@@ -19,4 +19,6 @@ for iT = 1:length(cells_to_process)
    this_file = parts{end}; 
    This_cell = KA_screener(this_file);  
     
+   
+   close all
 end

@@ -91,6 +91,7 @@ cfg_peth = [];
 cfg_peth.window = [-5 5];
 %     cfg_peth.dt = 0.0025; % fine resulition for regular PETH.
 cfg_peth.dt = 0.20; % wider bins for 'Lap' plot later.
+cfg_peth.plot_type = 'zscore';
 
 
 for ii = unique(FeedersFired)
@@ -106,8 +107,18 @@ for ii = unique(FeedersFired)
     [All_trial.H{ii}, All_trial.p{ii},~] = ttest(All_trial.post_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','right', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
 
     if All_trial.H{ii} == 1
-        fprintf('<strong>%s</strong> Cell:  %s has significantly increased activity following reward (p = %0.3d) at %s arm \n', mfilename, cell_to_process, All_trial.p{ii}, Feeder_names{ii});
+        fprintf('<strong>%s</strong> Cell:  %s has significantly increased activity following reward <strong>(p = %0.3f) at %s arm </strong>\n', mfilename, cell_to_process, All_trial.p{ii}, Feeder_names{ii});
+    else
+        fprintf('<strong>%s</strong> Cell:  %s is not significantly increased activity following reward (p = %0.3f) at %s arm \n', mfilename, cell_to_process, All_trial.p{ii}, Feeder_names{ii});
     end
+    
+    saveas(gcf, [out.S.label{1}(1:end-2) '_' Feeder_names{ii} '_' cfg_peth.plot_type '.png'])
+    saveas(gcf, [out.S.label{1}(1:end-2)  '_' Feeder_names{ii} '_' cfg_peth.plot_type '.fig'])
+    
+    print(gcf,[out.S.label{1}(1:end-2)  '_' Feeder_names{ii} '_' cfg_peth.plot_type],'-depsc')
+%     saveas_eps([out.S.label{1}(1:end-2)  '_' Feeder_names{ii} '_' cfg_peth.plot_type], cd)
+
+
 end
 
 
@@ -121,6 +132,13 @@ cfg_all.plot_type = 'zscore';
 title(['PETH for Feeder: ' Feeder_names{ii} ' | Trials: ' num2str(length(FeederTimes))])
 
 
+    saveas(gcf, [out.S.label{1}(1:end-2) '_all_' cfg_peth.plot_type '.png'])
+    saveas(gcf, [out.S.label{1}(1:end-2)  '_all_' cfg_peth.plot_type '.fig'])
+%     saveas_eps([out.S.label{1}(1:end-2)  '_all_' cfg_peth.plot_type], cd)
+    print(gcf,[out.S.label{1}(1:end-2)  '_all_' cfg_peth.plot_type],'-depsc')
+
+
+
 % conver the PETH into a zscore using the pre-event period as the baseline.
 z_idx = find(All_trial.outputIT{5} == 0);
 All_trial.Z{5} = (All_trial.mean_S_gau{5} - mean(All_trial.mean_S_gau{5}(1:z_idx))./ std(All_trial.mean_S_gau{5}(1:z_idx))); 
@@ -130,7 +148,7 @@ All_trial.Z{5} = (All_trial.mean_S_gau{5} - mean(All_trial.mean_S_gau{5}(1:z_idx
 [All_trial.H{5}, All_trial.p{5},~] = ttest(All_trial.post_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','right', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
 
 if All_trial.H{5} == 1
-    fprintf('<strong>%s</strong> Cell:  %s has significantly increased activity following reward (p = %0.3d)\n', mfilename, cell_to_process, All_trial.p{5});
+    fprintf('<strong>%s</strong> Cell:  %s has significantly increased activity following <strong> all reward (p = %0.3d)</strong>\n', mfilename, cell_to_process, All_trial.p{5});
 end
 
 %% get the shuffles
