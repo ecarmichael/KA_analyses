@@ -7,6 +7,11 @@ cfg = [];
 cfg.getTTnumbers = 0;
 cfg.fc = {cell_to_process};
 out.S = LoadSpikes(cfg);
+
+if length(out.S.t{1}) < 500
+    out = []; 
+    return
+end
 %load('TT1.ntt_01-wv.mat');
 
 evt = LoadEvents([]);
@@ -97,11 +102,11 @@ cfg_peth.plot_type = 'zscore';
 for ii = unique(FeedersFired)
     F_idx = find(FeedersFired == ii);
     figure(ii)
-    [All_trial.outputS{ii}, All_trial.outputIT{ii}, All_trial.outputGau{ii}, All_trial.mean_S_gau{ii}, All_trial.pre_stim_means{ii}, All_trial.post_stim_means{ii}] = SpikePETH(cfg_peth, out.S, FeederTimes(F_idx)/1000000);
+    [All_trial.outputS{ii}, All_trial.outputIT{ii}, All_trial.outputGau{ii}, All_trial.mean_S_gau{ii}, All_trial.pre_stim_means{ii}, All_trial.post_stim_means{ii},~, ~, All_trial.Z{ii}] = SpikePETH(cfg_peth, out.S, FeederTimes(F_idx)/1000000);
     
     title(['PETH for Feeder: ' Feeder_names{ii} ' | Reward mag: ' num2str(Feeder_mag(ii)) ' | ' Feeder_type{ii} ' | Trials: ' num2str(length(F_idx))]);
     z_idx = find(All_trial.outputIT{ii} == 0);
-    All_trial.Z{ii} = (All_trial.mean_S_gau{ii} - mean(All_trial.mean_S_gau{ii}(1:z_idx))./ std(All_trial.mean_S_gau{ii}(1:z_idx))); 
+%     All_trial.Z{ii} = (All_trial.mean_S_gau{ii} - mean(All_trial.mean_S_gau{ii}(1:z_idx)))./ std(All_trial.mean_S_gau{ii}(1:z_idx)); 
 
     % test for sig modulation using t-test. 
     [All_trial.H{ii}, All_trial.p{ii},~] = ttest(All_trial.post_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','right', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
@@ -127,29 +132,58 @@ figure(1001)
 cfg_all = cfg_peth;
 cfg_all.evt_color_mat = Feeder_cord;
 cfg_all.plot_type = 'zscore';
-
-[All_trial.outputS{5}, All_trial.outputIT{5}, All_trial.outputGau{5}, All_trial.mean_S_gau{5}, All_trial.pre_stim_means{5}, All_trial.post_stim_means{5}] = SpikePETH(cfg_all, out.S, FeederTimes/1000000);
-title(['PETH for Feeder: ' Feeder_names{ii} ' | Trials: ' num2str(length(FeederTimes))])
-
-
-    saveas(gcf, [out.S.label{1}(1:end-2) '_all_' cfg_peth.plot_type '.png'])
-    saveas(gcf, [out.S.label{1}(1:end-2)  '_all_' cfg_peth.plot_type '.fig'])
-%     saveas_eps([out.S.label{1}(1:end-2)  '_all_' cfg_peth.plot_type], cd)
-    print(gcf,[out.S.label{1}(1:end-2)  '_all_' cfg_peth.plot_type],'-depsc')
+cfg_all.markersize = 10; 
+[All_trial.outputS{5}, All_trial.outputIT{5}, All_trial.outputGau{5}, All_trial.mean_S_gau{5}, All_trial.pre_stim_means{5}, All_trial.post_stim_means{5},~, ~, All_trial.Z{5}] = SpikePETH(cfg_all, out.S, FeederTimes/1000000);
+title(['PETH for Feeder: ' Feeder_names{5} ' | Trials: ' num2str(length(FeederTimes))])
 
 
-
-% conver the PETH into a zscore using the pre-event period as the baseline.
-z_idx = find(All_trial.outputIT{5} == 0);
-All_trial.Z{5} = (All_trial.mean_S_gau{5} - mean(All_trial.mean_S_gau{5}(1:z_idx))./ std(All_trial.mean_S_gau{5}(1:z_idx))); 
-
+% % conver the PETH into a zscore using the pre-event period as the baseline.
+% z_idx = find(All_trial.outputIT{5} == 0);
+% All_trial.Z{5} = (All_trial.mean_S_gau{5} - mean(All_trial.mean_S_gau{5}(1:z_idx)))./ std(All_trial.mean_S_gau{5}(1:z_idx)); 
+% 
 
 % test for sig modulation using t-test. 
 [All_trial.H{5}, All_trial.p{5},~] = ttest(All_trial.post_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','right', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
 
-if All_trial.H{5} == 1
+
+% update plot based sig of all trial types.  '-' for sig, '--' for not. 
+
+if All_trial.H{5} ==1
     fprintf('<strong>%s</strong> Cell:  %s has significantly increased activity following <strong> all reward (p = %0.3d)</strong>\n', mfilename, cell_to_process, All_trial.p{5});
+else
+    chil = get(gca, 'Children');
+    chil(4).LineStyle = '--'; 
 end
+
+%% add the individual feeders to the overall PETH
+figure(1001)
+subplot(212)
+hold on
+for ii =unique(FeedersFired)
+    if All_trial.H{ii} == 1
+        plot(All_trial.outputIT{1}, All_trial.Z{ii},'-',  'color', [c_ord(ii,:), .8])
+    else
+        plot(All_trial.outputIT{1}, All_trial.Z{ii},'--',  'color', [c_ord(ii,:), .8])
+    end
+end
+
+ylim([min([All_trial.Z{1}; All_trial.Z{2}; All_trial.Z{3}; All_trial.Z{4}; All_trial.Z{5}]) max([All_trial.Z{1}; All_trial.Z{2}; All_trial.Z{3}; All_trial.Z{4}; All_trial.Z{5}])])
+
+% move the pre post means up
+chil = get(gca, 'Children');
+chil(5).Position = [chil(5).Position(1) max([All_trial.Z{1}; All_trial.Z{2}; All_trial.Z{3}; All_trial.Z{4}; All_trial.Z{5}])*.6 chil(5).Position(3)]; 
+chil(6).Position = [chil(6).Position(1) max([All_trial.Z{1}; All_trial.Z{2}; All_trial.Z{3}; All_trial.Z{4}; All_trial.Z{5}])*.7 chil(6).Position(3)]; 
+
+
+leg = legend(['All', Feeder_names(1:4)], 'Orientation', 'horizontal', 'Location', 'northwest','FontSize',14);
+set(leg, 'box', 'off')
+
+SetFigure([], gcf)
+
+    saveas(gcf, [out.S.label{1}(1:end-2) '_all_' cfg_peth.plot_type '.png'])
+    saveas(gcf, [out.S.label{1}(1:end-2)  '_all_' cfg_peth.plot_type '.fig'])
+    print(gcf,[out.S.label{1}(1:end-2)  '_all_' cfg_peth.plot_type],'-depsc')
+
 
 %% get the shuffles
 nShuff = 1000;
@@ -158,11 +192,7 @@ cfg_shuff.window = cfg_peth.window;
 cfg_shuff.dt = cfg_peth.dt;
 
 
-Shuff_mean_gau = [];
-Shuff_pre_means = [];
-Shuff_post_means = [];
 tic
-
 fprintf('<strong>%s</strong> starting shuffle ...', mfilename);
 for iS = nShuff:-1:1
     this_S = out.S;
