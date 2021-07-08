@@ -38,7 +38,7 @@ out.pos = LoadPos([]);
 spk_x = interp1(out.pos.tvec,out.pos.data(1,:),out.S.t{1},'linear');
 spk_y = interp1(out.pos.tvec,out.pos.data(2,:),out.S.t{1},'linear');
 
-out.S = restrict(out.S, evt.t{1}(1), evt.t{2}(1)); % restrict the spikes recording periods.avoids odd thing where spike trains contains zeros.  MClust issue?
+out.S = restrict(out.S, evt.t{1}(1), evt.t{2}(end)); % restrict the spikes recording periods.avoids odd thing where spike trains contains zeros.  MClust issue?
 
 %  load PM control script vars
 PM_dir = dir('PM*.mat');

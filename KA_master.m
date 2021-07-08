@@ -50,7 +50,7 @@ for iS = 1:length(sess_list)
         
         % if there were too few spikes in the .t then skip this file. 
         if isempty(This_cell)
-            fprintf('<strong>%s</strong>:  Cell %s had too few spikes to be included (<500)', mfilename, this_file)
+            fprintf('<strong>%s</strong>:  Cell %s had too few spikes to be included (<1200)', mfilename, this_file)
             continue
         end
         
