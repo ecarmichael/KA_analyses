@@ -8,7 +8,7 @@ cfg.getTTnumbers = 0;
 cfg.fc = {cell_to_process};
 out.S = LoadSpikes(cfg);
 
-if length(out.S.t{1}) < 500
+if length(out.S.t{1}) < 1200
     out = []; 
     return
 end
