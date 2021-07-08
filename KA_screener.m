@@ -35,10 +35,12 @@ evt.label{6} = evt_og.label{4};  %swap east and west
 
 out.pos = LoadPos([]);
 
+out.S = restrict(out.S, evt.t{1}(1), evt.t{2}(end)); % restrict the spikes recording periods.avoids odd thing where spike trains contains zeros.  MClust issue?
+
+
 spk_x = interp1(out.pos.tvec,out.pos.data(1,:),out.S.t{1},'linear');
 spk_y = interp1(out.pos.tvec,out.pos.data(2,:),out.S.t{1},'linear');
 
-out.S = restrict(out.S, evt.t{1}(1), evt.t{2}(end)); % restrict the spikes recording periods.avoids odd thing where spike trains contains zeros.  MClust issue?
 
 %  load PM control script vars
 PM_dir = dir('PM*.mat');
@@ -56,7 +58,7 @@ end
 
 %% Summary of spiking in time and space.
 figure(101)
-subplot(211)
+subplot(2,3,1:2)
 hold on
 hold on
 plot(out.pos.data(1,:), out.pos.data(2,:), 'color', [.7 .7 .7])
@@ -69,9 +71,15 @@ axis off
 %     plot(500:(160/32):655,(mWV(:,ii)*.010)+400, 'color',c_ord(ii,:), 'linewidth', 2)
 % end
 
-text(max(out.pos.data(1,:))*.1, max(out.pos.data(2,:))*.9, {['Firing rate = ' num2str(length(out.S.t{1})/(out.pos.tvec(end) - out.pos.tvec(1)),2) 'Hz'] ; ['Mode ISI = ' num2str((mode(diff(out.S.t{1})))*10000, 3) 'ms']})
+text(max(out.pos.data(1,:))*.1, max(out.pos.data(2,:))*.9, {['Firing rate = ' num2str(length(out.S.t{1})/(out.pos.tvec(end) - out.pos.tvec(1)),3) 'Hz'] ;['Mode ISI = ' num2str((mode(diff(out.S.t{1})))*10000, 5) 'ms'] ; ['Median ISI = ' num2str((median(diff(out.S.t{1})))*10000, 5) 'ms']})
 
-subplot(212)
+subplot(2,3,3)
+histogram(diff(out.S.t{1})*10000, 0:20:2000);
+xlabel('ISI ms')
+ylabel('Spike count')
+
+
+subplot(2,3, 4:6)
 cfg_rast = [];
 
 hold on
