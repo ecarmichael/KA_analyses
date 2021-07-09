@@ -66,10 +66,11 @@ for iF = 1:length(file_names)
     
     % put additional criteria for inclusion here. 
     
-    if str2double(file_names{iF}(strfind(file_names{iF}, '.mat')-1)) > 3
-        fprintf('Quality is %d, skipping %s\n', str2double(file_names{iF}(strfind(file_names{iF}, '.mat')-1)) , file_names{iF})
-        continue
-    end
+%     if str2double(file_names{iF}(strfind(file_names{iF}, '.mat')-1)) > 3
+%         fprintf('Quality is %d, skipping %s\n', str2double(file_names{iF}(strfind(file_names{iF}, '.mat')-1)) , file_names{iF})
+%         continue
+%     end
+%     
     
     this_sess = This_cell.session; % get the session type. 
     
@@ -82,9 +83,13 @@ for iF = 1:length(file_names)
     all_sig.(this_sess) =  [all_sig.(this_sess) This_cell.H{5}]; 
     
     north_sig.(this_sess) =  [north_sig.(this_sess) This_cell.H{1}]; 
+    north_sig.(this_sess) = north_sig.(this_sess) ==1; 
     west_sig.(this_sess) =  [west_sig.(this_sess) This_cell.H{2}]; 
-    south_sig.(this_sess) =  [south_sig.(this_sess) This_cell.H{3}]; 
+    west_sig.(this_sess) = west_sig.(this_sess) ==1;
+    south_sig.(this_sess) =  [south_sig.(this_sess) This_cell.H{3}];
+    south_sig.(this_sess) = south_sig.(this_sess) == 1; 
     east_sig.(this_sess) =  [east_sig.(this_sess) This_cell.H{4}]; 
+    east_sig.(this_sess) = east_sig.(this_sess) == 1;
 
     tvec.(this_sess) = This_cell.outputIT{1}; 
     clear This_cell
@@ -92,36 +97,110 @@ end % iF files
 
 %% compile into sessions and get the mean Z score. 
 sessions = fieldnames(all_out); 
+% make some empty matricies to fill in with each cell. 
+all_mat = [];
+north_mat = [];
+west_mat = [];
+south_mat = [];
+east_mat = []; 
+
+all_sig_mat = [];
+north_sig_mat = [];
+west_sig_mat = [];
+south_sig_mat = [];
+east_sig_mat = []; 
+
+all_nCells_label = []; 
+all_sig_nCells_label = []; 
+all_nCells_c_ord = []; % for session type colors. 
+
 
 % remove R1 due to oddness. 
 R1_idx = find(contains(sessions,'R1'));
 sessions(R1_idx) = []; 
 
-for iS = length(sessions):-1:1
+for iS = 1:length(sessions)
     if isempty(all_out.(sessions{iS}))
         continue
     end
+    % keep only cells with sig modulation
+    sig_mean_out.(sessions{iS}) = nanmean(all_out.(sessions{iS})(:,logical(all_sig.(sessions{iS}))),2);
+    sig_mean_N_out.(sessions{iS}) = nanmean(north_out.(sessions{iS})(:,logical(north_sig.(sessions{iS}))),2);
+    sig_mean_W_out.(sessions{iS}) = nanmean(west_out.(sessions{iS})(:,logical(west_sig.(sessions{iS}))),2);
+    sig_mean_S_out.(sessions{iS}) = nanmean(south_out.(sessions{iS})(:,logical(south_sig.(sessions{iS}))),2);
+    sig_mean_E_out.(sessions{iS}) = nanmean(east_out.(sessions{iS})(:,logical(east_sig.(sessions{iS}))),2);
+    
+    sig_mean_all_mat(iS,:) = sig_mean_out.(sessions{iS});
+    sig_mean_N_mat(iS,:) = sig_mean_N_out.(sessions{iS});
+    sig_mean_W_mat(iS,:) = sig_mean_W_out.(sessions{iS});
+    sig_mean_S_mat(iS,:) = sig_mean_S_out.(sessions{iS});
+    sig_mean_E_mat(iS,:) = sig_mean_E_out.(sessions{iS});
+
+
     mean_out.(sessions{iS}) = nanmean(all_out.(sessions{iS}),2);
     mean_N_out.(sessions{iS}) = nanmean(north_out.(sessions{iS}),2);
     mean_W_out.(sessions{iS}) = nanmean(west_out.(sessions{iS}),2);
     mean_S_out.(sessions{iS}) = nanmean(south_out.(sessions{iS}),2);
     mean_E_out.(sessions{iS}) = nanmean(east_out.(sessions{iS}),2);
     
-mean_all_mat(iS,:) = mean_out.(sessions{iS}) ;
-mean_N_mat(iS,:) = mean_N_out.(sessions{iS}) ;
-mean_W_mat(iS,:) = mean_W_out.(sessions{iS}) ;
-mean_S_mat(iS,:) = mean_S_out.(sessions{iS}) ;
-mean_E_mat(iS,:) = mean_E_out.(sessions{iS}) ;
+    mean_all_mat(iS,:) = mean_out.(sessions{iS});
+    mean_N_mat(iS,:) = mean_N_out.(sessions{iS});
+    mean_W_mat(iS,:) = mean_W_out.(sessions{iS});
+    mean_S_mat(iS,:) = mean_S_out.(sessions{iS});
+    mean_E_mat(iS,:) = mean_E_out.(sessions{iS});
+    
+    
+    % collect every cell. 
+    all_mat = [all_mat, all_out.(sessions{iS})];
+    north_mat = [north_mat, north_out.(sessions{iS})];
+    west_mat = [west_mat, west_out.(sessions{iS})];
+    south_mat = [south_mat, south_out.(sessions{iS})];
+    east_mat = [east_mat, east_out.(sessions{iS})];
+    
+    all_nCells_label = [all_nCells_label, repmat(iS,1, size(all_out.(sessions{iS}),2))];
+    
+    if strcmp(sessions{iS}(1), 'C')
+        this_type = 1;
+    elseif strcmp(sessions{iS}(1), 'O')
+        this_type = 2;
+    elseif strcmp(sessions{iS}(1), 'E')
+        this_type = 3;
+    elseif strcmp(sessions{iS}(1), 'R')
+        this_type = 4;
+    end
+        
+    all_nCells_c_ord = [all_nCells_c_ord, repmat(this_type,1, size(all_out.(sessions{iS}),2))]; 
 
+    % collect every significant cell.
+    all_sig_mat = [all_sig_mat, all_out.(sessions{iS})(:,logical(all_sig.(sessions{iS})))];
+    north_sig_mat = [north_sig_mat, north_out.(sessions{iS})(:,logical(north_sig.(sessions{iS})))];
+    west_sig_mat = [west_sig_mat, west_out.(sessions{iS})(:,logical(west_sig.(sessions{iS})))];
+    south_sig_mat = [south_sig_mat, south_out.(sessions{iS})(:,logical(south_sig.(sessions{iS})))];
+    east_sig_mat = [east_sig_mat, east_out.(sessions{iS})(:,logical(east_sig.(sessions{iS})))];
+
+%     all_sig_nCells_label = [all_sig_nCells_label, repmat(iS,1, size(all_out.(sessions{iS})(:,logical(all_sig.(sessions{iS}))),2))]; 
+
+    
 sess_label{iS} = sessions{iS}; 
 nCells(iS) = size(all_out.(sessions{iS}),2);
+sig_all_nCells(iS) = size(all_out.(sessions{iS})(:,logical(all_sig.(sessions{iS}))),2);
+sig_N_nCells(iS) = size(north_out.(sessions{iS})(:,logical(north_sig.(sessions{iS}))),2);
+sig_W_nCells(iS) = size(west_out.(sessions{iS})(:,logical(west_sig.(sessions{iS}))),2);
+sig_S_nCells(iS) = size(south_out.(sessions{iS})(:,logical(south_sig.(sessions{iS}))),2);
+sig_E_nCells(iS) = size(east_out.(sessions{iS})(:,logical(east_sig.(sessions{iS}))),2);
+
 end
 
 Z_min = min(min([mean_all_mat; mean_N_mat; mean_W_mat; mean_S_mat; mean_W_mat])); 
 Z_max = max(max([mean_all_mat; mean_N_mat; mean_W_mat; mean_S_mat; mean_W_mat])); 
 
+Z_sig_min = min(min([mean_all_mat; sig_mean_N_mat; sig_mean_W_mat; sig_mean_S_mat; sig_mean_W_mat])); 
+Z_sig_max = max(max([mean_all_mat; sig_mean_N_mat; sig_mean_W_mat; sig_mean_S_mat; sig_mean_W_mat])); 
 
-%% make some simple image imagesc
+[all_mat_order, sort_idx] = sort(all_nCells_label, 'ascend');
+
+c_ord = linspecer(length(unique(all_nCells_c_ord))); 
+%% make some simple image imagesc using all cells
 
 % first plot the mean Z score for each session (row)
 figure(101)
@@ -186,8 +265,204 @@ ylabel(cb, 'mean zscore','Rotation',90)
 
 
 % add a main title
-ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
-text(0.5, 0.98,'Mean Zscore per session')
+% ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
+% text(0.5, 0.98,'Mean Zscore per session')
 % title(currentFigure.Children(end), 'Mean Zscore per session');
 
 SetFigure([], gcf)
+
+
+%% same plot using only cells with sig modulation. 
+figure(102)
+
+subplot(1,5,1)
+imagesc(tvec.C1, 1:size(sig_mean_N_mat,1), sig_mean_N_mat)
+title({'North' ;'banana x 3'})
+set(gca, 'ytick', 1:size(sig_mean_N_mat,1), 'yTickLabel', sess_label)
+set(gca, 'xtick', -5:2.5:5)
+xlabel('feeder time (s)')
+ylabel('session')
+vline(0, 'k')
+for ii = 1:size(sig_mean_N_mat,1)
+   text(5.5, ii, num2str(sig_N_nCells(ii)), 'fontsize', 12);
+end
+% colorbar
+caxis([Z_min Z_max]);
+
+
+subplot(1,5,2)
+imagesc(tvec.C1, 1:size(sig_mean_W_mat,1), sig_mean_W_mat)
+title({'West'; 'grain x 3'})
+% set(gca, 'ytick', 1:size(mean_W_mat,1), 'yTickLabel', sess_label);
+set(gca, 'ytick', [])
+set(gca, 'xtick', -5:2.5:5)
+vline(0, 'k')
+for ii = 1:size(sig_mean_W_mat,1)
+   text(5.5, ii, num2str(sig_W_nCells(ii)), 'fontsize', 12);
+end
+caxis([Z_sig_min Z_sig_max]);
+
+
+subplot(1,5,3)
+imagesc(tvec.C1, 1:size(sig_mean_S_mat,1), sig_mean_S_mat)
+title({'South'; 'banana x 1'})
+% set(gca, 'ytick', 1:size(mean_S_mat,1), 'yTickLabel', sess_label)
+set(gca, 'ytick', [])
+set(gca, 'xtick', -5:2.5:5)
+vline(0, 'k')
+for ii = 1:size(sig_mean_S_mat,1)
+   text(5.5, ii, num2str(sig_S_nCells(ii)), 'fontsize', 12);
+end
+caxis([Z_sig_min Z_sig_max]);
+
+
+
+subplot(1,5,4)
+imagesc(tvec.C1, 1:size(sig_mean_E_mat,1), sig_mean_E_mat)
+title({'East'; 'grain x 1'})
+% set(gca, 'ytick', 1:size(mean_E_mat,1), 'yTickLabel', sess_label)
+set(gca, 'ytick', [])
+set(gca, 'xtick', -5:2.5:5)
+vline(0, 'k')
+for ii = 1:size(sig_mean_E_mat,1)
+   text(5.5, ii, num2str(sig_E_nCells(ii)), 'fontsize', 12);
+end
+caxis([Z_sig_min Z_sig_max]);
+
+
+subplot(1,5,5)
+imagesc(tvec.C1, 1:size(sig_mean_all_mat,1), sig_mean_all_mat)
+title('All feeders')
+% set(gca, 'ytick', 1:size(mean_all_mat,1), 'yTickLabel', sess_label)
+set(gca, 'ytick', [])
+set(gca, 'xtick', -5:2.5:5)
+vline(0, 'k')
+for ii = 1:size(sig_mean_all_mat,1)
+   text(5.5, ii, num2str(sig_nCells(ii)), 'fontsize', 12);
+end
+caxis([Z_sig_min Z_sig_max]);
+cb=colorbar;
+cb.Position(1) = cb.Position(1) + .075;
+ylabel(cb, 'mean zscore','Rotation',90)
+
+
+% add a main title
+% ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
+% text(0.5, 0.98,'Mean Zscore per session')
+% title(currentFigure.Children(end), 'Mean Zscore per session');
+
+SetFigure([], gcf)
+
+%% Again with all of the cells stacked. 
+
+figure(103)
+
+subplot(1,5,1)
+imagesc(tvec.C1, 1:length(all_mat_order), north_mat')
+title({'North' ;'banana x 3'})
+% set(gca, 'ytick', 1:length(all_mat_order), 'yTickLabel', sessions(all_mat_order))
+set(gca, 'ytick', [])
+
+set(gca, 'xtick', -5:2.5:5)
+xlabel('feeder time (s)')
+ylabel('session')
+vl = vline(0, '--k');
+vl.LineWidth = 2;
+caxis([Z_min Z_max]);
+for ii = 1:length(all_mat_order)
+   text(-5.8, ii, sessions(all_mat_order(ii)), 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left');
+end
+
+
+% type_start_idx = [0 find(diff(all_nCells_c_ord))];
+% for ii = 1:length(type_start_idx)
+%     if ii == length(type_start_idx)
+%         rectangle('position', [-5, type_start_idx(ii)+.7, 9.8, (length(all_nCells_c_ord) - type_start_idx(ii))-.2], 'edgecolor', c_ord(ii,:), 'linewidth',4);
+%     else
+%         rectangle('position', [-5, type_start_idx(ii)+.7, 9.8, (type_start_idx(ii+1) - type_start_idx(ii))-.2], 'edgecolor', c_ord(ii,:), 'linewidth', 4);
+%     end
+% end
+hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+%     
+subplot(1,5,2)
+imagesc(tvec.C1, 1:length(all_mat_order), west_mat')
+% set(gca, 'ytick', 1:length(all_mat_order), 'yTickLabel', sessions(all_mat_order))
+set(gca, 'ytick', [])
+title({'West'; 'grain x 3'})
+set(gca, 'ytick', [])
+set(gca, 'xtick', -5:2.5:5)
+vl = vline(0, '--k');
+vl.LineWidth = 2;
+caxis([Z_sig_min Z_sig_max]);
+hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+
+subplot(1,5,3)
+imagesc(tvec.C1, 1:length(all_mat_order), south_mat')
+% set(gca, 'ytick', 1:length(all_mat_order), 'yTickLabel', sessions(all_mat_order))
+set(gca, 'ytick', [])
+title({'South'; 'banana x 1'})
+% set(gca, 'ytick', 1:size(mean_S_mat,1), 'yTickLabel', sess_label)
+set(gca, 'ytick', [])
+set(gca, 'xtick', -5:2.5:5)
+vl = vline(0, '--k');
+vl.LineWidth = 2;
+caxis([Z_sig_min Z_sig_max]);
+hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+
+
+subplot(1,5,4)
+imagesc(tvec.C1, 1:length(all_mat_order), east_mat')
+% set(gca, 'ytick', 1:length(all_mat_order), 'yTickLabel', sessions(all_mat_order))
+set(gca, 'ytick', [])
+title({'East'; 'grain x 1'})
+% set(gca, 'ytick', 1:size(mean_E_mat,1), 'yTickLabel', sess_label)
+set(gca, 'ytick', [])
+set(gca, 'xtick', -5:2.5:5)
+vl = vline(0, '--k');
+vl.LineWidth = 2;
+caxis([Z_sig_min Z_sig_max]);
+hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+
+subplot(1,5,5)
+imagesc(tvec.C1, 1:length(all_mat_order), all_mat(:,sort_idx)')
+% set(gca, 'ytick', 1:length(all_mat_order), 'yTickLabel', sessions(all_mat_order))
+set(gca, 'ytick', [])
+title('All feeders')
+% set(gca, 'ytick', 1:size(mean_all_mat,1), 'yTickLabel', sess_label)
+set(gca, 'ytick', [])
+set(gca, 'xtick', -5:2.5:5)
+vl = vline(0, '--k');
+vl.LineWidth = 2;
+caxis([Z_sig_min Z_sig_max]);
+cb=colorbar;
+cb.Position(1) = cb.Position(1) + .075;
+ylabel(cb, 'mean zscore','Rotation',90)
+hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+
+% add a main title
+% ha = axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0  1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
+% text(0.5, 0.98,'Mean Zscore per session')
+% title(currentFigure.Children(end), 'Mean Zscore per session');
+
+SetFigure([], gcf)
+
