@@ -32,7 +32,7 @@ SUNS_map = [linspace(purple(1) , yellow(1), NumPoints).', ...
 %     all_sig.(['A' num2str(ii)]) = [];
 % 
 % end
-subj_list = {'C1_1', 'C3_2','C3_1', 'C3_4', 'C4_3', 'C5_2', 'C5_3'}; 
+subj_list = {'C1_1', 'C3_2','C3_3', 'C3_4', 'C4_3', 'C5_2', 'C5_3'}; 
 deval_type = {'W', 'N', 'N', ' ' , 'W', 'W', 'N'}; 
 for ii = 1:3  % Criteria should be 3
     all_out.(['C' num2str(ii)]) = [];
@@ -291,12 +291,12 @@ c_ord = linspecer(length(unique(all_nCells_c_ord)));
 %% get an index for the deval type
 
 for ii = 1:length(all_subj_mat)
-    if ismember(all_subj_mat(ii), [1 5 6]) && (all_nCells_label(ii) == 14)
+    if ismember(all_subj_mat(ii), [1 5 6]) && (all_nCells_label(ii) >= 12)
         N_deval_mat(ii) = 0;
         S_deval_mat(ii) = 0;
         E_deval_mat(ii) = 1;
         W_deval_mat(ii) = 1;
-    elseif ismember(all_subj_mat(ii), [2, 3, 6]) && (all_nCells_label(ii) == 14)
+    elseif ismember(all_subj_mat(ii), [2, 3, 6]) && (all_nCells_label(ii) >=12)
         N_deval_mat(ii) = 1;
         S_deval_mat(ii) = 1;
         E_deval_mat(ii) = 0;
@@ -497,6 +497,9 @@ for ii = 1:length(all_mat_order)
    elseif north_mat_sig_post(ii)
       text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
    end
+   if N_deval_mat(ii)
+       text(6.25, ii, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
 end
 
 
@@ -530,6 +533,10 @@ for ii = 1:length(all_mat_order)
    elseif west_mat_sig_post(ii)
       text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
    end
+   
+   if W_deval_mat(ii)
+       text(6.25, ii, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
 end
 
 
@@ -556,6 +563,9 @@ for ii = 1:length(all_mat_order)
    elseif south_mat_sig_post(ii)
       text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
    end
+   if S_deval_mat(ii)
+       text(6.25, ii, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
 end
 
 
@@ -580,6 +590,9 @@ for ii = 1:length(all_mat_order)
       text(5.25, ii, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
    elseif east_mat_sig_post(ii)
       text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
+   if E_deval_mat(ii)
+       text(6.25, ii, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
    end
 end
 
@@ -615,5 +628,14 @@ end
 % text(0.5, 0.98,'Mean Zscore per session')
 % title(currentFigure.Children(end), 'Mean Zscore per session');
 
-SetFigure([], gcf)
+cfg_fig.resize = 2;
+SetFigure(cfg_fig, gcf)
+pos = get(gcf, 'position'); 
+set(gcf, 'position', [pos(1)-400 pos(2) pos(3)*2.4 pos(4)*2.4]);
+
+%% save all the figures
+
+figure(103)
+% saveas(gcf, [inter_dir
+
 
