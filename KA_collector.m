@@ -630,12 +630,28 @@ end
 
 cfg_fig.resize = 2;
 SetFigure(cfg_fig, gcf)
-pos = get(gcf, 'position'); 
-set(gcf, 'position', [pos(1)-400 pos(2) pos(3)*2.4 pos(4)*2.4]);
 
 %% save all the figures
+figure(101)
+maximize
+
+saveas(gcf, [inter_dir filesep 'All_mean.png'])
+saveas(gcf, [inter_dir filesep 'All_mean.fig'])
+print(gcf,[inter_dir filesep  'All_mean'],'-depsc')
+
+figure(102)
+maximize
+
+saveas(gcf, [inter_dir filesep 'All_mean_sig_only.png'])
+saveas(gcf, [inter_dir filesep 'All_mean_sig_only.fig'])
+print(gcf,[inter_dir filesep  'All_mean_sig_only'],'-depsc')
+
 
 figure(103)
-% saveas(gcf, [inter_dir
+maximize
+
+saveas(gcf, [inter_dir filesep 'All_cells.png'])
+saveas(gcf, [inter_dir filesep 'All_cells.fig'])
+print(gcf,[inter_dir filesep  'All_cells'],'-depsc')
 
 
