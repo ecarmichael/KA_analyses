@@ -5,7 +5,7 @@ addpath(genpath('/Users/jericcarmichael/Documents/Github/EC_State'));
 addpath(genpath('/Users/jericcarmichael/Documents/Github/KA_analyses'));
 addpath(genpath('/Users/jericcarmichael/Documents/Github/vandermeerlab/code-matlab/shared'))
 data_dir = '/Users/jericcarmichael/Dropbox/KA_Data/Raw_data'; % where all the NLX data is. 
-inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter';  % where to save the outputs. 
+inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_new';  % where to save the outputs. 
 
 cd(data_dir); % move to the data dir. 
 
@@ -29,7 +29,7 @@ sess_list =   sess_list(~cellfun('isempty',sess_list));
 
 
 % loop over sessions in the data dir.
-for iS = 1:length(sess_list)
+for iS = length(sess_list):-1:1
     
     cd([data_dir filesep sess_list{iS}])
     
@@ -47,6 +47,7 @@ for iS = 1:length(sess_list)
         parts = strsplit(cells_to_process{iT}, filesep);
         this_file = parts{end};
         This_cell = KA_screener(this_file);
+%         This_cell = KA_screener_pseudo_baseline(this_file); 
         
         % if there were too few spikes in the .t then skip this file. 
         if isempty(This_cell)
