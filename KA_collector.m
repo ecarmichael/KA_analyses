@@ -17,17 +17,26 @@ if nargin == 0
 end
 
 
+% custom colormap
+purple = [18 13 44]./255; 
+yellow = [246 207 70]./255;
+cmapsize = 256;   %or as passed in
+NumPoints = floor(cmapsize * 15/100) - floor(cmapsize * 0/100);
+SUNS_map = [linspace(purple(1) , yellow(1), NumPoints).', ...
+         linspace(purple(2) , yellow(2), NumPoints).', ...
+         linspace(purple(3) , yellow(3), NumPoints).']; 
+
 %% allocate some empty arrays to fill in. 
 % for ii = 1:15 % Acqusition stage could talke many days. Will trim empty ones later. 
 %     all_out.(['A' num2str(ii)]) = [];
 %     all_sig.(['A' num2str(ii)]) = [];
 % 
 % end
-
+subj_list = {'C1_1', 'C3_2','C3_1', 'C3_4', 'C4_3', 'C5_2', 'C5_3'}; 
+deval_type = {'W', 'N', 'N', ' ' , 'W', 'W', 'N'}; 
 for ii = 1:3  % Criteria should be 3
     all_out.(['C' num2str(ii)]) = [];
-    all_sig.(['C' num2str(ii)]) = [];
-
+    all_sig.(['C' num2str(ii)]) = [];   
 end
 
 for ii = 1:7 % Overtaining should b 7
@@ -55,7 +64,22 @@ north_sig = all_sig;
 east_sig = all_sig; 
 south_sig = all_sig;
 west_sig = all_sig;
-%% cycle and collect
+
+all_sig_pre = all_sig; 
+north_sig_pre = all_sig;
+east_sig_pre = all_sig; 
+south_sig_pre = all_sig;
+west_sig_pre = all_sig;
+
+all_sig_post = all_sig;
+north_sig_post = all_sig;
+east_sig_post = all_sig; 
+south_sig_post = all_sig;
+west_sig_post = all_sig;
+
+all_subj = all_out; 
+
+% cycle and collect
 
 cd(inter_dir); 
 file_names = FindFiles('*TT*');  % get all the files containing 'TT' which should be all the outputs from KA_master. 
@@ -73,15 +97,17 @@ for iF = 1:length(file_names)
 %     
     
     this_sess = This_cell.session; % get the session type. 
-    
-    all_out.(this_sess) = [all_out.(this_sess) This_cell.Z{5}]; 
-    north_out.(this_sess) = [north_out.(this_sess) This_cell.Z{1}];
-    west_out.(this_sess) = [west_out.(this_sess) This_cell.Z{2}];
-    south_out.(this_sess) = [south_out.(this_sess) This_cell.Z{3}]; 
-    east_out.(this_sess) = [east_out.(this_sess) This_cell.Z{4}]; 
+    all_subj.(this_sess) =[all_subj.(this_sess), find(ismember(subj_list, This_cell.subject))]; 
+
+    all_out.(this_sess) = [all_out.(this_sess) This_cell.mean_S_gau{5}]; 
+    north_out.(this_sess) = [north_out.(this_sess) This_cell.mean_S_gau{1}];
+    west_out.(this_sess) = [west_out.(this_sess) This_cell.mean_S_gau{2}];
+    south_out.(this_sess) = [south_out.(this_sess) This_cell.mean_S_gau{3}]; 
+    east_out.(this_sess) = [east_out.(this_sess) This_cell.mean_S_gau{4}]; 
 
     all_sig.(this_sess) =  [all_sig.(this_sess) This_cell.H{5}]; 
     
+    % get sig for two sided ttest (any modulation)
     north_sig.(this_sess) =  [north_sig.(this_sess) This_cell.H{1}]; 
     north_sig.(this_sess) = north_sig.(this_sess) ==1; 
     west_sig.(this_sess) =  [west_sig.(this_sess) This_cell.H{2}]; 
@@ -90,7 +116,31 @@ for iF = 1:length(file_names)
     south_sig.(this_sess) = south_sig.(this_sess) == 1; 
     east_sig.(this_sess) =  [east_sig.(this_sess) This_cell.H{4}]; 
     east_sig.(this_sess) = east_sig.(this_sess) == 1;
-
+    
+    % same but only post reward > pre
+    all_sig_post.(this_sess) =  [all_sig_post.(this_sess) This_cell.H_post{5}];
+    all_sig_post.(this_sess) = all_sig_post.(this_sess) ==1; 
+    north_sig_post.(this_sess) =  [north_sig_post.(this_sess) This_cell.H_post{1}]; 
+    north_sig_post.(this_sess) = north_sig_post.(this_sess) ==1; 
+    west_sig_post.(this_sess) =  [west_sig_post.(this_sess) This_cell.H_post{2}]; 
+    west_sig_post.(this_sess) = west_sig_post.(this_sess) ==1;
+    south_sig_post.(this_sess) =  [south_sig_post.(this_sess) This_cell.H_post{3}];
+    south_sig_post.(this_sess) = south_sig_post.(this_sess) == 1; 
+    east_sig_post.(this_sess) =  [east_sig_post.(this_sess) This_cell.H_post{4}]; 
+    east_sig_post.(this_sess) = east_sig_post.(this_sess) == 1;
+    
+    % same but only pre reward > post
+    all_sig_pre.(this_sess) =  [all_sig_pre.(this_sess) This_cell.H_pre{5}];
+    all_sig_pre.(this_sess) = all_sig_pre.(this_sess) ==1; 
+    north_sig_pre.(this_sess) =  [north_sig_pre.(this_sess) This_cell.H_pre{1}]; 
+    north_sig_pre.(this_sess) = north_sig_pre.(this_sess) ==1; 
+    west_sig_pre.(this_sess) =  [west_sig_pre.(this_sess) This_cell.H_pre{2}]; 
+    west_sig_pre.(this_sess) = west_sig_pre.(this_sess) ==1;
+    south_sig_pre.(this_sess) =  [south_sig_pre.(this_sess) This_cell.H_pre{3}];
+    south_sig_pre.(this_sess) = south_sig_pre.(this_sess) == 1; 
+    east_sig_pre.(this_sess) =  [east_sig_pre.(this_sess) This_cell.H_pre{4}]; 
+    east_sig_pre.(this_sess) = east_sig_pre.(this_sess) == 1;
+    
     tvec.(this_sess) = This_cell.outputIT{1}; 
     clear This_cell
 end % iF files
@@ -104,20 +154,29 @@ west_mat = [];
 south_mat = [];
 east_mat = []; 
 
+% collect the H for each cell (for all_mat)
+all_mat_sig = [];  all_mat_sig_pre = [];  all_mat_sig_post = [];
+north_mat_sig = [];  north_mat_sig_pre = [];  north_mat_sig_post = [];
+west_mat_sig = [];  west_mat_sig_pre = [];  west_mat_sig_post = [];
+south_mat_sig = [];  south_mat_sig_pre = [];  south_mat_sig_post = [];
+east_mat_sig = [];  east_mat_sig_pre = [];  east_mat_sig_post = [];
+
+% collect only significant cells
 all_sig_mat = [];
 north_sig_mat = [];
 west_sig_mat = [];
 south_sig_mat = [];
 east_sig_mat = []; 
 
+all_subj_mat = [];
 all_nCells_label = []; 
 all_sig_nCells_label = []; 
 all_nCells_c_ord = []; % for session type colors. 
 
 
-% remove R1 due to oddness. 
-R1_idx = find(contains(sessions,'R1'));
-sessions(R1_idx) = []; 
+% % remove R1 due to oddness. 
+% R1_idx = find(contains(sessions,'R1'));
+% sessions(R1_idx) = []; 
 
 for iS = 1:length(sessions)
     if isempty(all_out.(sessions{iS}))
@@ -149,6 +208,8 @@ for iS = 1:length(sessions)
     mean_S_mat(iS,:) = mean_S_out.(sessions{iS});
     mean_E_mat(iS,:) = mean_E_out.(sessions{iS});
     
+    %collect all subject ids
+    all_subj_mat = [all_subj_mat, all_subj.(sessions{iS})]; 
     
     % collect every cell. 
     all_mat = [all_mat, all_out.(sessions{iS})];
@@ -157,6 +218,32 @@ for iS = 1:length(sessions)
     south_mat = [south_mat, south_out.(sessions{iS})];
     east_mat = [east_mat, east_out.(sessions{iS})];
     
+    % get the corresponding significane value (two sided)
+    all_mat_sig = [all_mat_sig, all_sig.(sessions{iS})];
+    north_mat_sig = [north_mat_sig, north_sig.(sessions{iS})];
+    west_mat_sig = [west_mat_sig, west_sig.(sessions{iS})];
+    south_mat_sig = [south_mat_sig, south_sig.(sessions{iS})];
+    east_mat_sig = [east_mat_sig, east_sig.(sessions{iS})];
+    
+    % get the corresponding significane value (left side -> greater
+    % before reward)
+    all_mat_sig_pre = [all_mat_sig_pre, all_sig_pre.(sessions{iS})];
+    north_mat_sig_pre = [north_mat_sig_pre, north_sig_pre.(sessions{iS})];
+    west_mat_sig_pre = [west_mat_sig_pre, west_sig_pre.(sessions{iS})];
+    south_mat_sig_pre = [south_mat_sig_pre, south_sig_pre.(sessions{iS})];
+    east_mat_sig_pre = [east_mat_sig_pre, east_sig_pre.(sessions{iS})];
+    
+    
+    % get the corresponding significane value (right side, greater post
+    % reward)
+    all_mat_sig_post = [all_mat_sig_post, all_sig_post.(sessions{iS})];
+    north_mat_sig_post = [north_mat_sig_post, north_sig_post.(sessions{iS})];
+    west_mat_sig_post = [west_mat_sig_post, west_sig_post.(sessions{iS})];
+    south_mat_sig_post = [south_mat_sig_post, south_sig_post.(sessions{iS})];
+    east_mat_sig_post = [east_mat_sig_post, east_sig_post.(sessions{iS})];
+    
+
+
     all_nCells_label = [all_nCells_label, repmat(iS,1, size(all_out.(sessions{iS}),2))];
     
     if strcmp(sessions{iS}(1), 'C')
@@ -200,6 +287,28 @@ Z_sig_max = max(max([mean_all_mat; sig_mean_N_mat; sig_mean_W_mat; sig_mean_S_ma
 [all_mat_order, sort_idx] = sort(all_nCells_label, 'ascend');
 
 c_ord = linspecer(length(unique(all_nCells_c_ord))); 
+
+%% get an index for the deval type
+
+for ii = 1:length(all_subj_mat)
+    if ismember(all_subj_mat(ii), [1 5 6]) && (all_nCells_label(ii) == 14)
+        N_deval_mat(ii) = 0;
+        S_deval_mat(ii) = 0;
+        E_deval_mat(ii) = 1;
+        W_deval_mat(ii) = 1;
+    elseif ismember(all_subj_mat(ii), [2, 3, 6]) && (all_nCells_label(ii) == 14)
+        N_deval_mat(ii) = 1;
+        S_deval_mat(ii) = 1;
+        E_deval_mat(ii) = 0;
+        W_deval_mat(ii) = 0;
+    else
+        N_deval_mat(ii) = 0;
+        S_deval_mat(ii) = 0;
+        E_deval_mat(ii) = 0;
+        W_deval_mat(ii) = 0;
+    end
+end
+
 %% make some simple image imagesc using all cells
 
 % first plot the mean Z score for each session (row)
@@ -214,7 +323,7 @@ xlabel('feeder time (s)')
 ylabel('session')
 vline(0, 'k')
 for ii = 1:size(mean_N_mat,1)
-   text(5.5, ii, num2str(nCells(ii)), 'fontsize', 12);
+   text(5.5, ii, [num2str(sig_N_nCells(ii)) '/' num2str(nCells(ii))], 'fontsize', 12);
 end
 % colorbar
 caxis([Z_min Z_max]);
@@ -227,6 +336,9 @@ title({'West'; 'grain x 3'})
 set(gca, 'ytick', [])
 set(gca, 'xtick', -5:2.5:5)
 vline(0, 'k')
+for ii = 1:size(mean_N_mat,1)
+   text(5.5, ii, [num2str(sig_W_nCells(ii)) '/' num2str(nCells(ii))], 'fontsize', 12);
+end
 caxis([Z_min Z_max]);
 
 
@@ -237,6 +349,9 @@ title({'South'; 'banana x 1'})
 set(gca, 'ytick', [])
 set(gca, 'xtick', -5:2.5:5)
 vline(0, 'k')
+for ii = 1:size(mean_N_mat,1)
+   text(5.5, ii, [num2str(sig_N_nCells(ii)) '/' num2str(nCells(ii))], 'fontsize', 12);
+end
 caxis([Z_min Z_max]);
 
 
@@ -248,6 +363,9 @@ title({'East'; 'grain x 1'})
 set(gca, 'ytick', [])
 set(gca, 'xtick', -5:2.5:5)
 vline(0, 'k')
+for ii = 1:size(mean_N_mat,1)
+   text(5.5, ii, [num2str(sig_E_nCells(ii)) '/' num2str(nCells(ii))], 'fontsize', 12);
+end
 caxis([Z_min Z_max]);
 
 
@@ -258,6 +376,9 @@ title('All feeders')
 set(gca, 'ytick', [])
 set(gca, 'xtick', -5:2.5:5)
 vline(0, 'k')
+for ii = 1:size(mean_N_mat,1)
+   text(5.5, ii, [num2str(sig_all_nCells(ii)) '/' num2str(nCells(ii))], 'fontsize', 12);
+end
 caxis([Z_min Z_max]);
 cb=colorbar;
 cb.Position(1) = cb.Position(1) + .075;
@@ -338,7 +459,7 @@ set(gca, 'ytick', [])
 set(gca, 'xtick', -5:2.5:5)
 vline(0, 'k')
 for ii = 1:size(sig_mean_all_mat,1)
-   text(5.5, ii, num2str(sig_nCells(ii)), 'fontsize', 12);
+   text(5.5, ii, num2str(sig_all_nCells(ii)), 'fontsize', 12);
 end
 caxis([Z_sig_min Z_sig_max]);
 cb=colorbar;
@@ -358,7 +479,7 @@ SetFigure([], gcf)
 figure(103)
 
 subplot(1,5,1)
-imagesc(tvec.C1, 1:length(all_mat_order), north_mat')
+imagesc(tvec.C1, 1:length(all_mat_order), north_mat(:,sort_idx)')
 title({'North' ;'banana x 3'})
 % set(gca, 'ytick', 1:length(all_mat_order), 'yTickLabel', sessions(all_mat_order))
 set(gca, 'ytick', [])
@@ -371,25 +492,25 @@ vl.LineWidth = 2;
 caxis([Z_min Z_max]);
 for ii = 1:length(all_mat_order)
    text(-5.8, ii, sessions(all_mat_order(ii)), 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left');
+   if north_mat_sig_pre(ii)
+      text(5.25, ii, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   elseif north_mat_sig_post(ii)
+      text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
 end
 
 
-% type_start_idx = [0 find(diff(all_nCells_c_ord))];
-% for ii = 1:length(type_start_idx)
-%     if ii == length(type_start_idx)
-%         rectangle('position', [-5, type_start_idx(ii)+.7, 9.8, (length(all_nCells_c_ord) - type_start_idx(ii))-.2], 'edgecolor', c_ord(ii,:), 'linewidth',4);
-%     else
-%         rectangle('position', [-5, type_start_idx(ii)+.7, 9.8, (type_start_idx(ii+1) - type_start_idx(ii))-.2], 'edgecolor', c_ord(ii,:), 'linewidth', 4);
-%     end
-% end
 hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
 for ii = 1:length(hl)
     hl(ii).LineWidth = 3;
     hl(ii).Color = c_ord(ii+1,:);
 end
+
+
+
 %     
 subplot(1,5,2)
-imagesc(tvec.C1, 1:length(all_mat_order), west_mat')
+imagesc(tvec.C1, 1:length(all_mat_order), west_mat(:,sort_idx)')
 % set(gca, 'ytick', 1:length(all_mat_order), 'yTickLabel', sessions(all_mat_order))
 set(gca, 'ytick', [])
 title({'West'; 'grain x 3'})
@@ -403,9 +524,17 @@ for ii = 1:length(hl)
     hl(ii).LineWidth = 3;
     hl(ii).Color = c_ord(ii+1,:);
 end
+for ii = 1:length(all_mat_order)
+   if west_mat_sig_pre(ii)
+      text(5.25, ii, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   elseif west_mat_sig_post(ii)
+      text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
+end
+
 
 subplot(1,5,3)
-imagesc(tvec.C1, 1:length(all_mat_order), south_mat')
+imagesc(tvec.C1, 1:length(all_mat_order), south_mat(:,sort_idx)')
 % set(gca, 'ytick', 1:length(all_mat_order), 'yTickLabel', sessions(all_mat_order))
 set(gca, 'ytick', [])
 title({'South'; 'banana x 1'})
@@ -421,9 +550,17 @@ for ii = 1:length(hl)
     hl(ii).Color = c_ord(ii+1,:);
 end
 
+for ii = 1:length(all_mat_order)
+   if south_mat_sig_pre(ii)
+      text(5.25, ii, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   elseif south_mat_sig_post(ii)
+      text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
+end
+
 
 subplot(1,5,4)
-imagesc(tvec.C1, 1:length(all_mat_order), east_mat')
+imagesc(tvec.C1, 1:length(all_mat_order), east_mat(:,sort_idx)')
 % set(gca, 'ytick', 1:length(all_mat_order), 'yTickLabel', sessions(all_mat_order))
 set(gca, 'ytick', [])
 title({'East'; 'grain x 1'})
@@ -437,6 +574,13 @@ hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
 for ii = 1:length(hl)
     hl(ii).LineWidth = 3;
     hl(ii).Color = c_ord(ii+1,:);
+end
+for ii = 1:length(all_mat_order)
+   if east_mat_sig_pre(ii)
+      text(5.25, ii, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   elseif east_mat_sig_post(ii)
+      text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
 end
 
 subplot(1,5,5)
@@ -457,6 +601,13 @@ hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
 for ii = 1:length(hl)
     hl(ii).LineWidth = 3;
     hl(ii).Color = c_ord(ii+1,:);
+end
+for ii = 1:length(all_mat_order)
+   if all_mat_sig_pre(ii)
+      text(5.25, ii, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   elseif all_mat_sig_post(ii)
+      text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
 end
 
 % add a main title
