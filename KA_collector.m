@@ -77,6 +77,8 @@ east_sig_post = all_sig;
 south_sig_post = all_sig;
 west_sig_post = all_sig;
 
+all_out_perc  = all_out; 
+
 all_subj = all_out; 
 
 % cycle and collect
@@ -140,6 +142,10 @@ for iF = 1:length(file_names)
     south_sig_pre.(this_sess) = south_sig_pre.(this_sess) == 1; 
     east_sig_pre.(this_sess) =  [east_sig_pre.(this_sess) This_cell.H_pre{4}]; 
     east_sig_pre.(this_sess) = east_sig_pre.(this_sess) == 1;
+    
+    % % change from pre to post reward
+    all_out_perc.(this_sess) = [all_out_perc.(this_sess), This_cell.post_stim_means{5} / This_cell.pre_stim_means{5}]; 
+    
     
     tvec.(this_sess) = This_cell.outputIT{1}; 
     clear This_cell
@@ -653,5 +659,33 @@ maximize
 saveas(gcf, [inter_dir filesep 'All_cells.png'])
 saveas(gcf, [inter_dir filesep 'All_cells.fig'])
 print(gcf,[inter_dir filesep  'All_cells'],'-depsc')
+
+
+%% bar plots for % change
+
+Cs = [all_out_perc.C1, all_out_perc.C3, all_out_perc.C3]; 
+O_e = ([all_out_perc.O1, all_out_perc.O2]); 
+O_l = ([all_out_perc.O6, all_out_perc.O7]); 
+Rs = ([all_out_perc.R1, all_out_perc.R2, all_out_perc.R3]); 
+
+
+% figure(302)
+% % bar([Cs; O_e; O_l; Rs]);
+% 
+% set(gca, 'xticklabel', {'Crit', 'Over Early', 'Over Late', 'Rein'});
+% hline(1)
+
+% export as csv
+mat_out = NaN(4, 38); 
+
+
+mat_out(1,1:length(Cs)) = Cs;
+mat_out(2,1:length(O_e)) = O_e;
+mat_out(3,1:length(O_l)) = O_l;
+mat_out(4,1:length(Rs)) = Rs;
+
+mat_out= mat_out';
+
+csvwrite('block_perc.csv', mat_out)
 
 
