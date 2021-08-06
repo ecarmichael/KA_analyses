@@ -32,11 +32,17 @@ evt.label{4} = evt_og.label{6};  %swap east and west
 evt.label{6} = evt_og.label{4};  %swap east and west
 
 
-
-out.pos = LoadPos([]);
+cfg_pos.convFact = [560/142 480/142]; 
+out.pos = LoadPos(cfg_pos);
 
 out.S = restrict(out.S, evt.t{1}(1), evt.t{2}(end)); % restrict the spikes recording periods.avoids odd thing where spike trains contains zeros.  MClust issue?
 
+out.velo = getLinSpd([], out.pos); 
+out.velo.data = interp1(out.velo.tvec,out.velo.data(1,:),out.pos.tvec,'linear');
+
+% smooth speed over 0.5 seconds
+out.velo_smooth = out.velo; 
+% out.velo_smooth.data = smooth(out.velo.data, round(1/mode(diff(out.pos.tvec)))*.5)'; % smooth with gaussian 
 
 spk_x = interp1(out.pos.tvec,out.pos.data(1,:),out.S.t{1},'linear');
 spk_y = interp1(out.pos.tvec,out.pos.data(2,:),out.S.t{1},'linear');
@@ -110,15 +116,10 @@ gk = gausskernel(gauss_window,gauss_SD); gk = gk./cfg_z.binsize; % normalize by 
 tbin_edges = evt.t{1}(1):cfg_z.binsize:evt.t{2}(end);
 
 
-
-
 spk_count = histc(out.S.t{1},tbin_edges);
 S_gau_sdf = conv2(spk_count(1:end-1),gk,'same'); % convolve with gaussian window
 gau_mean = mean(S_gau_sdf);
 gau_std = std(S_gau_sdf);
-
-
-
 
 %% spike Peth
 % prepare the PETHS
@@ -198,6 +199,7 @@ else
     chil(4).LineStyle = '--'; 
 end
 
+
 %% add the individual feeders to the overall PETH
 figure(1001)
 subplot(212)
@@ -217,8 +219,40 @@ chil = get(gca, 'Children');
 chil(5).Position = [chil(5).Position(1) max([All_trial.mean_S_gau{1}; All_trial.mean_S_gau{2}; All_trial.mean_S_gau{3}; All_trial.mean_S_gau{4}; All_trial.mean_S_gau{5}])*.6 chil(5).Position(3)]; 
 chil(6).Position = [chil(6).Position(1) max([All_trial.mean_S_gau{1}; All_trial.mean_S_gau{2}; All_trial.mean_S_gau{3}; All_trial.mean_S_gau{4}; All_trial.mean_S_gau{5}])*.7 chil(6).Position(3)]; 
 
+%% get the speed for each trial and superimpose it. 
+velo_window = [cfg_peth.window(1)*floor(1/mode(diff(out.velo_smooth.tvec))), cfg_peth.window(2)*floor(1/mode(diff(out.velo_smooth.tvec)))]; 
+all_velo = NaN(length(FeederTimes), (abs(velo_window(1)) + abs(velo_window(2)) +1));
+for ii = length(FeedersFired):-1:1
+    this_idx = nearest_idx(FeederTimes(ii)/1000000, out.velo_smooth.tvec);
+    
+        if this_idx < abs(velo_window(1))
+            continue
+        end
 
-leg = legend(['All', Feeder_names(1:4)], 'Orientation', 'horizontal', 'Location', 'northwest','FontSize',14);
+    all_velo(ii,:) = out.velo_smooth.data((velo_window(1)+this_idx):(velo_window(2)+this_idx));
+end
+
+velo_mean = nanmedian(all_velo, 1);
+velo_tvec = cfg_peth.window(1) : 1/floor(1/mode(diff(out.velo_smooth.tvec))):cfg_peth.window(2);
+
+yyaxis right
+% plot(velo_tvec, velo_mean, '--', );
+hv = shadedErrorBar(velo_tvec,velo_mean,nanstd(all_velo) / sqrt(size(all_velo,1)));
+hv.mainLine.Color =  [.5 .5 .5 .3];
+hv.edge(1).Color =  [.5 .5 .5 .3];
+hv.edge(2).Color =  [.5 .5 .5 .3];
+
+hv.patch.FaceAlpha =  .2;
+
+ylabel('speed (cm/s)')
+
+%%
+
+ax = gca;
+ax.YAxis(1).Color = 'k';
+ax.YAxis(2).Color = [.5 .5 .5]; 
+
+leg = legend(['All', Feeder_names(1:4) , 'speed'], 'Orientation', 'horizontal', 'Location', 'northwest','FontSize',14);
 set(leg, 'box', 'off')
 
 SetFigure([], gcf);

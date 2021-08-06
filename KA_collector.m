@@ -663,10 +663,19 @@ print(gcf,[inter_dir filesep  'All_cells'],'-depsc')
 
 %% bar plots for % change
 
-Cs = [all_out_perc.C1, all_out_perc.C3, all_out_perc.C3]; 
-O_e = ([all_out_perc.O1, all_out_perc.O2]); 
-O_l = ([all_out_perc.O6, all_out_perc.O7]); 
-Rs = ([all_out_perc.R1, all_out_perc.R2, all_out_perc.R3]); 
+Cs = [all_out_perc.C1(all_sig_pre.C1 | all_sig_post.C1),...
+    all_out_perc.C2(all_sig_pre.C2 | all_sig_post.C2),...
+    all_out_perc.C3(all_sig_pre.C3 | all_sig_post.C3)]; 
+O_e = [all_out_perc.O1(all_sig_pre.O1 | all_sig_post.O1),...
+    all_out_perc.O2(all_sig_pre.O2 | all_sig_post.O2),...
+    all_out_perc.O3(all_sig_pre.O3 | all_sig_post.O3),...
+    all_out_perc.O4(all_sig_pre.O4 | all_sig_post.O4)]; 
+O_l = [all_out_perc.O5(all_sig_pre.O5 | all_sig_post.O5),...
+    all_out_perc.O6(all_sig_pre.O6 | all_sig_post.O6),...
+    all_out_perc.O7(all_sig_pre.O7 | all_sig_post.O7)]; 
+Rs = [all_out_perc.R1(all_sig_pre.R1 | all_sig_post.R1),...
+    all_out_perc.R2(all_sig_pre.R2 | all_sig_post.R2),...
+    all_out_perc.R3(all_sig_pre.R3 | all_sig_post.R3)]; 
 
 
 % figure(302)
@@ -676,7 +685,7 @@ Rs = ([all_out_perc.R1, all_out_perc.R2, all_out_perc.R3]);
 % hline(1)
 
 % export as csv
-mat_out = NaN(4, 38); 
+mat_out = NaN(4, max([length(Cs),length(O_e),length(O_l),length(Rs)])); 
 
 
 mat_out(1,1:length(Cs)) = Cs;
