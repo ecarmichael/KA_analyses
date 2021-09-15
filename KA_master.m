@@ -1,9 +1,9 @@
 %% KA screener master script. 
 
 % load data
+addpath(genpath('/Users/jericcarmichael/Documents/Github/vandermeerlab/code-matlab/shared'))
 addpath(genpath('/Users/jericcarmichael/Documents/Github/EC_State'));
 addpath(genpath('/Users/jericcarmichael/Documents/Github/KA_analyses'));
-addpath(genpath('/Users/jericcarmichael/Documents/Github/vandermeerlab/code-matlab/shared'))
 data_dir = '/Users/jericcarmichael/Dropbox/KA_Data/Raw_data'; % where all the NLX data is. 
 inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_new';  % where to save the outputs. 
 inter_dir_app = '/Users/jericcarmichael/Dropbox/KA_Data/inter_approach';

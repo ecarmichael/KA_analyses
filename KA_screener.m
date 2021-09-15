@@ -35,10 +35,23 @@ evt.label{6} = evt_og.label{4};  %swap east and west
 cfg_pos.convFact = [560/142 480/142]; 
 out.pos = LoadPos(cfg_pos);
 
+% % circ smooth
+% figure(919)
+% plot(out.pos.tvec, unwrap(out.pos.data(3,:)*pi/180-pi), out.pos.tvec,smooth(unwrap(out.pos.data(3,:)*pi/180-pi), floor((1/mode(diff(out.pos.tvec))/4))));
+% 
+% figure(929)
+% plot(out.pos.tvec,out.pos.data(3,:), out.pos.tvec,mod((180/pi)*smooth(unwrap(out.pos.data(3,:)*pi/180-pi), floor((1/mode(diff(out.pos.tvec))/4)))+180, 360))
+% 
+% 
+% out.hd_smooth = rad2deg((unwrap(deg2rad(out.pos.data(3,:)))));%, floor((1/mode(diff(out.pos.tvec))/4))); % smooth hd over .25s
+
+
 out.S = restrict(out.S, evt.t{1}(1), evt.t{2}(end)); % restrict the spikes recording periods.avoids odd thing where spike trains contains zeros.  MClust issue?
 
 out.velo = getLinSpd([], out.pos); 
 out.velo.data = interp1(out.velo.tvec,out.velo.data(1,:),out.pos.tvec,'linear');
+
+
 
 % smooth speed over 0.5 seconds
 out.velo_smooth = out.velo; 
@@ -59,6 +72,135 @@ Feeder_type = {'Banana', 'Grain', 'Banana', 'Grain'};
 for ii = length(FeederTimes):-1:1
     Feeder_cord(ii,:) = c_ord(FeedersFired(ii),:);
 end
+
+
+
+%% infer nosepoke from FeedersFired and tracking data. 
+S_pix_x = [85 98]; S_pix_y = 130;      
+W_pix_x = 25;     W_pix_y = [68, 82];
+N_pix_x = [70 85]; N_pix_y = 10;
+E_pix_x = 145;      E_pix_y = [50, 68]; 
+
+
+trial_vec= NaN(1,length(out.pos.tvec)); 
+
+    
+figure(109)
+cla
+hold on
+plot(out.pos.data(1,:), out.pos.data(2,:), 'color', [.8 .8 .8])
+xlim([min(out.pos.data(1,:)) max(out.pos.data(1,:))]);
+ylim([min(out.pos.data(2,:)) max(out.pos.data(2,:))]);
+set(gca, 'YDir','reverse', 'XDir','reverse')
+
+for iF = 1:length(FeedersFired)
+
+    if iF == length(FeedersFired)
+        this_trial.pos = restrict(out.pos, FeederTimes(iF)/1000000, out.pos.tvec(end));
+        this_trial.velo_smooth = restrict(out.velo_smooth, FeederTimes(iF)/1000000,out.pos.tvec(end));
+        trial_vec(nearest_idx(FeederTimes(iF)/1000000, out.pos.tvec): end)= FeedersFired(iF);% make an array of the trial type.
+    else
+        this_trial.pos = restrict(out.pos, FeederTimes(iF)/1000000, FeederTimes(iF+1)/1000000);
+        this_trial.velo_smooth = restrict(out.velo_smooth, FeederTimes(iF)/1000000, FeederTimes(iF+1)/1000000);
+        trial_vec(nearest_idx(FeederTimes(iF)/1000000, out.pos.tvec): nearest_idx(FeederTimes(iF+1)/1000000, out.pos.tvec)) = FeedersFired(iF); % make an array of the trial type.
+        
+    end
+    
+    %get the points within the corresponding pixels
+    if FeedersFired(iF) == 1 % zone 1 'North'
+        trial_idx = this_trial.pos.data(2,:) < N_pix_y; 
+        trial_idx = trial_idx & (this_trial.pos.data(1,:) > N_pix_x(1))  & (this_trial.pos.data(1,:) < N_pix_x(2));
+%         trial_idx = trial_idx & this_trial.pos.data(3,:) ;
+        
+    elseif FeedersFired(iF) == 2 % zone 2 'West'
+        trial_idx = this_trial.pos.data(1,:) < W_pix_x;
+        trial_idx = trial_idx & this_trial.pos.data(2,:) > W_pix_y(1)  & this_trial.pos.data(2,:) < W_pix_y(2);
+
+    elseif FeedersFired(iF) == 3 % zone 3 'South'
+        trial_idx = this_trial.pos.data(2,:) > S_pix_y; 
+        trial_idx = trial_idx & this_trial.pos.data(1,:) > S_pix_x(1)  & this_trial.pos.data(1,:) < S_pix_x(2);
+
+    else % zone 4 'East'
+        trial_idx = this_trial.pos.data(1,:) > E_pix_x;
+        trial_idx = trial_idx & this_trial.pos.data(2,:) > E_pix_y(1)  & this_trial.pos.data(2,:) < E_pix_y(2);
+    end
+    
+    % get periods of no movement. 
+    trial_idx = trial_idx & (this_trial.velo_smooth.data <= 0.1);
+    % get the longest 
+
+    [~, p_idx, p_w] = findpeaks(double(trial_idx), 'MinPeakWidth',floor(.5/mode(diff(this_trial.pos.tvec))));
+    if isempty(p_idx)
+       error_trial(iF)  = 1; 
+       continue
+    else
+        error_trial(iF) = 0; 
+    end
+%     [~, longest_pause] = max(p_idx); 
+
+        enter_idx = p_idx(1);
+        exit_idx = enter_idx +p_w(1); 
+
+        plot(this_trial.pos.data(1,1:exit_idx), this_trial.pos.data(2,1:exit_idx), 'color', [c_ord(FeedersFired(iF),:) .5])
+% for ii = enter_idx:exit_idx
+    hp = plot(this_trial.pos.data(1,enter_idx), this_trial.pos.data(2,enter_idx),'o', 'color', c_ord(FeedersFired(iF),:), 'markersize', 10);
+    hpex = plot(this_trial.pos.data(1,exit_idx), this_trial.pos.data(2,exit_idx),'x', 'color', c_ord(FeedersFired(iF),:), 'markersize', 10);
+
+    %     plot(this_trial.pos.data(1,trial_idx(ii)), this_trial.pos.data(2,trial_idx(ii)),'o', 'color', c_ord(FeedersFired(iF),:), 'markersize', 10)
+%   h = text(20, 120, num2str(iF), 'fontsize', 24);
+%     pause(1)
+%     delete(h); delete(hp)
+% end
+        drawnow
+    
+end
+
+    fprintf('Trial hit rate: %0.2f%%\n', (1 -  sum(error_trial)/length(error_trial))*100)
+
+%% test position and heading in time
+
+figure(1010)
+cla
+hold on
+subplot(5,1,1)
+plot(this_trial.pos.tvec, this_trial.pos.data(1,:), 'b'); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]);
+subplot(5,1,2)
+plot(this_trial.pos.tvec, this_trial.pos.data(2,:), 'g'); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]);
+subplot(5,1,3)
+plot(this_trial.pos.tvec, this_trial.pos.data(3,:), 'm'); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]);
+subplot(5,1,4)
+plot(this_trial.pos.tvec, this_trial.velo_smooth.data, 'r'); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]);
+subplot(5,1,5)
+plot(this_trial.pos.tvec, trial_idx, 'k'); ylim([-.5 1.5]); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]);
+
+
+% legend({'X', 'Y', 'HD', 'Speed', 'Trial idx'})
+% figure(109)
+% legend({'path', 'N trial', 'N poke', 'E trial', 'E poke', 'S trial', 'S poke', 'W trial', 'W poke'})
+% 
+
+%% make a replay of the tracking
+
+figure(99)
+plot(out.pos.data(1,:), out.pos.data(2,:), 'color', [.8 .8 .8])
+    hold on
+
+
+for ii = 301:1:floor(length(out.pos.tvec)/10)
+    
+    xlim([min(out.pos.data(1,:)) max(out.pos.data(1,:))]);
+    ylim([min(out.pos.data(2,:)) max(out.pos.data(2,:))]);
+    h1 = plot(out.pos.data(1,floor(ii - 300) : ii), out.pos.data(2,floor(ii - 300) : ii), 'color', [c_ord(trial_vec(ii),:) .2]);
+    h2 = plot(out.pos.data(1,ii), out.pos.data(2,ii), 'o', 'color', c_ord(trial_vec(ii),:), 'markersize', 10);
+
+    drawnow 
+%     pause(.5)
+        delete(h1);
+    delete(h2); 
+end
+
+
+% drawnow
 
 
 
