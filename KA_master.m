@@ -5,7 +5,7 @@ addpath(genpath('/Users/jericcarmichael/Documents/Github/vandermeerlab/code-matl
 addpath(genpath('/Users/jericcarmichael/Documents/Github/EC_State'));
 addpath(genpath('/Users/jericcarmichael/Documents/Github/KA_analyses'));
 data_dir = '/Users/jericcarmichael/Dropbox/KA_Data/Raw_data'; % where all the NLX data is. 
-inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_new';  % where to save the outputs. 
+inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_feeder';  % where to save the outputs. 
 inter_dir_app = '/Users/jericcarmichael/Dropbox/KA_Data/inter_approach';
 cd(data_dir); % move to the data dir. 
 
@@ -21,6 +21,7 @@ end
 
 % get all the sessions
 this_dir = dir(data_dir);
+sess_list = [];
 for ii = 1:length(this_dir)
     if strcmp(this_dir(ii).name(1), '.') % check for hidden dirs 
         continue
@@ -50,7 +51,9 @@ for iS = length(sess_list):-1:1
         parts = strsplit(cells_to_process{iT}, filesep);
         this_file = parts{end};
 %         This_cell_app = KA_screener_approach(this_file); 
-        This_cell = KA_screener(this_file);
+%         This_cell = KA_screener(this_file);
+        This_cell = KA_screener_feeder(this_file);
+
 %         This_cell = KA_screener_pseudo_baseline(this_file); 
         
         % if there were too few spikes in the .t then skip this file. 
@@ -64,7 +67,7 @@ for iS = length(sess_list):-1:1
         This_cell.session = parts{3}; % get the session type and number Acquisition, Criteria, Overtrain, Extinction, Reacquisition. nSessions: A ? C 3, O 7, E 1, R 3-5
         This_cell.date = parts{end}; 
         
-        save([inter_dir filesep sess_list{iS} '_' this_file(1:end-2) '.mat'], 'This_cell')
+        save([inter_dir filesep sess_list{iS} '_' this_file(1:end-2) '_Feeder.mat'], 'This_cell')
         
         close all
     end
