@@ -56,7 +56,7 @@ out.velo.data = interp1(out.velo.tvec,out.velo.data(1,:),out.pos.tvec,'linear');
 
 % smooth speed over 0.5 seconds
 out.velo_smooth = out.velo; 
-% out.velo_smooth.data = smooth(out.velo.data, round(1/mode(diff(out.pos.tvec)))*.5)'; % smooth with gaussian 
+out.velo_smooth.data = smooth(out.velo.data, round(1/mode(diff(out.pos.tvec)))*.5)'; % smooth with gaussian 
 
 spk_x = interp1(out.pos.tvec,out.pos.data(1,:),out.S.t{1},'linear');
 spk_y = interp1(out.pos.tvec,out.pos.data(2,:),out.S.t{1},'linear');
@@ -77,11 +77,15 @@ end
 
 
 %% infer nosepoke from FeedersFired and tracking data. 
-S_pix_x = [85 98]; S_pix_y = 130;      
-W_pix_x = 25;     W_pix_y = [68, 82];
-N_pix_x = [70 85]; N_pix_y = 10;
-E_pix_x = 145;      E_pix_y = [50, 68]; 
+% S_pix_x = [85 98]; S_pix_y = 130;      
+% W_pix_x = 25;     W_pix_y = [68, 82];
+% N_pix_x = [70 85]; N_pix_y = 10;
+% E_pix_x = 145;      E_pix_y = [50, 68]; 
 
+S_pix_x = [70 100]; S_pix_y = 130;      
+W_pix_x = 25;     W_pix_y = [55, 85];
+N_pix_x = [70 100]; N_pix_y = 10;
+E_pix_x = 145;      E_pix_y = [55, 85]; 
 
 trial_vec= NaN(1,length(out.pos.tvec)); 
 
@@ -93,6 +97,15 @@ plot(out.pos.data(1,:), out.pos.data(2,:), 'color', [.8 .8 .8])
 xlim([min(out.pos.data(1,:)) max(out.pos.data(1,:))]);
 ylim([min(out.pos.data(2,:)) max(out.pos.data(2,:))]);
 set(gca, 'YDir','reverse', 'XDir','reverse')
+
+h = hline(N_pix_y); h.Color = c_ord(1,:); h.LineStyle = '--'; 
+h = vline(N_pix_x); h(1).Color = c_ord(1,:); h(1).LineStyle = '--'; h(2).Color = c_ord(1,:); h(2).LineStyle = '--'; 
+h = vline(E_pix_x); h.Color = c_ord(2,:); h.LineStyle = '--'; 
+h = hline(E_pix_y); h(1).Color = c_ord(2,:); h(1).LineStyle = '--'; h(2).Color = c_ord(2,:); h(2).LineStyle = '--'; 
+h = hline(S_pix_y); h.Color = c_ord(3,:); h.LineStyle = '--'; 
+h = vline(S_pix_x); h(1).Color = c_ord(3,:); h(1).LineStyle = '--'; h(2).Color = c_ord(3,:); h(2).LineStyle = '--'; 
+h = vline(W_pix_x); h.Color = c_ord(4,:); h.LineStyle = '--'; 
+h = hline(W_pix_y); h(1).Color = c_ord(4,:); h(1).LineStyle = '--'; h(2).Color = c_ord(4,:); h(2).LineStyle = '--'; 
 
 for iF = 1:length(FeedersFired)
     if iF == length(FeedersFired)
@@ -126,7 +139,7 @@ for iF = 1:length(FeedersFired)
     end
     
     % get periods of no movement. 
-    trial_idx = trial_idx & (this_trial.velo_smooth.data <= 0.1);
+    trial_idx = trial_idx & (this_trial.velo_smooth.data <= 2);
     % get the longest 
 
     [~, p_idx, p_w] = findpeaks(double(trial_idx), 'MinPeakWidth',floor(.5/mode(diff(this_trial.pos.tvec))));
@@ -141,10 +154,10 @@ for iF = 1:length(FeedersFired)
         enter_idx = p_idx(1);
         exit_idx = enter_idx +p_w(1); 
 
-        plot(this_trial.pos.data(1,1:exit_idx), this_trial.pos.data(2,1:exit_idx), 'color', [c_ord(FeedersFired(iF),:) .5])
+        plot(this_trial.pos.data(1,:), this_trial.pos.data(2,:), 'color', [c_ord(FeedersFired(iF),:) .5])
 % for ii = enter_idx:exit_idx
-    plot(this_trial.pos.data(1,enter_idx), this_trial.pos.data(2,enter_idx),'o', 'color', c_ord(FeedersFired(iF),:), 'markersize', 10);
-    plot(this_trial.pos.data(1,exit_idx), this_trial.pos.data(2,exit_idx),'x', 'color', c_ord(FeedersFired(iF),:), 'markersize', 10);
+    plot(this_trial.pos.data(1,enter_idx), this_trial.pos.data(2,enter_idx),'o', 'color', c_ord(FeedersFired(iF),:)*.8, 'markersize', 14);
+    plot(this_trial.pos.data(1,exit_idx), this_trial.pos.data(2,exit_idx),'x', 'color', c_ord(FeedersFired(iF),:)*.8, 'markersize', 14);
 
     %     plot(this_trial.pos.data(1,trial_idx(ii)), this_trial.pos.data(2,trial_idx(ii)),'o', 'color', c_ord(FeedersFired(iF),:), 'markersize', 10)
 %   h = text(20, 120, num2str(iF), 'fontsize', 24);
@@ -379,7 +392,7 @@ all_velo = NaN(length(FeederTimes), (abs(velo_window(1)) + abs(velo_window(2)) +
 
 enter_t_correct = enter_t(~error_trial); 
 for ii = length(enter_t_correct):-1:1
-    this_idx = nearest_idx(enter_t_correct, out.velo_smooth.tvec);
+    this_idx = nearest_idx(enter_t_correct(ii), out.velo_smooth.tvec);
     
         if this_idx < abs(velo_window(1))
             continue
@@ -402,10 +415,15 @@ hv.patch.FaceAlpha =  .2;
 
 ylabel('speed (cm/s)')
 
+
 %%
 % y_lim = ylim
 % rectangle('position', [0 min(mean_S_gau) 0.001  abs(max(mean_S_gau))*10], 'facecolor', [[4,172,218]./2550.5], 'edgecolor', [[4,172,218]./255 0.5])
 
+
+subplot(212)
+y_lim = ylim; 
+rectangle('position', [0 y_lim 0.001  y_lim(2) - y_lim(1)], 'facecolor', [[4,172,218]./255 0.5], 'edgecolor', [[4,172,218]./255 0.5])
 
 ax = gca;
 ax.YAxis(1).Color = 'k';
