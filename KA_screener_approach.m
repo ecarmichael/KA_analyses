@@ -136,7 +136,7 @@ gau_std = std(S_gau_sdf);
 %% spike Peth
 % prepare the PETHS
 cfg_peth = [];
-cfg_peth.window = [-2 2];
+cfg_peth.window = [-5 5];
 %     cfg_peth.dt = 0.0025; % fine resulition for regular PETH.
 cfg_peth.dt = cfg_z.binsize; % wider bins for 'Lap' plot later.
 % cfg_peth.plot_type = 'zscore';

@@ -5,8 +5,8 @@ addpath(genpath('/Users/jericcarmichael/Documents/Github/vandermeerlab/code-matl
 addpath(genpath('/Users/jericcarmichael/Documents/Github/EC_State'));
 addpath(genpath('/Users/jericcarmichael/Documents/Github/KA_analyses'));
 data_dir = '/Users/jericcarmichael/Dropbox/KA_Data/Raw_data'; % where all the NLX data is. 
-inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_feeder';  % where to save the outputs. 
-inter_dir_app = '/Users/jericcarmichael/Dropbox/KA_Data/inter_approach';
+% inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs. 
+inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_approach_new';
 cd(data_dir); % move to the data dir. 
 
 % make an intermediate directory if it doesn't exist. 
@@ -50,9 +50,9 @@ for iS = length(sess_list):-1:1
         
         parts = strsplit(cells_to_process{iT}, filesep);
         this_file = parts{end};
-%         This_cell_app = KA_screener_approach(this_file); 
+        This_cell_app = KA_screener_approach(this_file); 
 %         This_cell = KA_screener(this_file);
-        This_cell = KA_screener_feeder(this_file);
+%         This_cell = KA_screener_feeder(this_file);
 
 %         This_cell = KA_screener_pseudo_baseline(this_file); 
         

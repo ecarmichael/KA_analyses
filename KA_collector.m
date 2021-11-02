@@ -284,8 +284,8 @@ sig_E_nCells(iS) = size(east_out.(sessions{iS})(:,logical(east_sig.(sessions{iS}
 
 end
 
-Z_min = min(min([mean_all_mat; mean_N_mat; mean_W_mat; mean_S_mat; mean_W_mat])); 
-Z_max = max(max([mean_all_mat; mean_N_mat; mean_W_mat; mean_S_mat; mean_W_mat])); 
+Z_min = min(min([mean_all_mat]))%; mean_N_mat; mean_W_mat; mean_S_mat; mean_W_mat])); 
+Z_max = max(max([mean_all_mat]))%; mean_N_mat; mean_W_mat; mean_S_mat; mean_W_mat])); 
 
 Z_sig_min = min(min([mean_all_mat; sig_mean_N_mat; sig_mean_W_mat; sig_mean_S_mat; sig_mean_W_mat])); 
 Z_sig_max = max(max([mean_all_mat; sig_mean_N_mat; sig_mean_W_mat; sig_mean_S_mat; sig_mean_W_mat])); 
@@ -637,6 +637,247 @@ end
 cfg_fig.resize = 2;
 SetFigure(cfg_fig, gcf)
 
+
+
+%% get the feeder activity vs end of matrix 
+turn_idx(1) = nearest_idx(-1, tvec.C1);
+turn_idx(2) = nearest_idx(1, tvec.C1);
+
+feeder_idx(1) = nearest_idx(3, tvec.C1);
+feeder_idx(2) = length(tvec.C1);
+
+% get the mean zscore at the feeder point (3 : 5 s) and subtract the mean
+% zscore at the decision point (-1 : 1s)
+all_feed_turn_val = (mean(all_mat(feeder_idx(1):feeder_idx(2),:),1) - mean(all_mat(turn_idx(1):turn_idx(2),:),1))/2;
+N_feed_turn_val = (mean(north_mat(feeder_idx(1):feeder_idx(2),:),1) - mean(north_mat(turn_idx(1):turn_idx(2),:),1))/2;
+E_feed_turn_val = (mean(east_mat(feeder_idx(1):feeder_idx(2),:),1) - mean(east_mat(turn_idx(1):turn_idx(2),:),1))/2;
+S_feed_turn_val = (mean(south_mat(feeder_idx(1):feeder_idx(2),:),1) - mean(south_mat(turn_idx(1):turn_idx(2),:),1))/2;
+W_feed_turn_val = (mean(west_mat(feeder_idx(1):feeder_idx(2),:),1) - mean(west_mat(turn_idx(1):turn_idx(2),:),1))/2;
+
+
+figure(1010)
+subplot(1,30,1:4)
+imagesc(tvec.C1, 1:length(all_mat_order), north_mat(:,sort_idx)')
+title({'North' ;'banana x 3'})
+% set(gca, 'ytick', 1:length(all_mat_order), 'yTickLabel', sessions(all_mat_order))
+set(gca, 'ytick', [])
+
+set(gca, 'xtick', -5:2.5:5)
+xlabel('feeder time (s)')
+ylabel('session')
+vl = vline(0, '--k');
+vl.LineWidth = 2;
+caxis([Z_min Z_max]);
+for ii = 1:length(all_mat_order)
+   text(-5.8, ii, sessions(all_mat_order(ii)), 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left');
+   if north_mat_sig_pre(ii)
+      text(5.25, ii, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   elseif north_mat_sig_post(ii)
+      text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
+   if N_deval_mat(ii)
+       text(6.25, ii, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
+end
+hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+
+
+subplot(1,30, 6)
+% imagesc(1, 1:length(all_mat_order), N_feed_turn_val(:,sort_idx)')
+scatter(N_feed_turn_val(:,sort_idx), (1:length(all_mat_order))-.5,125, N_feed_turn_val(:,sort_idx), 'filled')
+set(gca, 'YDir', 'reverse')
+title('North Rew - turn')
+hl = hline(find(diff(all_nCells_c_ord)), {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+set(gca, 'xtick', [- 2 0 2], 'xticklabel', {'T','0', 'R'}, 'ytick', []); 
+
+
+subplot(1,30, 7:10)
+imagesc(tvec.C1, 1:length(all_mat_order), west_mat(:,sort_idx)')
+set(gca, 'ytick', [])
+title({'West'; 'grain x 3'})
+set(gca, 'ytick', [])
+set(gca, 'xtick', -5:2.5:5)
+vl = vline(0, '--k');
+vl.LineWidth = 2;
+caxis([Z_sig_min Z_sig_max]);
+hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+for ii = 1:length(all_mat_order)
+   if west_mat_sig_pre(ii)
+      text(5.25, ii, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   elseif west_mat_sig_post(ii)
+      text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
+   
+   if W_deval_mat(ii)
+       text(6.25, ii, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
+end
+
+
+
+
+subplot(1,30, 12)
+% imagesc(1, 1:length(all_mat_order), W_feed_turn_val(:,sort_idx)');
+scatter(W_feed_turn_val(:,sort_idx), (1:length(all_mat_order))-.5,125, W_feed_turn_val(:,sort_idx), 'filled')
+set(gca, 'YDir', 'reverse')
+title('West Rew - turn')
+hl = hline(find(diff(all_nCells_c_ord)), {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+set(gca, 'xtick', [- 2 0 2], 'xticklabel', {'T','0', 'R'}, 'ytick', []); 
+
+
+subplot(1,30, 13:16)
+imagesc(tvec.C1, 1:length(all_mat_order), south_mat(:,sort_idx)')
+set(gca, 'ytick', [])
+title({'South'; 'banana x 1'})
+% set(gca, 'ytick', 1:size(mean_S_mat,1), 'yTickLabel', sess_label)
+set(gca, 'ytick', [])
+set(gca, 'xtick', -5:2.5:5)
+vl = vline(0, '--k');
+vl.LineWidth = 2;
+caxis([Z_sig_min Z_sig_max]);
+hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+
+for ii = 1:length(all_mat_order)
+   if south_mat_sig_pre(ii)
+      text(5.25, ii, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   elseif south_mat_sig_post(ii)
+      text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
+   if S_deval_mat(ii)
+       text(6.25, ii, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
+end
+
+
+
+
+subplot(1,30, 18)
+% imagesc(1, 1:length(all_mat_order), S_feed_turn_val(:,sort_idx)')
+scatter(S_feed_turn_val(:,sort_idx), (1:length(all_mat_order))-.5,125, S_feed_turn_val(:,sort_idx), 'filled')
+set(gca, 'YDir', 'reverse')
+title('South Rew - turn')
+hl = hline(find(diff(all_nCells_c_ord)), {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+set(gca, 'xtick', [- 2 0 2], 'xticklabel', {'T','0', 'R'}, 'ytick', []); 
+
+
+subplot(1,30, 19:22)
+imagesc(tvec.C1, 1:length(all_mat_order), east_mat(:,sort_idx)')
+set(gca, 'ytick', [])
+title({'East'; 'grain x 1'})
+% set(gca, 'ytick', 1:size(mean_E_mat,1), 'yTickLabel', sess_label)
+set(gca, 'ytick', [])
+set(gca, 'xtick', -5:2.5:5)
+vl = vline(0, '--k');
+vl.LineWidth = 2;
+caxis([Z_sig_min Z_sig_max]);
+hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+for ii = 1:length(all_mat_order)
+   if east_mat_sig_pre(ii)
+      text(5.25, ii, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   elseif east_mat_sig_post(ii)
+      text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
+   if E_deval_mat(ii)
+       text(6.25, ii, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
+end
+
+subplot(1,30,24)
+% imagesc(tvec.C1, 1:length(all_mat_order), E_feed_turn_val(:,sort_idx)')
+scatter(E_feed_turn_val(:,sort_idx),(1:length(all_mat_order))-.5,125, E_feed_turn_val(:,sort_idx), 'filled')
+set(gca, 'YDir', 'reverse')
+title('East Rew - turn')
+hl = hline(find(diff(all_nCells_c_ord)), {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+set(gca, 'xtick', [- 2 0 2], 'xticklabel', {'T','0', 'R'}, 'ytick', []); 
+
+
+subplot(1,30,25:28)
+imagesc(tvec.C1, 1:length(all_mat_order), all_mat(:,sort_idx)')
+title('All')
+set(gca, 'ytick', [])
+title('All feeders')
+% set(gca, 'ytick', 1:size(mean_all_mat,1), 'yTickLabel', sess_label)
+set(gca, 'ytick', [])
+set(gca, 'xtick', -5:2.5:5)
+vl = vline(0, '--k');
+vl.LineWidth = 2;
+caxis([Z_sig_min Z_sig_max]);
+cb=colorbar;
+cb.Position(1) = cb.Position(1) + .105;
+ylabel(cb, 'mean zscore','Rotation',90)
+hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+for ii = 1:length(all_mat_order)
+   if all_mat_sig_pre(ii)
+      text(5.25, ii, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   elseif all_mat_sig_post(ii)
+      text(5.75, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+   end
+end
+
+
+subplot(1,30,30)
+% imagesc(1, 1:length(all_mat_order), all_feed_turn_val(:,sort_idx)')
+scatter(all_feed_turn_val(:,sort_idx), (1:length(all_mat_order))-.5,125, all_feed_turn_val(:,sort_idx), 'filled')
+set(gca, 'YDir', 'reverse')
+title('All Rew - turn')
+hl = hline(find(diff(all_nCells_c_ord)), {'k', 'k', 'k'});
+for ii = 1:length(hl)
+    hl(ii).LineWidth = 3;
+    hl(ii).Color = c_ord(ii+1,:);
+end
+set(gca, 'xtick', [- 2 0 2], 'xticklabel', {'T','0', 'R'}, 'ytick', []); 
+
+
+SetFigure([], gcf)
+
+
+% save the output data as a table/csv
+for ii = 1:length(all_mat_order)
+sess_id(ii) = sessions(all_mat_order(ii)); 
+end
+
+index_out = array2table([N_feed_turn_val(:,sort_idx)', W_feed_turn_val(:,sort_idx)', S_feed_turn_val(:,sort_idx)', E_feed_turn_val(:,sort_idx)'], 'VariableNames',{'North_index',  'West_index', 'South_index', 'East_index'}) ;
+
+index_out = [cell2table(sess_id'), index_out]; 
+
+writetable( index_out,'Rew_turn_idx.csv')
+
 %% save all the figures
 figure(101)
 maximize
@@ -697,4 +938,157 @@ mat_out= mat_out';
 
 csvwrite('block_perc.csv', mat_out)
 
+
+%% same thing for rew-turn index
+% fnames = fieldnames(all_out); 
+% Cs_idx = fnames
+
+Cs = [N_feed_turn_val, W_feed_turn_val, S_feed_turn_val, E_feed_turn_val all_feed_turn_val] ; 
+O_e = [all_out_perc.O1(all_sig_pre.O1 | all_sig_post.O1),...
+    all_out_perc.O2(all_sig_pre.O2 | all_sig_post.O2),...
+    all_out_perc.O3(all_sig_pre.O3 | all_sig_post.O3),...
+    all_out_perc.O4(all_sig_pre.O4 | all_sig_post.O4)]; 
+O_l = [all_out_perc.O5(all_sig_pre.O5 | all_sig_post.O5),...
+    all_out_perc.O6(all_sig_pre.O6 | all_sig_post.O6),...
+    all_out_perc.O7(all_sig_pre.O7 | all_sig_post.O7)]; 
+Rs = [all_out_perc.R1(all_sig_pre.R1 | all_sig_post.R1),...
+    all_out_perc.R2(all_sig_pre.R2 | all_sig_post.R2),...
+    all_out_perc.R3(all_sig_pre.R3 | all_sig_post.R3)]; 
+
+
+% figure(302)
+% % bar([Cs; O_e; O_l; Rs]);
+% 
+% set(gca, 'xticklabel', {'Crit', 'Over Early', 'Over Late', 'Rein'});
+% hline(1)
+
+% export as csv
+mat_out = NaN(4, max([length(Cs),length(O_e),length(O_l),length(Rs)])); 
+
+
+mat_out(1,1:length(Cs)) = Cs;
+mat_out(2,1:length(O_e)) = O_e;
+mat_out(3,1:length(O_l)) = O_l;
+mat_out(4,1:length(Rs)) = Rs;
+
+mat_out= mat_out';
+
+csvwrite('block_perc.csv', mat_out)
+
+%%  unrelated Kenny shadded error bar thing
+
+% Initialize variables.
+filename = '/Users/jericcarmichael/Dropbox (Personal)/KA_Data/CeA_record_train.csv';
+delimiter = ',';
+startRow = 2;
+
+% Read columns of data as text:
+% For more information, see the TEXTSCAN documentation.
+formatSpec = '%s%s%s%s%s%s%s%s%s%s%s%[^\n\r]';
+
+% Open the text file.
+fileID = fopen(filename,'r','n','UTF-8');
+% Skip the BOM (Byte Order Mark).
+fseek(fileID, 3, 'bof');
+
+% Read columns of data according to the format.
+% This call is based on the structure of the file used to generate this
+% code. If an error occurs for a different file, try regenerating the code
+% from the Import Tool.
+dataArray = textscan(fileID, formatSpec, 'Delimiter', delimiter, 'TextType', 'string', 'HeaderLines' ,startRow-1, 'ReturnOnError', false, 'EndOfLine', '\r\n');
+
+% Close the text file.
+fclose(fileID);
+
+% Convert the contents of columns containing numeric text to numbers.
+% Replace non-numeric text with NaN.
+raw = repmat({''},length(dataArray{1}),length(dataArray)-1);
+for col=1:length(dataArray)-1
+    raw(1:length(dataArray{col}),col) = mat2cell(dataArray{col}, ones(length(dataArray{col}), 1));
+end
+numericData = NaN(size(dataArray{1},1),size(dataArray,2));
+
+for col=[2,4,5,6,7,8,9,10,11]
+    % Converts text in the input cell array to numbers. Replaced non-numeric
+    % text with NaN.
+    rawData = dataArray{col};
+    for row=1:size(rawData, 1)
+        % Create a regular expression to detect and remove non-numeric prefixes and
+        % suffixes.
+        regexstr = '(?<prefix>.*?)(?<numbers>([-]*(\d+[\,]*)+[\.]{0,1}\d*[eEdD]{0,1}[-+]*\d*[i]{0,1})|([-]*(\d+[\,]*)*[\.]{1,1}\d+[eEdD]{0,1}[-+]*\d*[i]{0,1}))(?<suffix>.*)';
+        try
+            result = regexp(rawData(row), regexstr, 'names');
+            numbers = result.numbers;
+            
+            % Detected commas in non-thousand locations.
+            invalidThousandsSeparator = false;
+            if numbers.contains(',')
+                thousandsRegExp = '^\d+?(\,\d{3})*\.{0,1}\d*$';
+                if isempty(regexp(numbers, thousandsRegExp, 'once'))
+                    numbers = NaN;
+                    invalidThousandsSeparator = true;
+                end
+            end
+            % Convert numeric text to numbers.
+            if ~invalidThousandsSeparator
+                numbers = textscan(char(strrep(numbers, ',', '')), '%f');
+                numericData(row, col) = numbers{1};
+                raw{row, col} = numbers{1};
+            end
+        catch
+            raw{row, col} = rawData{row};
+        end
+    end
+end
+
+
+% Split data into numeric and string columns.
+rawNumericColumns = raw(:, [2,4,5,6,7,8,9,10,11]);
+rawStringColumns = string(raw(:, [1,3]));
+
+
+% Make sure any text containing <undefined> is properly converted to an <undefined> categorical
+for catIdx = [1,2]
+    idx = (rawStringColumns(:, catIdx) == "<undefined>");
+    rawStringColumns(idx, catIdx) = "";
+end
+
+% Create output variable
+CeArecordtrain1 = table;
+CeArecordtrain1.rat = categorical(rawStringColumns(:, 1));
+CeArecordtrain1.day = cell2mat(rawNumericColumns(:, 1));
+CeArecordtrain1.sex = categorical(rawStringColumns(:, 2));
+CeArecordtrain1.time = cell2mat(rawNumericColumns(:, 2));
+CeArecordtrain1.total = cell2mat(rawNumericColumns(:, 3));
+CeArecordtrain1.correct = cell2mat(rawNumericColumns(:, 4));
+CeArecordtrain1.incorrect = cell2mat(rawNumericColumns(:, 5));
+CeArecordtrain1.outcome = cell2mat(rawNumericColumns(:, 6));
+CeArecordtrain1.perc = cell2mat(rawNumericColumns(:, 7));
+CeArecordtrain1.min = cell2mat(rawNumericColumns(:, 8));
+CeArecordtrain1.speed = cell2mat(rawNumericColumns(:, 9));
+
+% Clear temporary variables
+clearvars filename delimiter startRow formatSpec fileID dataArray ans raw col numericData rawData row regexstr result numbers invalidThousandsSeparator thousandsRegExp rawNumericColumns rawStringColumns catIdx idx;
+
+
+
+%% plot stuff avec error bars
+days = unique(CeArecordtrain1.day);
+for ii = 1:length(days)
+    
+    perc_mean(ii) = mean(CeArecordtrain1.perc(CeArecordtrain1.day == days(ii)));
+    perc_SEM(ii) = std(CeArecordtrain1.perc(CeArecordtrain1.day == days(ii))) / sqrt(length(CeArecordtrain1.perc(CeArecordtrain1.day == days(ii)))); 
+    
+    
+end
+
+h = shadedErrorBar(days, perc_mean*100, perc_SEM*100)
+h.mainLine.Color = c_ord(1,:);
+h.mainLine.LineWidth = 3;
+h.edge(1).Color = h.patch.FaceColor; 
+h.edge(2).Color = h.patch.FaceColor; 
+
+hline(60)
+
+% bar(CeArecordtrain1.day, CeArecordtrain1.perc')%, {@mean,@std})
 

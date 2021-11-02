@@ -423,7 +423,7 @@ ylabel('speed (cm/s)')
 
 subplot(212)
 y_lim = ylim; 
-rectangle('position', [0 y_lim 0.001  y_lim(2) - y_lim(1)], 'facecolor', [[4,172,218]./255 0.5], 'edgecolor', [[4,172,218]./255 0.5])
+rectangle('position', [0 y_lim(1) 0.001  y_lim(2) - y_lim(1)], 'facecolor', [[4,172,218]./255 0.5], 'edgecolor', [[4,172,218]./255 0.5])
 
 ax = gca;
 ax.YAxis(1).Color = 'k';
