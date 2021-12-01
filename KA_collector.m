@@ -214,6 +214,8 @@ for iS = 1:length(sessions)
     mean_S_mat(iS,:) = mean_S_out.(sessions{iS});
     mean_E_mat(iS,:) = mean_E_out.(sessions{iS});
     
+    
+
     %collect all subject ids
     all_subj_mat = [all_subj_mat, all_subj.(sessions{iS})]; 
     
@@ -284,8 +286,14 @@ sig_E_nCells(iS) = size(east_out.(sessions{iS})(:,logical(east_sig.(sessions{iS}
 
 end
 
-Z_min = min(min([mean_all_mat]))%; mean_N_mat; mean_W_mat; mean_S_mat; mean_W_mat])); 
-Z_max = max(max([mean_all_mat]))%; mean_N_mat; mean_W_mat; mean_S_mat; mean_W_mat])); 
+%     %gaussian 1D smoothing
+%     for jj = size(mean_all_mat, 1):-1:1
+%         mean_all_mat(jj,:) = filter(gausswin(10),1,mean_all_mat(jj,:)); % conv(mean_all_mat(:,jj), ones(15,1)/15, 'same');
+%     end
+
+
+Z_min = min(min([mean_all_mat]));% mean_N_mat; mean_W_mat; mean_S_mat; mean_W_mat])); 
+Z_max = max(max([mean_all_mat]));% mean_N_mat; mean_W_mat; mean_S_mat; mean_W_mat])); 
 
 Z_sig_min = min(min([mean_all_mat; sig_mean_N_mat; sig_mean_W_mat; sig_mean_S_mat; sig_mean_W_mat])); 
 Z_sig_max = max(max([mean_all_mat; sig_mean_N_mat; sig_mean_W_mat; sig_mean_S_mat; sig_mean_W_mat])); 
@@ -318,7 +326,7 @@ end
 %% make some simple image imagesc using all cells
 
 % first plot the mean Z score for each session (row)
-figure(101)
+figure(1001)
 
 subplot(1,5,1)
 imagesc(tvec.C1, 1:size(mean_N_mat,1), mean_N_mat)
