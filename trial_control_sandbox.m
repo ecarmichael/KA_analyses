@@ -54,8 +54,9 @@ while etime(clock, t0) < total_time
                 
                 % lick check function here. check for licks (during tone)% when writing this make sure it logs the time. time points can be counted later and can also be added to the plot.
                 clf
-                text(.5, .5, ['Time: ' this_time 's'], 'FontSize', 24)
-                text(.5, .25, ['State: Tone 1'], 'FontSize', 24, 'color', 'b')
+                text(.5, .5, ['Time: ' this_time 's'], 'FontSize', 24);
+                text(.5, .4, ['Trial: ' sprintf('%2.0f',length(trials)+1)  ], 'FontSize', 24);
+                text(.5, .3, ['State: Tone 1 ' sprintf('%2.1f', etime(clock, tone_t))], 'FontSize', 24, 'color', 'b');
                 drawnow
             end
             
@@ -90,7 +91,8 @@ while etime(clock, t0) < total_time
                 % lick check function here. check for licks (during tone)% when writing this make sure it logs the time. time points can be counted later and can also be added to the plot.
                 clf
                 text(.5, .5, ['Time: ' this_time 's'], 'FontSize', 24)
-                text(.5, .25, ['State: Tone 2'], 'FontSize', 24, 'color', 'r')
+                text(.5, .4, ['Trial: ' sprintf('%2.0f',length(trials)+1)  ], 'FontSize', 24)
+                text(.5, .3, ['State: Tone 2 ' sprintf('%2.1f', etime(clock, tone_t))], 'FontSize', 24, 'color', 'r')
                 drawnow
             end
             
@@ -119,7 +121,8 @@ while etime(clock, t0) < total_time
     else
         clf
         text(.5, .5, ['Time: ' this_time 's'], 'FontSize', 24)
-        text(.5, .25, 'State: waiting...', 'FontSize', 24)
+        text(.5, .4, ['Trial: ' sprintf('%2.0f',length(trials))  ], 'FontSize', 24)
+        text(.5, .3, 'State: waiting...', 'FontSize', 24)
         drawnow
     end
     
