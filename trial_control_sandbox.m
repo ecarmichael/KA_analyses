@@ -12,15 +12,15 @@ trials = [];
 iState = 0; % initial state;
 
 %tones
-Fs=44100;                       %CD quality - also conveniently divisible by 30 and 25
+Fs=44100/10;                       %CD quality - also conveniently divisible by 30 and 25
 stim_dur=5;               %duration of puretone in seconds
 T=0:1/Fs:stim_dur-1/Fs;
 
 %tone 1
-t1_freq =8000; 
+t1_freq =1200; 
 Y1 = sin(2*pi*t1_freq*T);
 %tone2
-t2_freq = 1000; 
+t2_freq = 800; 
 Y2 = sin(2*pi*t2_freq*T);
 
 % make a figure to track everything
@@ -93,7 +93,7 @@ while etime(clock, t0) < total_time
             
             % play a tone; log the time. 
             tone_t = clock; 
-            tic; sound(Y2, Fs); toc; % seems to take .33 seconds to play the tone. 
+            tic; sound(Y2, Fs); toc; % seems to take between 0.01 and .33 seconds to play the tone. 
 
             while etime(clock, tone_t) < 5
                 % lick check function here. check for licks (during tone)% when writing this make sure it logs the time. time points can be counted later and can also be added to the plot.
