@@ -38,6 +38,8 @@ evt.label{6} = evt_og.label{4};  %swap east and west
 cfg_pos.convFact = [560/142 480/142]; 
 out.pos = LoadPos(cfg_pos);
 
+
+%% add in check for multiple recording periods.  Some seem to have a pre and post recoding. 
 out.S = restrict(out.S, evt.t{1}(1), evt.t{2}(end)); % restrict the spikes recording periods.avoids odd thing where spike trains contains zeros.  MClust issue?
 
 out.velo = getLinSpd([], out.pos); 
