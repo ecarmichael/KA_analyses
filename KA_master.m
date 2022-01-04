@@ -4,9 +4,9 @@
 addpath(genpath('/Users/jericcarmichael/Documents/Github/vandermeerlab/code-matlab/shared'))
 addpath(genpath('/Users/jericcarmichael/Documents/Github/EC_State'));
 addpath(genpath('/Users/jericcarmichael/Documents/Github/KA_analyses'));
-data_dir = '/Users/jericcarmichael/Dropbox/KA_Data/Raw_data'; % where all the NLX data is. 
+data_dir = '/Users/jericcarmichael/Desktop/Kenny_new'; % where all the NLX data is. 
 % inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs. 
-inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_approach_new';
+inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_approach_test';
 inter_dir_app = [];
 cd(data_dir); % move to the data dir. 
 

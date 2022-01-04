@@ -5,25 +5,30 @@ if ~exist('Zone_plots', 'dir')
 end
 c_ord = linspecer(5); % nice colours.
 %% load data
-cfg = [];
-cfg.getTTnumbers = 0;
-cfg.fc = {cell_to_process};
-out.S = LoadSpikes(cfg);
 
-if length(out.S.t{1}) < 1200
-    out = []; 
-    return
-end
-%load('TT1.ntt_01-wv.mat');
-
+%%% load the events. 
 evt = LoadEvents([]);
+% add in check for multiple recording periods.  Some seem to have a pre and post recoding.
+s_rec_idx = find(contains(evt.label, 'Starting Record')); 
+e_rec_idx = find(contains(evt.label, 'Stopping Record')); 
+
+nRec = length(evt.t{s_rec_idx}); 
+if nRec >1
+    for iR = nRec:-1:1
+        rec_dur(iR) = evt.t{e_rec_idx}(iR) - evt.t{s_rec_idx}(iR);
+    end
+    [~, task_rec_idx] = max(rec_dur); 
+    
+else
+   task_rec_idx = 1;  
+end
+
 % relabel the events file for arm/feeders
 evt.label{3} = 'NorthPellets';
 evt.label{4} = 'EastPellets';
 evt.label{5} = 'SouthPellets';
 evt.label{6} = 'WestPellets';
 evt.label{7} = 'TotalPellets';
-
 
 % change the order to fit the ZoneIn
 evt_og = evt; % temp version
@@ -35,12 +40,10 @@ evt.label{6} = evt_og.label{4};  %swap east and west
 
 
 
+%%% load the position %%%
 cfg_pos.convFact = [560/142 480/142]; 
 out.pos = LoadPos(cfg_pos);
-
-
-%% add in check for multiple recording periods.  Some seem to have a pre and post recoding. 
-out.S = restrict(out.S, evt.t{1}(1), evt.t{2}(end)); % restrict the spikes recording periods.avoids odd thing where spike trains contains zeros.  MClust issue?
+out.pos = restrict(out.pos, evt.t{s_rec_idx}(task_rec_idx), evt.t{e_rec_idx}(task_rec_idx)); % restrict position to time on track. 
 
 out.velo = getLinSpd([], out.pos); 
 out.velo.data = interp1(out.velo.tvec,out.velo.data(1,:),out.pos.tvec,'linear');
@@ -49,11 +52,28 @@ out.velo.data = interp1(out.velo.tvec,out.velo.data(1,:),out.pos.tvec,'linear');
 out.velo_smooth = out.velo; 
 % out.velo_smooth.data = smooth(out.velo.data, round(1/mode(diff(out.pos.tvec)))*.5)'; % smooth with gaussian 
 
+
+%%% load the spikes %%%
+cfg = [];
+cfg.getTTnumbers = 0;
+cfg.fc = {cell_to_process};
+out.S = LoadSpikes(cfg);
+
+out.S = restrict(out.S, evt.t{s_rec_idx}(task_rec_idx), evt.t{e_rec_idx}(task_rec_idx)); % restrict the spikes recording periods.avoids odd thing where spike trains contains zeros.  MClust issue?
+
+if length(out.S.t{1}) < 1200
+    out = []; 
+    return
+end
+
+% interp to match position and spikes. 
+
 spk_x = interp1(out.pos.tvec,out.pos.data(1,:),out.S.t{1},'linear');
 spk_y = interp1(out.pos.tvec,out.pos.data(2,:),out.S.t{1},'linear');
 
 
-%  load PM control script vars
+
+%%% load PM control script vars %%%
 PM_dir = dir('PM*.mat');
 load(PM_dir.name)
 
@@ -77,7 +97,11 @@ axis off
 subplot(2,3,2)
 hold on
 plot(out.pos.data(1,:), out.pos.data(2,:), 'color', [.7 .7 .7])
-gscatter(out.pos.data(1,zone_idx), out.pos.data(2,zone_idx), ZoneIn, Zone_cord, 'o', 3)
+gscatter(nan(1,4), nan(1,4),1:4, c_ord(1:4,:)); % space filler to get the colors in the legend to work. 
+for ii = 1:length(zone_idx) % hack to get the colours to work properly. 
+    gscatter(out.pos.data(1,zone_idx(ii)), out.pos.data(2,zone_idx(ii)), ZoneIn(ii), Zone_cord(ii,:), 'o', 3)
+% gscatter(out.pos.data(1,zone_idx), out.pos.data(2,zone_idx), ZoneIn, Zone_cord, 'o+x.', 3)
+end
 axis off
 set(gca,'YDir','reverse')
 legend(['pos', Zone_names(1:4)])
