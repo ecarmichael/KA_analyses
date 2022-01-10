@@ -31,7 +31,7 @@ sess_list =   sess_list(~cellfun('isempty',sess_list));
 
 % loop over session folders
 for iS = 1:length(sess_list)
-    
+    fprintf('\nMigrating: %s...',  sess_list{iS}); 
     cd([data_dir filesep sess_list{iS}]); % move to the session folder. 
     
     this_new_dir = [new_dir filesep sess_list{iS}]; % copy the folder name.
@@ -50,8 +50,10 @@ for iS = 1:length(sess_list)
     
     
     % get the .nvt files in this session dir
-    v_list = dir('*.nvt'); 
+    zip('VT1.zip', 'VT1.nvt')
+    v_list = dir('*.zip'); 
     copyfile(v_list.name, [this_new_dir filesep v_list.name])
+    delete(v_list.name)
     
     % copy the matlab trial control output
     PM_dir = dir('PM*.mat');
