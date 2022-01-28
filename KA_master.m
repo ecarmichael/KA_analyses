@@ -4,9 +4,9 @@
 addpath(genpath('/Users/jericcarmichael/Documents/Github/vandermeerlab/code-matlab/shared'))
 addpath(genpath('/Users/jericcarmichael/Documents/Github/EC_State'));
 addpath(genpath('/Users/jericcarmichael/Documents/Github/KA_analyses'));
-data_dir = '/Users/jericcarmichael/Desktop/Kenny_new'; % where all the NLX data is. 
+data_dir = '/Users/jericcarmichael/Downloads/filtered_eric'; % where all the NLX data is. 
 % inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs. 
-inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_approach_test';
+inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_approach_2p5_new_sig';
 inter_dir_app = [];
 cd(data_dir); % move to the data dir. 
 
@@ -32,9 +32,9 @@ for ii = 1:length(this_dir)
 end
 sess_list =   sess_list(~cellfun('isempty',sess_list));
 
-
+success = []; FR = []; 
 % loop over sessions in the data dir.
-for iS = length(sess_list):-1:1
+for iS = 1:length(sess_list)
     
     cd([data_dir filesep sess_list{iS}])
     
@@ -58,10 +58,20 @@ for iS = length(sess_list):-1:1
 %         This_cell = KA_screener_pseudo_baseline(this_file); 
         
         % if there were too few spikes in the .t then skip this file. 
-        if isempty(This_cell)
-            fprintf('<strong>%s</strong>:  Cell %s had too few spikes to be included (<1200)', mfilename, this_file)
+        if ischar(This_cell)
+            fprintf('<strong>%s</strong>: Minimum requirments not met: %s  -   <strong>%s</strong>\n', mfilename, this_file, This_cell)
+            if strcmpi(This_cell, 'too short')
+                success(end+1) = 2;
+                continue
+            end
+        elseif isnumeric(This_cell)
+                success(end+1) = 3;
+                FR(length(success)) = This_cell; 
             continue
         end
+        success(end+1) = 1;
+        
+        FR(length(success)) = length(This_cell.S.t{1})/(This_cell.pos.tvec(end) - This_cell.pos.tvec(1)); 
         
         parts = strsplit(sess_list{iS}, '_');
         This_cell.subject = [parts{1} '_' parts{2}]; % get the subject ID
@@ -74,3 +84,8 @@ for iS = length(sess_list):-1:1
     end
     
 end
+
+% summarize the files
+fprintf('<strong>Total Sessions: %2.0f\nnSucess: %2.0f (%2.2f%%)\nToo short: %2.0f (%2.2f%%)\nFR too low: %2.0f (%2.2f%%)\n</strong>',...
+    length(success),sum(success==1), ((sum(success==1))/length(success))*100,sum(success==2), ((sum(success==2))/length(success))*100,...
+    sum(success==3),((sum(success==3))/length(success))*100)

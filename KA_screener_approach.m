@@ -21,7 +21,16 @@ if nRec >1
     
 else
    task_rec_idx = 1;  
+   rec_dur = evt.t{e_rec_idx}(task_rec_idx) - evt.t{s_rec_idx}(task_rec_idx);
 end
+
+% check for sessions that are too short. If less than 15mins skip. 
+if max(rec_dur)/60 < 10
+    fprintf('<strong>Minumum recording duration (15mins) not met: %2.1fmins</strong>\n', max(rec_dur)/60);
+    out = 'too short';  
+    return
+end
+
 
 % relabel the events file for arm/feeders
 evt.label{3} = 'NorthPellets';
@@ -61,8 +70,9 @@ out.S = LoadSpikes(cfg);
 
 out.S = restrict(out.S, evt.t{s_rec_idx}(task_rec_idx), evt.t{e_rec_idx}(task_rec_idx)); % restrict the spikes recording periods.avoids odd thing where spike trains contains zeros.  MClust issue?
 
-if length(out.S.t{1}) < 1200
-    out = []; 
+if length(out.S.t{1}) / (out.pos.tvec(end) - out.pos.tvec(1)) < .25
+    fprintf('<strong>Minumum mean spike rate (0.5Hz) not met: %2.1fhz</strong>\n', length(out.S.t{1}) / (out.pos.tvec(end) - out.pos.tvec(1)));
+    out =  length(out.S.t{1}) / (out.pos.tvec(end) - out.pos.tvec(1));  
     return
 end
 
@@ -137,7 +147,7 @@ xlim([out.pos.tvec(nearest_idx3(EnteringZoneTime(1)/1000000, out.pos.tvec))-2 ou
 
 %% get the mean and std for the data to zscore the rate
 
-cfg_z.binsize = 0.2;
+cfg_z.binsize = 0.1;
 cfg_z.gauss_window = 1;
 cfg_z.gauss_sd = 0.02;
 
@@ -162,7 +172,7 @@ gau_std = std(S_gau_sdf);
 %% spike Peth
 % prepare the PETHS
 cfg_peth = [];
-cfg_peth.window = [-5 5];
+cfg_peth.window = [-2.5 2.5];
 %     cfg_peth.dt = 0.0025; % fine resulition for regular PETH.
 cfg_peth.dt = cfg_z.binsize; % wider bins for 'Lap' plot later.
 % cfg_peth.plot_type = 'zscore';
@@ -176,24 +186,50 @@ for ii = unique(ZoneIn)
     figure(ii)
     [All_trial.outputS{ii}, All_trial.outputIT{ii}, All_trial.outputGau{ii}, All_trial.mean_S_gau{ii}, All_trial.pre_stim_means{ii}, All_trial.post_stim_means{ii},~, ~, All_trial.Z{ii}] = SpikePETH(cfg_peth, out.S, EnteringZoneTime(F_idx)/1000000);
     
+    % re-define the 'pre' and 'post' means
+    pre_idx = nearest_idx3([-2.5 1.8], All_trial.outputIT{ii});
+    act_idx = nearest_idx3([-1.8 0.8], All_trial.outputIT{ii});  
+    rew_idx = nearest_idx3([1.5 2.5], All_trial.outputIT{ii});  
+    
+    
+    All_trial.pre_stim_means{ii} = nanmean(All_trial.outputGau{ii}(pre_idx(1):pre_idx(2),:),1); 
+    All_trial.act_stim_means{ii} = nanmean(All_trial.outputGau{ii}(act_idx(1):act_idx(2),:),1); 
+    All_trial.rew_stim_means{ii} = nanmean(All_trial.outputGau{ii}(rew_idx(1):rew_idx(2),:),1); 
+
+
+    % test for baseline vs action
+    [All_trial.H_act_mod{ii}, All_trial.p_act_mod{ii},~] = ttest2(All_trial.act_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','both', 'alpha', 0.025); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+    [All_trial.H_pre_a{ii}, All_trial.p_pre_a{ii},~] = ttest2(All_trial.act_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','right', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+    [All_trial.H_act{ii}, All_trial.p_act{ii},~] = ttest2(All_trial.act_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','left', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+
+    if All_trial.H_act_mod{ii} == 1
+        fprintf('<strong>%s</strong> Cell:  %s has significantly activity change at action (vs baseline) <strong>(p = %0.3f) at %s arm </strong>\n', mfilename, cell_to_process, All_trial.p_act_mod{ii}, Zone_names{ii});
+    else
+        fprintf('<strong>%s</strong> Cell:  %s is no significantly activity change at action (vs baseline) (p = %0.3f) at %s arm \n', mfilename, cell_to_process, All_trial.p_act_mod{ii}, Zone_names{ii});
+    end
+    
+        % test for baseline vs action
+    [All_trial.H_rew_mod{ii}, All_trial.p_rew_mod{ii},~] = ttest(All_trial.rew_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','both', 'alpha', 0.025); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+    [All_trial.H_pre_r{ii}, All_trial.p_pre_r{ii},~] = ttest(All_trial.rew_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','right', 'alpha', 0.05); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+    [All_trial.H_rew{ii}, All_trial.p_rew{ii},~] = ttest(All_trial.rew_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','left', 'alpha', 0.05); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+
+    if All_trial.H_rew_mod{ii} == 1
+        fprintf('<strong>%s</strong> Cell:  %s has significantly activity change at reward (vs baseline) <strong>(p = %0.3f) at %s arm </strong>\n', mfilename, cell_to_process, All_trial.p_rew_mod{ii}, Zone_names{ii});
+    else
+        fprintf('<strong>%s</strong> Cell:  %s is no significantly activity change at reward (vs baseline) (p = %0.3f) at %s arm \n', mfilename, cell_to_process, All_trial.p_rew_mod{ii}, Zone_names{ii});
+    end
+    
+    
     title(['PETH for Entry: ' Zone_names{ii} ' | Trials: ' num2str(length(F_idx))]);
-%     z_idx = find(All_trial.outputIT{ii} == 0);
-%     All_trial.Z{ii} = (All_trial.mean_S_gau{ii} - mean(All_trial.mean_S_gau{ii}(1:z_idx)))./ std(All_trial.mean_S_gau{ii}(1:z_idx)); 
-%     All_trial.Z{ii} = (All_trial.mean_S_gau{ii} - cfg_peth.z_mean)./ cfg_peth.z_std; 
 
     % test for sig modulation using t-test. 
-    [All_trial.H{ii}, All_trial.p{ii},~] = ttest(All_trial.post_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','both', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+%     [All_trial.H{ii}, All_trial.p{ii},~] = ttest(All_trial.post_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','both', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+%     [All_trial.H_pre{ii}, All_trial.p_pre{ii},~] = ttest(All_trial.act_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','left', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+%     [All_trial.H_act{ii}, All_trial.p_act{ii},~] = ttest(All_trial.act_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','right', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+%     [All_trial.H_post{ii}, All_trial.p_post{ii},~] = ttest(All_trial.rew_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','right', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+% 
+%     
 
-    [All_trial.H_pre{ii}, All_trial.p_pre{ii},~] = ttest(All_trial.post_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','left', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
-
-    [All_trial.H_post{ii}, All_trial.p_post{ii},~] = ttest(All_trial.post_stim_means{ii} - All_trial.pre_stim_means{ii},0,'Tail','right', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
-
-    
-    if All_trial.H{ii} == 1
-        fprintf('<strong>%s</strong> Cell:  %s has significantly increased activity following reward <strong>(p = %0.3f) at %s arm </strong>\n', mfilename, cell_to_process, All_trial.p{ii}, Zone_names{ii});
-    else
-        fprintf('<strong>%s</strong> Cell:  %s is not significantly increased activity following reward (p = %0.3f) at %s arm \n', mfilename, cell_to_process, All_trial.p{ii}, Zone_names{ii});
-    end
     
     saveas(gcf, ['Zone_plots' filesep out.S.label{1}(1:end-2) '_' Zone_names{ii} '_all_zcore.png'])
     saveas(gcf, ['Zone_plots' filesep out.S.label{1}(1:end-2)  '_' Zone_names{ii} '_all_zcore.fig'])
@@ -215,35 +251,58 @@ cfg_all.markersize = 10;
 title(['PETH for Entry: ' Zone_names{5} ' | Trials: ' num2str(length(EnteringZoneTime))])
 
 
-% % conver the PETH into a zscore using the pre-event period as the baseline.
-% z_idx = find(All_trial.outputIT{5} == 0);
-% All_trial.Z{5} = (All_trial.mean_S_gau{5} - cfg_peth.z_mean)./ cfg_peth.z_std; 
-% 
+    All_trial.pre_stim_means{5} = nanmean(All_trial.outputGau{5}(pre_idx(1):pre_idx(2),:),1); 
+    All_trial.act_stim_means{5} = nanmean(All_trial.outputGau{5}(act_idx(1):act_idx(2),:),1); 
+    All_trial.rew_stim_means{5} = nanmean(All_trial.outputGau{5}(rew_idx(1):rew_idx(2),:),1); 
 
-% test for sig modulation using t-test. 
-[All_trial.H{5}, All_trial.p{5},~] = ttest(All_trial.post_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','both', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
 
-[All_trial.H_pre{5}, All_trial.p_pre{5},~] = ttest(All_trial.post_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','left', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+[All_trial.H_act_mod{5}, All_trial.p_act_mod{5},~] = ttest(All_trial.act_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','both', 'alpha', 0.025); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+[All_trial.H_pre_a{5}, All_trial.p_pre_a{5},~] = ttest(All_trial.act_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','right', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+[All_trial.H_act{5}, All_trial.p_act{5},~] = ttest(All_trial.act_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','left', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
 
-[All_trial.H_post{5}, All_trial.p_post{5},~] = ttest(All_trial.post_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','right', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
-
-% update plot based sig of all trial types.  '-' for sig, '--' for not. 
-
-if All_trial.H{5} ==1
-    fprintf('<strong>%s</strong> Cell:  %s is significantly modulated by reward  <strong> all reward (p = %0.3d)</strong>\n', mfilename, cell_to_process, All_trial.p{5});
+if All_trial.H_act_mod{5} == 1
+    fprintf('<strong>%s</strong> Cell:  %s has significantly activity change at action (vs baseline) <strong>(p = %0.3f) at %sarm </strong>\n', mfilename, cell_to_process, All_trial.p_act_mod{5}, Zone_names{5});
 else
-        fprintf('<strong>%s</strong> Cell:  %s is not significantly modulated by reward  (p = %0.3f) at %s arm \n', mfilename, cell_to_process, All_trial.p{5});
+    fprintf('<strong>%s</strong> Cell:  %s is no significantly activity change at action (vs baseline) (p = %0.3f) at %s arm \n', mfilename, cell_to_process, All_trial.p_act_mod{5}, Zone_names{5});
+end
+
+[All_trial.H_rew_mod{5}, All_trial.p_rew_mod{5},~] = ttest(All_trial.rew_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','both', 'alpha', 0.025); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+[All_trial.H_pre_r{5}, All_trial.p_pre_r{5},~] = ttest(All_trial.rew_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','right', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+[All_trial.H_rew{5}, All_trial.p_rew{5},~] = ttest(All_trial.rew_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','left', 'alpha', 0.01); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+
+if All_trial.H_act_mod{5} == 1
+    fprintf('<strong>%s</strong> Cell:  %s has significantly activity change at reward (vs baseline) <strong>(p = %0.3f) at %s arm </strong>\n', mfilename, cell_to_process, All_trial.p_rew_mod{5}, Zone_names{5});
+elseif All_trial.H_rew_mod{5} == 1
+        chil = get(gca, 'Children');
+    chil(4).LineStyle = '-.'; 
+else
+    fprintf('<strong>%s</strong> Cell:  %s is no significantly activity change at reward (vs baseline) (p = %0.3f) at %s arm \n', mfilename, cell_to_process, All_trial.p_rew_mod{5}, Zone_names{5});
     chil = get(gca, 'Children');
     chil(4).LineStyle = '--'; 
 end
+
+% % test for sig modulation using t-test. 
+% [All_trial.H{5}, All_trial.p{5},~] = ttest2(All_trial.post_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','both', 'alpha', 0.025); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+% [All_trial.H_pre{5}, All_trial.p_pre{5},~] = ttest2(All_trial.post_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','left', 'alpha', 0.05); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+% [All_trial.H_post{5}, All_trial.p_post{5},~] = ttest2(All_trial.post_stim_means{5} - All_trial.pre_stim_means{5},0,'Tail','right', 'alpha', 0.05); % use a t-test to see if the distribution of post FR - pre FR across trials is greater than 0. Implying that the cell has significantly higher firing rate following reward delivery.
+
+% update plot based sig of all trial types.  '-' for sig, '--' for not. 
+
+% if All_trial.H{5} ==1
+%     fprintf('<strong>%s</strong> Cell:  %s is significantly modulated by reward  <strong> all reward (p = %0.3d)</strong>\n', mfilename, cell_to_process, All_trial.p{5});
+% else
+%         fprintf('<strong>%s</strong> Cell:  %s is not significantly modulated by reward  (p = %0.3f) at %s arm \n', mfilename, cell_to_process, All_trial.p{5});
+% end
 
 %% add the individual feeders to the overall PETH
 figure(1001)
 subplot(212)
 hold on
 for ii =unique(ZoneIn)
-    if All_trial.H{ii} == 1
+    if All_trial.H_rew_mod{ii} == 1
         plot(All_trial.outputIT{1}, All_trial.mean_S_gau{ii},'-',  'color', [c_ord(ii,:), .8])
+    elseif All_trial.H_act_mod{ii} == 1
+        plot(All_trial.outputIT{1}, All_trial.mean_S_gau{ii},'-.',  'color', [c_ord(ii,:), .8])
     else
         plot(All_trial.outputIT{1}, All_trial.mean_S_gau{ii},'--',  'color', [c_ord(ii,:), .8])
     end
@@ -264,13 +323,15 @@ set(leg, 'box', 'off')
 velo_window = [cfg_peth.window(1)*floor(1/mode(diff(out.velo_smooth.tvec))), cfg_peth.window(2)*floor(1/mode(diff(out.velo_smooth.tvec)))]; 
 all_velo = NaN(length(EnteringZoneTime), (abs(velo_window(1)) + abs(velo_window(2)) +1));
 for ii = length(EnteringZoneTime):-1:1
-    this_idx = nearest_idx(EnteringZoneTime(ii)/1000000, out.velo_smooth.tvec);
+    this_idx = nearest_idx3(EnteringZoneTime(ii)/1000000, out.velo_smooth.tvec);
     
-        if this_idx < abs(velo_window(1))
+        if this_idx < abs(velo_window(1)) || velo_window(2)+this_idx > length(out.velo_smooth.data)
             continue
         end
 
+        
     all_velo(ii,:) = out.velo_smooth.data((velo_window(1)+this_idx):(velo_window(2)+this_idx));
+    
 end
 
 velo_mean = nanmedian(all_velo, 1);
@@ -288,6 +349,197 @@ SetFigure([], gcf);
     print(gcf,['Zone_plots' filesep out.S.label{1}(1:end-2) '_all_zcore'],'-depsc')
 
 
+    close all
+    
+    %% create a rate map for each zone and the all zone
+    figure(918)
+         title('Rate Map')
+% 
+%     cfg = []; cfg.method = 'raw'; cfg.operation = '>'; cfg.threshold = 5; % speed limit in cm/sec
+%     iv_fast = TSDtoIV(cfg,out.velo_smooth); % only keep intervals with speed above thresh
+%     
+%     pos_r = restrict(out.pos,iv_fast);
+%     S_r = restrict(out.S,iv_fast);
+%     
+%     spk_x = interp1(pos_r.tvec,pos_r.data(1,:),S_r.t{1},'linear');
+%     spk_y = interp1(pos_r.tvec,pos_r.data(2,:),S_r.t{1},'linear');
+%     
+spk_x = interp1(out.pos.tvec,out.pos.data(1,:),out.S.t{1},'linear');
+spk_y = interp1(out.pos.tvec,out.pos.data(2,:),out.S.t{1},'linear');
+
+    % set up bins
+    SET_xmin = 0; SET_ymin = 0; % set up bins
+    SET_xmax = 180; SET_ymax = 180;
+    SET_xBinSz = (SET_xmax - SET_xmin)/60; SET_yBinSz = (SET_xmax - SET_xmin)/60;
+    
+    
+    x_edges = SET_xmin:SET_xBinSz:SET_xmax;
+    y_edges = SET_ymin:SET_yBinSz:SET_ymax;
+    
+    % set up gaussian
+    kernel = gausskernel([4 4],2); % 2d gaussian in bins
+    
+      % compute occupancy
+    occ_hist = hist3(out.pos.data(1:2,:)', 'edges', {y_edges x_edges});
+%     occ_hist = histcn(out.pos.data(1:2,:)',y_edges,x_edges); % 2-D version of histc()
+    low_occ_idx = find(occ_hist <4 ); 
+    occ_hist(low_occ_idx) = 0; 
+
+%     occ_hist = conv2(occ_hist,kernel,'same');
+    
+    no_occ_idx = find(occ_hist == 0 ); % NaN out bins never visited
+    occ_hist(no_occ_idx) = NaN;
+%     
+    occ_hist = occ_hist .* mode(diff(out.pos.tvec)); % convert samples to seconds using video frame rate (30 Hz)
+
+    subplot(1,3,1)
+    pcolor(occ_hist'); shading flat; axis off; c =colorbar;
+    c.Label.String = 'nFrames'; c.Label.FontSize = 12; 
+    c.Ticks = [min(c.Ticks) max(c.Ticks)];
+    a = get(c, 'position');
+    set(c,'Position',[a(1) a(2) 0.025 0.2]);
+    set(gca, 'yDir', 'reverse')
+    title('occupancy');
+    
+
+    % get the spike map
+    spk_hist = hist3([spk_x, spk_y], 'edges', {y_edges x_edges});
+%         spk_hist = histcn([spk_x, spk_y],y_edges,x_edges);
+    
+%     spk_hist = conv2(spk_hist,kernel,'same');  
+    spk_hist(no_occ_idx) = NaN;
+    
+    subplot(1,3,2)
+    pcolor(spk_hist'); shading flat; axis off; c=colorbar;
+    c.Label.String = 'nSpikes'; c.Label.FontSize = 12; 
+    c.Ticks = [min(c.Ticks) max(c.Ticks)];
+    a = get(c, 'position');
+    set(c,'Position',[a(1) a(2) 0.025 0.2]);
+    set(gca, 'yDir', 'reverse')
+
+    title('spikes');
+    
+    % rate map
+    tc = spk_hist./occ_hist;
+    nan_idx = isnan(tc); 
+    tc(nan_idx) = 0; 
+    tc = conv2(tc,kernel,'same');
+    tc(no_occ_idx) = NaN;
+
+    
+    subplot(1,3,3)
+    pcolor(tc'); shading flat; axis off; c= colorbar; 
+    c.Label.String = 'Hz'; c.Label.FontSize = 12; 
+    c.Ticks = [min(c.Ticks) max(c.Ticks)];
+    a = get(c, 'position');
+    set(c,'Position',[a(1) a(2) 0.025 0.2]);
+    set(gca, 'yDir', 'reverse')
+    title('rate map');
+        
+        SetFigure([], gcf);
+    set(gcf, 'position', [178,418,1578,468]); 
+
+    saveas(gcf, ['Zone_plots' filesep out.S.label{1}(1:end-2) '_rate.png'])
+    saveas(gcf, ['Zone_plots' filesep out.S.label{1}(1:end-2) '_rate.fig'])
+    print(gcf,['Zone_plots' filesep out.S.label{1}(1:end-2) '_rate'],'-depsc')
+
+
+    %% 
+     figure(919)
+     title('Entry Rate Map')
+    
+    % restrict to times around entries
+    pos_r = restrict(out.pos,(EnteringZoneTime/1000000)-5, (EnteringZoneTime/1000000)+5);
+    S_r = restrict(out.S,(EnteringZoneTime/1000000)-5, (EnteringZoneTime/1000000)+5);
+    
+    cfg = []; cfg.method = 'raw'; cfg.operation = '>'; cfg.threshold = 5; % speed limit in cm/sec
+    iv_fast = TSDtoIV(cfg,out.velo_smooth); % only keep intervals with speed above thresh
+    
+    pos_r = restrict(pos_r,iv_fast);
+    S_r = restrict(S_r,iv_fast);
+    
+    spk_x = interp1(pos_r.tvec,pos_r.data(1,:),S_r.t{1},'linear');
+    spk_y = interp1(pos_r.tvec,pos_r.data(2,:),S_r.t{1},'linear');
+%     
+% spk_x = interp1(out.pos.tvec,out.pos.data(1,:),out.S.t{1},'linear');
+% spk_y = interp1(out.pos.tvec,out.pos.data(2,:),out.S.t{1},'linear');
+
+    % set up bins
+    SET_xmin = 0; SET_ymin = 0; % set up bins
+    SET_xmax = 180; SET_ymax = 180;
+    SET_xBinSz = (SET_xmax - SET_xmin)/60; SET_yBinSz = (SET_xmax - SET_xmin)/60;
+    
+    
+    x_edges = SET_xmin:SET_xBinSz:SET_xmax;
+    y_edges = SET_ymin:SET_yBinSz:SET_ymax;
+    
+    % set up gaussian
+    kernel = gausskernel([4 4],2); % 2d gaussian in bins
+    
+      % compute occupancy
+    occ_hist = hist3(out.pos.data(1:2,:)', 'edges', {y_edges x_edges});
+%     occ_hist = histcn(out.pos.data(1:2,:)',y_edges,x_edges); % 2-D version of histc()
+    low_occ_idx = find(occ_hist <4 ); 
+    occ_hist(low_occ_idx) = 0; 
+
+%     occ_hist = conv2(occ_hist,kernel,'same');
+    
+    no_occ_idx = find(occ_hist == 0 ); % NaN out bins never visited
+    occ_hist(no_occ_idx) = NaN;
+%     
+    occ_hist = occ_hist .* mode(diff(out.pos.tvec)); % convert samples to seconds using video frame rate (30 Hz)
+
+    subplot(1,3,1)
+    pcolor(occ_hist'); shading flat; axis off; c =colorbar;
+    c.Label.String = 'nFrames'; c.Label.FontSize = 12; 
+    c.Ticks = [min(c.Ticks) max(c.Ticks)];
+    a = get(c, 'position');
+    set(c,'Position',[a(1) a(2) 0.025 0.2]);
+    set(gca, 'yDir', 'reverse')
+    title('occupancy');
+    
+
+    % get the spike map
+    spk_hist = hist3([spk_x, spk_y], 'edges', {y_edges x_edges});
+%         spk_hist = histcn([spk_x, spk_y],y_edges,x_edges);
+    
+%     spk_hist = conv2(spk_hist,kernel,'same');  
+    spk_hist(no_occ_idx) = NaN;
+    
+    subplot(1,3,2)
+    pcolor(spk_hist'); shading flat; axis off; c=colorbar;
+    c.Label.String = 'nSpikes'; c.Label.FontSize = 12; 
+    c.Ticks = [min(c.Ticks) max(c.Ticks)];
+    a = get(c, 'position');
+    set(c,'Position',[a(1) a(2) 0.025 0.2]);
+    set(gca, 'yDir', 'reverse')
+
+    title('spikes');
+    
+    % rate map
+    tc = spk_hist./occ_hist;
+    nan_idx = isnan(tc); 
+    tc(nan_idx) = 0; 
+    tc = conv2(tc,kernel,'same');
+    tc(no_occ_idx) = NaN;
+
+    
+    subplot(1,3,3)
+    pcolor(tc'); shading flat; axis off; c= colorbar; 
+    c.Label.String = 'Hz'; c.Label.FontSize = 12; 
+    c.Ticks = [min(c.Ticks) max(c.Ticks)];
+    a = get(c, 'position');
+    set(c,'Position',[a(1) a(2) 0.025 0.2]);
+    set(gca, 'yDir', 'reverse')
+    title('entry rate map');
+        
+        SetFigure([], gcf);
+    set(gcf, 'position', [178,418,1578,468]); 
+
+    saveas(gcf, ['Zone_plots' filesep out.S.label{1}(1:end-2) '_entry_rate.png'])
+    saveas(gcf, ['Zone_plots' filesep out.S.label{1}(1:end-2) '_entry_rate.fig'])
+    print(gcf,['Zone_plots' filesep out.S.label{1}(1:end-2) '_entry_rate'],'-depsc')
+    
     
     %% add the individual feeders to the overall PETH [within trial zscore]
 % figure(1001)
@@ -386,6 +638,7 @@ out_temp = out;
 out = All_trial;
 out.S = out_temp.S;
 out.pos = out_temp.pos;
+out.velo = out_temp.velo; 
 % out.Shuff = Shuff; 
 out.Zone_names = Zone_names;
 out.Zone_cord = Zone_cord;
