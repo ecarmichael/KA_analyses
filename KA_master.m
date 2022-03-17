@@ -51,7 +51,9 @@ for iS = 1:length(sess_list)
         
         parts = strsplit(cells_to_process{iT}, filesep);
         this_file = parts{end};
-        This_cell = KA_screener_approach(this_file); 
+        This_cell = KA_screener_zscore(this_file);
+
+%         This_cell = KA_screener_approach(this_file); 
 %         This_cell = KA_screener(this_file);
 %         This_cell = KA_screener_feeder(this_file);
 

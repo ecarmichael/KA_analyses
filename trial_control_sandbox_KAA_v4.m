@@ -67,10 +67,13 @@ while etime(clock, t0) < total_time
             sound(Y1, Fs)
             
             freq = 4; % in Hz
-            freq = 1/freq;
-            t_laser_start = 0;
+            t_laser_start = clock;
             t_laser_end = 5;
-            while t_laser_start < t_laser_end
+            
+            p_start = clock;
+            p1 = 1; p2 = 1;
+            while etime(clock, t_laser_start) < t_laser_end
+                % check the caps
                 if cap_1_value > 0.5
                     licks_1(end+1) = clock;
                     disp(['lick1:' num2str(licks_1(end))])
@@ -80,16 +83,26 @@ while etime(clock, t0) < total_time
                     licks_2(end+1) = clock;
                     disp(['lick2:' num2str(licks_2(end))])
                 end
-                writeDigitalPin(a_board, 'D6', 0)
-                disp('on')
-                    t_laser_start = t_laser_start+freq/2;
-                pause(freq/2)
-                writeDigitalPin(a_board, 'D6', 1)
-                disp('off')
-                    t_laser_start = t_laser_start+freq/2;
-                pause(freq/2)
+                
+                if etime(clock, p_start) < (1/freq)/2 %pulse on
+                    if p1 == 1
+                        writeDigitalPin(a_board, 'D6', 1) % turn the TTL on
+                        fprintf('on \n') % print on first instance
+                        p1 = 0;
+                    end
+                elseif etime(clock, p_start) >= (1/freq)/2 && etime(clock, p_start) < (1/freq) % pulse off
+                    if p2 == 1
+                        fprintf('off \n')
+                        writeDigitalPin(a_board, 'D6', 0); % turn TTl off
+                        p2 = 0;
+                    end
+                elseif etime(clock, p_start) >= (1/freq) % reset the pulse cycle.
+                    p_start = clock;
+                    p1 = 1; p2 = 1;
+                    disp('cycle')
+                end
             end
-            disp(etime(clock,tone_t))
+
             
             %while etime(clock, tone_t) < 5
                 
@@ -143,10 +156,13 @@ while etime(clock, t0) < total_time
             tic; sound(Y2, Fs); toc; % seems to take between 0.01 and .33 seconds to play the tone.
             
             freq = 4; % in Hz
-            freq = 1/freq;
-            t_laser_start = 0;
+   t_laser_start = clock;
             t_laser_end = 5;
-            while t_laser_start < t_laser_end
+            
+            p_start = clock;
+            p1 = 1; p2 = 1;
+            while etime(clock, t_laser_start) < t_laser_end
+                % check the caps
                 if cap_1_value > 0.5
                     licks_1(end+1) = clock;
                     disp(['lick1:' num2str(licks_1(end))])
@@ -156,16 +172,25 @@ while etime(clock, t0) < total_time
                     licks_2(end+1) = clock;
                     disp(['lick2:' num2str(licks_2(end))])
                 end
-                writeDigitalPin(a_board, 'D6', 0)
-                disp('on')
-                    t_laser_start = t_laser_start+freq/2;
-                pause(freq/2)
-                writeDigitalPin(a_board, 'D6', 1)
-                disp('off')
-                    t_laser_start = t_laser_start+freq/2;
-                pause(freq/2)
+                
+                if etime(clock, p_start) < (1/freq)/2 %pulse on
+                    if p1 == 1
+                        writeDigitalPin(a_board, 'D6', 1) % turn the TTL on
+                        fprintf('on \n') % print on first instance
+                        p1 = 0;
+                    end
+                elseif etime(clock, p_start) >= (1/freq)/2 && etime(clock, p_start) < (1/freq) % pulse off
+                    if p2 == 1
+                        fprintf('off \n')
+                        writeDigitalPin(a_board, 'D6', 0); % turn TTl off
+                        p2 = 0;
+                    end
+                elseif etime(clock, p_start) >= (1/freq) % reset the pulse cycle.
+                    p_start = clock;
+                    p1 = 1; p2 = 1;
+                    disp('cycle')
+                end
             end
-            disp(etime(clock,tone_t))
             %while etime(clock, tone_t) < 5
                 
             %    clf

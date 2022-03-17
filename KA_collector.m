@@ -178,6 +178,19 @@ east_sig_rew_post = all_sig;
 south_sig_rew_post = all_sig;
 west_sig_rew_post = all_sig;
 
+% SD sig measures. 
+all_SD_rew_pre = all_sig;
+north_SD_rew_pre = all_sig;
+east_SD_rew_pre = all_sig;
+south_SD_rew_pre = all_sig;
+west_SD_rew_pre = all_sig;
+
+all_SD_rew_post = all_sig;
+north_SD_rew_post = all_sig;
+east_SD_rew_post = all_sig;
+south_SD_rew_post = all_sig;
+west_SD_rew_post = all_sig;
+
 
 all_out_perc  = all_out;
 
@@ -338,8 +351,10 @@ for iF = 1:length(file_names)
         east_sig_rew_pre.(this_sess) = east_sig_rew_pre.(this_sess) == 1;
     end
     
-    
-    
+    all_z_diff_rew_pre.(this_sess) = [all_z_diff_rew_pre.(this_sess) This_cell.act_stim_];
+    all_z_diff_act_pre.(this_sess) = [all_z_diff_rew_pre.(this_sess) This_cell.act_stim_diff{5}];
+    all_z_diff_pre_pre.(this_sess) = [all_z_diff_rew_pre.(this_sess) This_cell.pre_stim_diff{5}];
+
     % % change from pre to post reward
     all_out_perc.(this_sess) = [all_out_perc.(this_sess), This_cell.post_stim_means{5} / This_cell.pre_stim_means{5}];
     
@@ -1937,45 +1952,44 @@ fprintf('<strong>R1-3 Reward mod: %2.2f%%</strong>\n', (sum(all_mat_sig_act(all_
 
 fprintf('\n')
 % overall
-any_sig_mod = (all_mat_sig_act | all_mat_sig_rew); 
-fprintf('<strong>Overall Reward or Action mod: %2.0f</strong>\n', (sum(any_sig_mod)));
-fprintf('<strong>C1-3 Reward or Action mod: %2.0f</strong>\n', (sum(any_sig_mod(all_nCells_c_ord ==1))));
+any_sig_mod = (all_mat_sig_act ) +( all_mat_sig_rew); 
+fprintf('<strong>Overall Reward or Action mod: %2.0f / %2.0f</strong>\n', (sum(any_sig_mod)), length(any_sig_mod));
+fprintf('<strong>C1-3 Reward or Action mod: %2.0f / %2.0f</strong>\n', (sum(any_sig_mod(all_nCells_c_ord ==1))), length(any_sig_mod(all_nCells_c_ord ==1)));
 O13 = ismember(all_mat_order, [4:6]);
-fprintf('<strong>O1-3 Reward or Action mod: %2.0f</strong>\n', (sum(any_sig_mod(O13))));
+fprintf('<strong>O1-3 Reward or Action mod: %2.0f / %2.0f</strong>\n', (sum(any_sig_mod(O13))), length(any_sig_mod(O13)));
 O47 = ismember(all_mat_order, [7 8 9 10]);
-fprintf('<strong>O4-7 Reward or Action mod: %2.0f</strong>\n',  (sum(any_sig_mod(O47))));
-fprintf('<strong>R1-3 Reward or Action mod: %2.0f</strong>\n', (sum(any_sig_mod(all_nCells_c_ord ==4))));
+fprintf('<strong>O4-7 Reward or Action mod: %2.0f / %2.0f</strong>\n',  (sum(any_sig_mod(O47))), length(any_sig_mod(O47)));
+fprintf('<strong>R1-3 Reward or Action mod: %2.0f / %2.0f</strong>\n', (sum(any_sig_mod(all_nCells_c_ord ==4))), length(any_sig_mod(all_nCells_c_ord ==4)));
 fprintf('_____________________\n')
 
 
 any_sig_mod = (all_mat_sig_act & all_mat_sig_rew); 
-fprintf('<strong>Overall Reward & Action mod: %2.0f</strong>\n', (sum(any_sig_mod)));
-fprintf('<strong>C1-3 Reward & Action mod: %2.0f</strong>\n', (sum(any_sig_mod(all_nCells_c_ord ==1))));
+fprintf('<strong>Overall Reward & Action mod: %2.0f / %2.0f</strong>\n', (sum(any_sig_mod)), length(any_sig_mod));
+fprintf('<strong>C1-3 Reward & Action mod: %2.0f / %2.0f</strong>\n', (sum(any_sig_mod(all_nCells_c_ord ==1))), length(any_sig_mod(all_nCells_c_ord ==1)));
 O13 = ismember(all_mat_order, [4:6]);
-fprintf('<strong>O1-3 Reward & Action mod: %2.0f</strong>\n', (sum(any_sig_mod(O13))));
+fprintf('<strong>O1-3 Reward & Action mod: %2.0f / %2.0f</strong>\n', (sum(any_sig_mod(O13))), length(any_sig_mod(O13)));
 O47 = ismember(all_mat_order, [7 8 9 10]);
-fprintf('<strong>O4-7 Reward & Action mod: %2.0f</strong>\n',  (sum(any_sig_mod(O47))));
-fprintf('<strong>R1-3 Reward & Action mod: %2.0f</strong>\n', (sum(any_sig_mod(all_nCells_c_ord ==4))));
+fprintf('<strong>O4-7 Reward & Action mod: %2.0f / %2.0f</strong>\n',  (sum(any_sig_mod(O47))), length(any_sig_mod(O47)));
+fprintf('<strong>R1-3 Reward & Action mod: %2.0f / %2.0f</strong>\n', (sum(any_sig_mod(all_nCells_c_ord ==4))), length(any_sig_mod(all_nCells_c_ord ==4)));
 
 fprintf('_____________________\n')
 
 % overall
-fprintf('<strong>Overall Action mod: %2.0f</strong>\n', (sum(all_mat_sig_rew)));
-fprintf('<strong>C1-3 Action mod: %2.0f</strong>\n', (sum(all_mat_sig_rew(all_nCells_c_ord ==1))));
+fprintf('<strong>Overall Action mod: %2.0f / %2.0f</strong>\n', (sum(all_mat_sig_rew)), length((all_mat_sig_rew)));
+fprintf('<strong>C1-3 Action mod: %2.0f / %2.0f</strong>\n', (sum(all_mat_sig_rew(all_nCells_c_ord ==1))), length((all_mat_sig_rew(all_nCells_c_ord ==1))));
 O13 = ismember(all_mat_order, [4:6]);
-fprintf('<strong>O1-3 Action mod: %2.0f</strong>\n', (sum(all_mat_sig_rew(O13))));
+fprintf('<strong>O1-3 Action mod: %2.0f / %2.0f</strong>\n', (sum(all_mat_sig_rew(O13))), length(all_mat_sig_rew(O13)));
 O47 = ismember(all_mat_order, [7 8 9 10]);
-fprintf('<strong>O4-7 Action mod: %2.0f</strong>\n',  (sum(all_mat_sig_rew(O47))));
-fprintf('<strong>R1-3 Action mod: %2.0f</strong>\n', (sum(all_mat_sig_rew(all_nCells_c_ord ==4))));
+fprintf('<strong>O4-7 Action mod: %2.0f / %2.0f</strong>\n',  (sum(all_mat_sig_rew(O47))), length(all_mat_sig_rew(O47)));
+fprintf('<strong>R1-3 Action mod: %2.0f / %2.0f</strong>\n', (sum(all_mat_sig_rew(all_nCells_c_ord ==4))), length(all_mat_sig_rew(all_nCells_c_ord ==4)));
 
 fprintf('_____________________\n')
-% overall
-fprintf('<strong>Overall Reward mod: %2.0f</strong>\n', sum(all_mat_sig_act));
-fprintf('<strong>C1-3 Reward mod: %2.0f</strong>\n', (sum(all_mat_sig_act(all_nCells_c_ord ==1))));
+fprintf('<strong>Overall Reward mod: %2.0f / %2.0f</strong>\n', (sum(all_mat_sig_act)), length((all_mat_sig_act)));
+fprintf('<strong>C1-3 Reward mod: %2.0f / %2.0f</strong>\n', (sum(all_mat_sig_act(all_nCells_c_ord ==1))), length((all_mat_sig_act(all_nCells_c_ord ==1))));
 O13 = ismember(all_mat_order, [4:6]);
-fprintf('<strong>O1-3 Reward mod: %2.0f</strong>\n', (sum(all_mat_sig_act(O13))));
+fprintf('<strong>O1-3 Reward mod: %2.0f / %2.0f</strong>\n', (sum(all_mat_sig_act(O13))), length(all_mat_sig_act(O13)));
 O47 = ismember(all_mat_order, [7 8 9 10]);
-fprintf('<strong>O4-7 Reward mod: %2.0f</strong>\n',  (sum(all_mat_sig_act(O47))));
-fprintf('<strong>R1-3 Reward mod: %2.0f</strong>\n', (sum(all_mat_sig_act(all_nCells_c_ord ==4))));
+fprintf('<strong>O4-7 Reward mod: %2.0f / %2.0f</strong>\n',  (sum(all_mat_sig_act(O47))), length(all_mat_sig_act(O47)));
+fprintf('<strong>R1-3 Reward mod: %2.0f / %2.0f</strong>\n', (sum(all_mat_sig_act(all_nCells_c_ord ==4))), length(all_mat_sig_act(all_nCells_c_ord ==4)));
 
 
