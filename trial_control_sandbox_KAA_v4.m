@@ -118,12 +118,16 @@ while etime(clock, t0) < total_time
             % edited by KAA to send TTL via arduino, D2 is the 2nd digital
             % pin, will be connected to Outcome 1
             valve_t = clock;
+            if etime(clock, valve_t) < 0.1
             writeDigitalPin(a_board, 'D2', 0)
-            pause(0.1)
+%             pause(0.1)
+            elseif etime(clock, valve_t) > 0.1 && etime(clock, valve_t) <= 0.5
             writeDigitalPin(a_board, 'D2', 1)
-            pause(0.5)
+%             pause(0.5)
+            elseif etime(clock, valve_t) < 0.5
             writeDigitalPin(a_board, 'D2', 0)
-            pause(5.0)
+%             pause(5.0)
+            end
             post_licks_1 = []; %trying to sample post-tone licks during 5 second reward bin (see pause in line above)
             post_licks_2 = [];
             if cap_1_value > 0.5
@@ -207,13 +211,24 @@ while etime(clock, t0) < total_time
             % do a thing like fire valve; log the time.
             % edited by KA to send TTL via arduino, pin D4 sends TTL to
             % Outcome 2
+%             valve_t = clock;
+%             writeDigitalPin(a_board, 'D4', 0)
+%             pause(0.1)
+%             writeDigitalPin(a_board, 'D4', 1)
+%             pause(0.5)
+%             writeDigitalPin(a_board, 'D4', 0)
+%             pause(5.0)
             valve_t = clock;
+            if etime(clock, valve_t) < 0.1
             writeDigitalPin(a_board, 'D4', 0)
-            pause(0.1)
+%             pause(0.1)
+            elseif etime(clock, valve_t) > 0.1 && etime(clock, valve_t) <= 0.5
             writeDigitalPin(a_board, 'D4', 1)
-            pause(0.5)
+%             pause(0.5)
+            elseif etime(clock, valve_t) < 0.5
             writeDigitalPin(a_board, 'D4', 0)
-            pause(5.0)
+%             pause(5.0)
+            end
             post_licks_1 = []; % same issue about post-tone reward bin lick logging
             post_licks_2 = [];
             if cap_1_value > 0.5
