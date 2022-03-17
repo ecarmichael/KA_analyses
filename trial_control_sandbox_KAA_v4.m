@@ -102,6 +102,7 @@ while etime(clock, t0) < total_time
                     disp('cycle')
                 end
             end
+            writeDigitalPin(a_board, 'D6', 0); % turn TTl off
 
             
             %while etime(clock, tone_t) < 5
@@ -191,6 +192,8 @@ while etime(clock, t0) < total_time
                     disp('cycle')
                 end
             end
+            writeDigitalPin(a_board, 'D6', 0); % turn TTl off
+
             %while etime(clock, tone_t) < 5
                 
             %    clf
