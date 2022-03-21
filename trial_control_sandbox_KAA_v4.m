@@ -38,11 +38,11 @@ xlim([.5 .75])
 ylim([.45 .55])
 
 t0 = clock;
-    t_state = t0;  % get the time at the end of the state, used to know when to start the next state.
+t_state = t0;  % get the time at the end of the state, used to know when to start the next state.
 %%
 while etime(clock, t0) < total_time
     this_time = sprintf('%2.1f', etime(clock, t0)); % time in a nice string format.
-
+    
     % I want the capacitance sensor to run here (continuous
     % sampling of the capacitance, and if cap_value > x, log a lick event
     % sample code below (line 49 and 50; 51 and 52)
@@ -50,15 +50,15 @@ while etime(clock, t0) < total_time
     sprintf('%d', cap_1_value);
     cap_2_value = readDigitalPin(a_board, 'D8');
     sprintf('%d', cap_2_value);
-             
-    if etime(clock, t_state) > 10 % change this to the initial time. 
+    
+    if etime(clock, t_state) > 10 % change this to the initial time.
         if iState == 0 % move to a state;
             iState = datasample(states, 1);
             while length(prior_states) >= 3 &&  sum(prior_states(end-2:end) == iState) ==3 % check if the same state has appeared three times in a row.
                 iState = datasample(states, 1);
             end
         end
-
+        
         if iState == 1
             tone_t = clock; % get elapsed time.
             licks_1 = []; %initialize licks
@@ -103,15 +103,15 @@ while etime(clock, t0) < total_time
                 end
             end
             writeDigitalPin(a_board, 'D6', 0); % turn TTl off
-
+            
             
             %while etime(clock, tone_t) < 5
-                
-             %   clf
-             %   text(.5, .5, ['Time: ' this_time 's'], 'FontSize', 24);
-             %   text(.5, .4, ['Trial: ' sprintf('%2.0f',length(trials)+1)  ], 'FontSize', 24);
-             %   text(.5, .3, ['State: Tone 1 ' sprintf('%2.1f', etime(clock, tone_t))], 'FontSize', 24, 'color', 'b');
-             %   drawnow
+            
+            %   clf
+            %   text(.5, .5, ['Time: ' this_time 's'], 'FontSize', 24);
+            %   text(.5, .4, ['Trial: ' sprintf('%2.0f',length(trials)+1)  ], 'FontSize', 24);
+            %   text(.5, .3, ['State: Tone 1 ' sprintf('%2.1f', etime(clock, tone_t))], 'FontSize', 24, 'color', 'b');
+            %   drawnow
             %end
             
             % do a thing like fire valve; log the time.
@@ -119,14 +119,14 @@ while etime(clock, t0) < total_time
             % pin, will be connected to Outcome 1
             valve_t = clock;
             if etime(clock, valve_t) < 0.1
-            writeDigitalPin(a_board, 'D2', 0)
-%             pause(0.1)
+                writeDigitalPin(a_board, 'D2', 0)
+                %             pause(0.1)
             elseif etime(clock, valve_t) > 0.1 && etime(clock, valve_t) <= 0.5
-            writeDigitalPin(a_board, 'D2', 1)
-%             pause(0.5)
+                writeDigitalPin(a_board, 'D2', 1)
+                %             pause(0.5)
             elseif etime(clock, valve_t) < 0.5
-            writeDigitalPin(a_board, 'D2', 0)
-%             pause(5.0)
+                writeDigitalPin(a_board, 'D2', 0)
+                %             pause(5.0)
             end
             post_licks_1 = []; %trying to sample post-tone licks during 5 second reward bin (see pause in line above)
             post_licks_2 = [];
@@ -151,7 +151,7 @@ while etime(clock, t0) < total_time
             % add in other details.
             
             iState = 0; % return to 0 state.
-            t_state = clock;  % get the time at the end of the state, used to know when to start the next state. 
+            t_state = clock;  % get the time at the end of the state, used to know when to start the next state.
         elseif iState == 2
             
             % play a tone; log the time.
@@ -161,7 +161,7 @@ while etime(clock, t0) < total_time
             tic; sound(Y2, Fs); toc; % seems to take between 0.01 and .33 seconds to play the tone.
             
             freq = 4; % in Hz
-   t_laser_start = clock;
+            t_laser_start = clock;
             t_laser_end = 5;
             
             p_start = clock;
@@ -197,9 +197,9 @@ while etime(clock, t0) < total_time
                 end
             end
             writeDigitalPin(a_board, 'D6', 0); % turn TTl off
-
+            
             %while etime(clock, tone_t) < 5
-                
+            
             %    clf
             %    text(.5, .5, ['Time: ' this_time 's'], 'FontSize', 24)
             %    text(.5, .4, ['Trial: ' sprintf('%2.0f',length(trials)+1)  ], 'FontSize', 24)
@@ -211,23 +211,23 @@ while etime(clock, t0) < total_time
             % do a thing like fire valve; log the time.
             % edited by KA to send TTL via arduino, pin D4 sends TTL to
             % Outcome 2
-%             valve_t = clock;
-%             writeDigitalPin(a_board, 'D4', 0)
-%             pause(0.1)
-%             writeDigitalPin(a_board, 'D4', 1)
-%             pause(0.5)
-%             writeDigitalPin(a_board, 'D4', 0)
-%             pause(5.0)
+            %             valve_t = clock;
+            %             writeDigitalPin(a_board, 'D4', 0)
+            %             pause(0.1)
+            %             writeDigitalPin(a_board, 'D4', 1)
+            %             pause(0.5)
+            %             writeDigitalPin(a_board, 'D4', 0)
+            %             pause(5.0)
             valve_t = clock;
             if etime(clock, valve_t) < 0.1
-            writeDigitalPin(a_board, 'D4', 0)
-%             pause(0.1)
+                writeDigitalPin(a_board, 'D4', 0)
+                %             pause(0.1)
             elseif etime(clock, valve_t) > 0.1 && etime(clock, valve_t) <= 0.5
-            writeDigitalPin(a_board, 'D4', 1)
-%             pause(0.5)
+                writeDigitalPin(a_board, 'D4', 1)
+                %             pause(0.5)
             elseif etime(clock, valve_t) < 0.5
-            writeDigitalPin(a_board, 'D4', 0)
-%             pause(5.0)
+                writeDigitalPin(a_board, 'D4', 0)
+                %             pause(5.0)
             end
             post_licks_1 = []; % same issue about post-tone reward bin lick logging
             post_licks_2 = [];
@@ -237,7 +237,7 @@ while etime(clock, t0) < total_time
             if cap_2_value > 0.5
                 post_licks_2 = clock;
             end
-
+            
             % log it and return to 0 state
             prior_states(end+1) = iState;
             % save the output as 'trials' with a bunch of informaiton.
