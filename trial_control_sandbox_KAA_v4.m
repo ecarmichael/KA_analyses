@@ -75,12 +75,12 @@ while etime(clock, t0) < total_time
             while etime(clock, t_laser_start) < t_laser_end
                 % check the caps
                 if cap_1_value > 0.5
-                    licks_1(end+1) = clock;
+                    licks_1(end+1) = etime(clock, t0);
                     disp(['lick1:' num2str(licks_1(end))])
                 end
                 
                 if cap_2_value > 0.5
-                    licks_2(end+1) = clock;
+                    licks_2(end+1) = etime(clock, t0);
                     disp(['lick2:' num2str(licks_2(end))])
                 end
                 
@@ -131,10 +131,10 @@ while etime(clock, t0) < total_time
             post_licks_1 = []; %trying to sample post-tone licks during 5 second reward bin (see pause in line above)
             post_licks_2 = [];
             if cap_1_value > 0.5
-                post_licks_1 = clock;
+                post_licks_1 = etime(clock, t0);
             end
             if cap_2_value > 0.5
-                post_licks_2 = clock;
+                post_licks_2 = etime(clock, t0);
             end
             
             % log it and return to 0 state
@@ -169,12 +169,12 @@ while etime(clock, t0) < total_time
             while etime(clock, t_laser_start) < t_laser_end
                 % check the caps
                 if cap_1_value > 0.5
-                    licks_1(end+1) = clock;
+                    licks_1(end+1) = etime(clock, t0);
                     disp(['lick1:' num2str(licks_1(end))])
                 end
                 
                 if cap_2_value > 0.5
-                    licks_2(end+1) = clock;
+                    licks_2(end+1) = etime(clock, t0);
                     disp(['lick2:' num2str(licks_2(end))])
                 end
                 
