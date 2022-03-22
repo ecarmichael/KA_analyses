@@ -47,10 +47,10 @@ while etime(clock, t0) < total_time
     % sampling of the capacitance, and if cap_value > x, log a lick event
     % sample code below (line 49 and 50; 51 and 52)
     while readDigitalPin(a_board, 'D10') ~=0
-    sprintf('%d', cap_1_value)
+    sprintf('Cap1: %2.2f', etime(clock, t0))
     end
     while readDigitalPin(a_board, 'D8') ~=0
-    sprintf('%d', cap_2_value)
+    sprintf('Cap1: %2.2f', etime(clock, t0))
     end
     
     if etime(clock, t_state) > 10 % change this to the initial time.
@@ -76,12 +76,12 @@ while etime(clock, t0) < total_time
             p1 = 1; p2 = 1;
             while etime(clock, t_laser_start) < t_laser_end
                 % check the caps
-                if cap_1_value > 0.5
+                if readDigitalPin(a_board, 'D10') > 0.5
                     licks_1(end+1) = etime(clock, t0);
                     disp(['lick1:' num2str(licks_1(end))])
                 end
                 
-                if cap_2_value > 0.5
+                if readDigitalPin(a_board, 'D8') > 0.5
                     licks_2(end+1) = etime(clock, t0);
                     disp(['lick2:' num2str(licks_2(end))])
                 end
@@ -132,10 +132,10 @@ while etime(clock, t0) < total_time
             end
             post_licks_1 = []; %trying to sample post-tone licks during 5 second reward bin (see pause in line above)
             post_licks_2 = [];
-            if cap_1_value > 0.5
+            if readDigitalPin(a_board, 'D10') > 0.5
                 post_licks_1(end+1) = etime(clock, t0);
             end
-            if cap_2_value > 0.5
+            if readDigitalPin(a_board, 'D8') > 0.5
                 post_licks_2(end+1) = etime(clock, t0);
             end
             
@@ -170,12 +170,12 @@ while etime(clock, t0) < total_time
             p1 = 1; p2 = 1;
             while etime(clock, t_laser_start) < t_laser_end
                 % check the caps
-                if cap_1_value > 0.5
+                if readDigitalPin(a_board, 'D10') > 0.5
                     licks_1(end+1) = etime(clock, t0);
                     disp(['lick1:' num2str(licks_1(end))])
                 end
                 
-                if cap_2_value > 0.5
+                if readDigitalPin(a_board, 'D8') > 0.5
                     licks_2(end+1) = etime(clock, t0);
                     disp(['lick2:' num2str(licks_2(end))])
                 end
@@ -233,10 +233,10 @@ while etime(clock, t0) < total_time
             end
             post_licks_1 = []; % same issue about post-tone reward bin lick logging
             post_licks_2 = [];
-            if cap_1_value > 0.5
+            if readDigitalPin(a_board, 'D10') > 0.5
                 post_licks_1(end+1) = etime(clock, t0);
             end
-            if cap_2_value > 0.5
+            if readDigitalPin(a_board, 'D8') > 0.5
                 post_licks_2(end+1) = etime(clock, t0);
             end
             
