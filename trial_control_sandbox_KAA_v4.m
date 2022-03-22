@@ -47,11 +47,12 @@ while etime(clock, t0) < total_time
     % sampling of the capacitance, and if cap_value > x, log a lick event
     % sample code below (line 49 and 50; 51 and 52)
     while readDigitalPin(a_board, 'D10') ~=0
-    sprintf('%d', cap_1_value)
+    sprintf('Cap1: %d', cap_1_value)
     end
     while readDigitalPin(a_board, 'D8') ~=0
     sprintf('%d', cap_2_value)
     end
+    
     
     if etime(clock, t_state) > 10 % change this to the initial time.
         if iState == 0 % move to a state;
