@@ -46,10 +46,12 @@ while etime(clock, t0) < total_time
     % I want the capacitance sensor to run here (continuous
     % sampling of the capacitance, and if cap_value > x, log a lick event
     % sample code below (line 49 and 50; 51 and 52)
-    cap_1_value = readDigitalPin(a_board, 'D10');
-    sprintf('%d', cap_1_value);
-    cap_2_value = readDigitalPin(a_board, 'D8');
-    sprintf('%d', cap_2_value);
+    while readDigitalPin(a_board, 'D10') ~=0
+    sprintf('%d', cap_1_value)
+    end
+    while readDigitalPin(a_board, 'D8') ~=0
+    sprintf('%d', cap_2_value)
+    end
     
     if etime(clock, t_state) > 10 % change this to the initial time.
         if iState == 0 % move to a state;
