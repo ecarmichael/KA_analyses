@@ -128,6 +128,7 @@ while etime(clock, t0) < total_time
             % pin, will be connected to Outcome 1
             valve_t = clock; % relative time for valve
             log_tog = 1; % for logging the time just once per fire.
+            while etime(clock, valve_t) <0.5
             if etime(clock, valve_t) < 0.1
                 writeDigitalPin(a_board, 'D2', 0)
                 disp('valve 1 off')
@@ -135,9 +136,10 @@ while etime(clock, t0) < total_time
                 writeDigitalPin(a_board, 'D2', 1)
                 disp('valve 1 on')
                 if log_tog; t_valve1(end+1) = etime(clock, t0); end
-            elseif etime(clock, valve_t) > 0.5
-                writeDigitalPin(a_board, 'D2', 0)
             end
+            end
+            writeDigitalPin(a_board, 'D2', 0) % ensure the pin is set low after. 
+
             log_tog = 0;
             % log it and return to 0 state
             prior_states(end+1) = iState;
@@ -200,16 +202,19 @@ while etime(clock, t0) < total_time
             % edited by KA to send TTL via arduino, pin D4 sends TTL to
             % Outcome 2
 
-            valve_t = clock;
+            valve_t = clock; % relative time for valve
             log_tog = 1; % for logging the time just once per fire.
+            while etime(clock, valve_t) <0.5
             if etime(clock, valve_t) < 0.1
                 writeDigitalPin(a_board, 'D4', 0)
-            elseif etime(clock, valve_t) > 0.1 && etime(clock, valve_t) <= 0.5
+                disp('valve 1 off')
+            elseif etime(clock, valve_t) >= 0.1 && etime(clock, valve_t) <= 0.5
                 writeDigitalPin(a_board, 'D4', 1)
+                disp('valve 1 on')
                 if log_tog; t_valve2(end+1) = etime(clock, t0); end
-            elseif etime(clock, valve_t) > 0.5
-                writeDigitalPin(a_board, 'D4', 0)
             end
+            end
+            writeDigitalPin(a_board, 'D4', 0) % ensure the pin is set low after. 
             log_tog = 0;
             
             % log it and return to 0 state
