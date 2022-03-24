@@ -127,11 +127,13 @@ while etime(clock, t0) < total_time
             % edited by KAA to send TTL via arduino, D2 is the 2nd digital
             % pin, will be connected to Outcome 1
             valve_t = clock; % relative time for valve
-            log_tog = 1; % for logging the time just once per fire. 
+            log_tog = 1; % for logging the time just once per fire.
             if etime(clock, valve_t) < 0.1
                 writeDigitalPin(a_board, 'D2', 0)
-            elseif etime(clock, valve_t) > 0.1 && etime(clock, valve_t) <= 0.5
+                disp('valve 1 off')
+            elseif etime(clock, valve_t) >= 0.1 && etime(clock, valve_t) <= 0.5
                 writeDigitalPin(a_board, 'D2', 1)
+                disp('valve 1 on')
                 if log_tog; t_valve1(end+1) = etime(clock, t0); end
             elseif etime(clock, valve_t) > 0.5
                 writeDigitalPin(a_board, 'D2', 0)
