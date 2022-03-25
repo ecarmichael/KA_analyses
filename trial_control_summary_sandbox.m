@@ -1,8 +1,21 @@
 %% try some plots of the events data
 
+
+%% convert jittery signals to first ts
+
+enames = {'t_state1', 't_tone1', 't_valve1','t_state2','t_tone2', 't_valve2', 't_laser_on'}; 
+for iE = 1:length(enames)
+    
+    this_diff = diff(events.(enames{iE})); 
+    jump_idx = find(this_diff > 1); 
+    
+    events_clean.(enames{iE}) = events.(enames{iE})([1 jump_idx+1]);
+
+end
+
 %% generate some rates
 bins = 0.05;
-t = 0:bins:90;
+t = 0:bins:100;
 
 tbin_edges = t:bins:t(end);
 tbin_centers = tbin_edges(1:end-1)+bins/2;
@@ -28,6 +41,14 @@ S_gau_sdf = conv2(lk_count,gk,'same'); % convolve with gaussian window
 
 lk2 = [S_gau_sdf S_gau_sdf(end)];
 
+
+% interp to a finer resolution
+
+bins = 0.0001;
+ti = t(1):bins:t(end);
+
+lk1 = interp1(t, lk1, ti);
+lk2 = interp1(t, lk2, ti);
 
 %%
 c_ord = linspecer(9);
@@ -59,9 +80,9 @@ ylim([.5 length(enames)+.5])
 
 ax(3) = subplot(4,1,4);
 hold on
-plot(t, lk1,  'color', c_ord(1,:))
+plot(ti, lk1,  'color', c_ord(1,:))
 
-plot(t, lk2,  'color', c_ord(2,:))
+plot(ti, lk2,  'color', c_ord(2,:))
 h = bar(tbin_centers,lk_count);
 set(h, 'BarWidth', 1)
 
@@ -75,4 +96,51 @@ linkaxes(ax, 'x')
 
 % get the average lick rats for states 1 and 2
 
-% for ii = 1:length(events.t_valve1)
+win = [-5 5];
+
+% valve 1 
+lk1_v1 = []; lk2_v1 = [];
+for ii = length(events_clean.t_valve1):-1:1
+   lk1_v1 = [lk1_v1; lk1(nearest_idx3(events_clean.t_valve1(ii)+win(1), ti):nearest_idx3(events_clean.t_valve1(ii)+win(2), ti))];
+   lk2_v1 = [lk2_v1;lk2(nearest_idx3(events_clean.t_valve1(ii)+win(1), ti):nearest_idx3(events_clean.t_valve1(ii)+win(2), ti))];
+end
+    
+
+% valve 1 
+lk1_v2 = []; lk2_v2 = [];
+for ii = 1:length(events_clean.t_valve2)
+   lk1_v2 = [lk1_v2; lk1(nearest_idx3(events_clean.t_valve2(ii)+win(1), ti):nearest_idx3(events_clean.t_valve2(ii)+win(2), ti))];
+   lk2_v2 = [lk2_v2;lk2(nearest_idx3(events_clean.t_valve2(ii)+win(1), ti):nearest_idx3(events_clean.t_valve2(ii)+win(2), ti))];
+end
+
+
+figure(601)
+subplot(2,1,1)
+title('Valve 1')
+hold on
+plot(-5:bins:5, mean(lk1_v1), 'color', c_ord(1,:), 'LineWidth', 2.5);
+plot(-5:bins:5, mean(lk2_v1), 'color', c_ord(2,:), 'LineWidth', 2.5);
+legend({'lick 1', 'lick 2'})
+
+% plot(-5:bins:5, mean(lk1_v1) + std(lk1_v1)/sqrt(length(lk1_v1)), '--', 'color', [c_ord(1,:) .3]);
+% plot(-5:bins:5, mean(lk1_v1) - std(lk1_v1)/sqrt(length(lk1_v1)), '--', 'color', [c_ord(1,:) .3]);
+
+% plot(-5:bins:5, mean(lk2_v1) + std(lk2_v1)/sqrt(length(lk2_v1)), '--', 'color', [c_ord(2,:) .3]);
+% plot(-5:bins:5, mean(lk2_v1) - std(lk2_v1)/sqrt(length(lk2_v1)), '--', 'color', [c_ord(2,:), .3]);
+vline(0, 'k')
+
+subplot(2,1,2)
+title('Valve 2')
+hold on
+plot(-5:bins:5, mean(lk1_v2), 'color', c_ord(1,:), 'LineWidth', 2.5);
+plot(-5:bins:5, mean(lk2_v2), 'color', c_ord(2,:), 'LineWidth', 2.5);
+
+legend({'lick 1', 'lick 2'})
+
+% plot(-5:bins:5, mean(lk1_v2) + std(lk1_v2)/sqrt(length(lk1_v2)), '--', 'color', [c_ord(1,:) .3]);
+% plot(-5:bins:5, mean(lk1_v2) - std(lk1_v2)/sqrt(length(lk1_v2)), '--', 'color', [c_ord(1,:) .3]);
+
+% plot(-5:bins:5, mean(lk2_v2) + std(lk2_v2)/sqrt(length(lk2_v2)), '--', 'color', [c_ord(2,:) .3]);
+% plot(-5:bins:5, mean(lk2_v2) - std(lk2_v2)/sqrt(length(lk2_v2)), '--', 'color', [c_ord(2,:), .3]);
+vline(0, 'k')
+    
