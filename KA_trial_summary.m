@@ -1,4 +1,9 @@
-%% try some plots of the events data
+function KA_trial_summary(events); 
+
+if nargin < 1
+    e_fname = dir('Events*.mat');
+    load(e_fname.name)
+end
 
 
 %% convert jittery signals to first ts
@@ -90,6 +95,7 @@ ylabel('licks/s')
 xlabel('time (s)')
 
 linkaxes(ax, 'x')
+SetFigure([], gcf)
 
 
 %% state based per-event
@@ -121,6 +127,7 @@ hold on
 plot(-5:bins:5, mean(lk1_v1), 'color', c_ord(1,:), 'LineWidth', 2.5);
 plot(-5:bins:5, mean(lk2_v1), 'color', c_ord(2,:), 'LineWidth', 2.5);
 legend({'lick 1', 'lick 2'})
+ylabel('licks/s');
 
 % plot(-5:bins:5, mean(lk1_v1) + std(lk1_v1)/sqrt(length(lk1_v1)), '--', 'color', [c_ord(1,:) .3]);
 % plot(-5:bins:5, mean(lk1_v1) - std(lk1_v1)/sqrt(length(lk1_v1)), '--', 'color', [c_ord(1,:) .3]);
@@ -136,6 +143,8 @@ plot(-5:bins:5, mean(lk1_v2), 'color', c_ord(1,:), 'LineWidth', 2.5);
 plot(-5:bins:5, mean(lk2_v2), 'color', c_ord(2,:), 'LineWidth', 2.5);
 
 legend({'lick 1', 'lick 2'})
+xlabel('time from valve (s)');
+ylabel('licks/s');
 
 % plot(-5:bins:5, mean(lk1_v2) + std(lk1_v2)/sqrt(length(lk1_v2)), '--', 'color', [c_ord(1,:) .3]);
 % plot(-5:bins:5, mean(lk1_v2) - std(lk1_v2)/sqrt(length(lk1_v2)), '--', 'color', [c_ord(1,:) .3]);
@@ -143,4 +152,6 @@ legend({'lick 1', 'lick 2'})
 % plot(-5:bins:5, mean(lk2_v2) + std(lk2_v2)/sqrt(length(lk2_v2)), '--', 'color', [c_ord(2,:) .3]);
 % plot(-5:bins:5, mean(lk2_v2) - std(lk2_v2)/sqrt(length(lk2_v2)), '--', 'color', [c_ord(2,:), .3]);
 vline(0, 'k')
+
+SetFigure([], gcf)
     

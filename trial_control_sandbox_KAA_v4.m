@@ -254,6 +254,8 @@ events.t_state1 = t_state1;
 events.t_state2 = t_state2;
 events.all_states = prior_states; 
 
+%% summary figure
+KA_trial_summary(events); 
 
 %% save things.
 
