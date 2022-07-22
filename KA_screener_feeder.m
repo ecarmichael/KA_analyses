@@ -107,6 +107,8 @@ h = vline(S_pix_x); h(1).Color = c_ord(3,:); h(1).LineStyle = '--'; h(2).Color =
 h = vline(W_pix_x); h.Color = c_ord(4,:); h.LineStyle = '--'; 
 h = hline(W_pix_y); h(1).Color = c_ord(4,:); h(1).LineStyle = '--'; h(2).Color = c_ord(4,:); h(2).LineStyle = '--'; 
 
+plot(median([min(out.pos.data(1,:)) max(out.pos.data(1,:))]),  median([min(out.pos.data(2,:)) max(out.pos.data(2,:))]), 'x', 'MarkerSize', 44)
+
 for iF = 1:length(FeedersFired)
     if iF == length(FeedersFired)
         this_trial.pos = restrict(out.pos, FeederTimes(iF)/1000000, out.pos.tvec(end));
@@ -170,28 +172,29 @@ for iF = 1:length(FeedersFired)
 end
 
     fprintf('Trial hit rate: %0.2f%%\n', (1 -  sum(error_trial)/length(error_trial))*100)
+legend({'path', 'N trial', 'N poke', 'N exit', 'E trial', 'E poke', 'E exit', 'S trial', 'S poke', 'S exit', 'W trial', 'W poke', 'W exit'})
 
 %% test position and heading in time
 
-% figure(1010)
-% cla
-% hold on
-% subplot(5,1,1)
-% plot(this_trial.pos.tvec, this_trial.pos.data(1,:), 'b'); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]);
-% subplot(5,1,2)
-% plot(this_trial.pos.tvec, this_trial.pos.data(2,:), 'g'); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]);
-% subplot(5,1,3)
-% plot(this_trial.pos.tvec, this_trial.pos.data(3,:), 'm'); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]);
-% subplot(5,1,4)
-% plot(this_trial.pos.tvec, this_trial.velo_smooth.data, 'r'); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]);
-% subplot(5,1,5)
-% plot(this_trial.pos.tvec, trial_idx, 'k'); ylim([-.5 1.5]); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]);
+figure(1010)
+cla
+hold on
+subplot(5,1,1)
+plot(this_trial.pos.tvec, this_trial.pos.data(1,:), 'b'); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]); ylabel('x pos'); 
+subplot(5,1,2)
+plot(this_trial.pos.tvec, this_trial.pos.data(2,:), 'g'); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]); ylabel('y pos'); 
+subplot(5,1,3)
+plot(this_trial.pos.tvec, this_trial.pos.data(3,:), 'm'); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]); ylabel('HD'); 
+subplot(5,1,4)
+plot(this_trial.pos.tvec, this_trial.velo_smooth.data, 'r'); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]); ylabel('Speed'); 
+subplot(5,1,5)
+plot(this_trial.pos.tvec, trial_idx, 'k'); ylim([-.5 1.5]); xlim([this_trial.pos.tvec(1) this_trial.pos.tvec(end)]); ylabel('Trial Idx'); 
 
 
-% legend({'X', 'Y', 'HD', 'Speed', 'Trial idx'})
-% figure(109)
-% legend({'path', 'N trial', 'N poke', 'E trial', 'E poke', 'S trial', 'S poke', 'W trial', 'W poke'})
-% 
+legend({'X', 'Y', 'HD', 'Speed', 'Trial idx'})
+figure(109)
+legend({'path', 'N trial', 'N poke', 'E trial', 'E poke', 'S trial', 'S poke', 'W trial', 'W poke'})
+
 
 %% make a replay of the tracking
 
