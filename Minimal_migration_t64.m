@@ -32,6 +32,11 @@ sess_list =   sess_list(~cellfun('isempty',sess_list));
 
 % loop over session folders
 for iS = 1:length(sess_list)
+    if ~contains(sess_list{iS}, 'done')
+            fprintf('\n<strong>%s does not have the marker %s</strong>. skipping...\n',  sess_list{iS}, 'done'); 
+
+        continue
+    end
     fprintf('\nMigrating: %s...',  sess_list{iS}); 
     cd([data_dir filesep sess_list{iS}]); % move to the session folder. 
     
