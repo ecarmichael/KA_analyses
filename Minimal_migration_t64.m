@@ -3,16 +3,17 @@ function Minimal_migration_t64
 %% pick folders
 
 % OG directory. 
-fprintf('<strong>Pick original data folder...')
+fprintf('<strong>Pick original data folder...</strong>')
 data_dir = uigetdir(cd, 'Original Data Directory'); 
 
 fprintf('<strong>Original data directory: %s</strong>\n', data_dir)
 
 
 % new directory. 
-fprintf('<strong>Pick the folder to copy everything to...')
+fprintf('<strong>Pick the folder to copy everything to...</strong>')
 new_dir = uigetdir(cd, 'New Data Directory');
 
+fprintf('<strong>Original data directory: %s</strong>\n', data_dir)
 fprintf('\n<strong>Copying data to: %s</strong>\n', new_dir)
 
 
