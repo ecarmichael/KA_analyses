@@ -1,4 +1,4 @@
-function KA_screen_cells(data_dir, out_dir)
+function KA_screen_cells(data_dir, out_dir, fname)
 %% KA_screen_cells: loop over the output figures from KA_screener in a dir
 % and collect them in some tile plots for easier screening. 
 %
@@ -6,6 +6,7 @@ function KA_screen_cells(data_dir, out_dir)
 %  Inputs:
 %       data_dir: [string]  path to the intermediate files from
 %       KA_screener
+%       fname: [string]  what to look for in the processed files. would be 'Feeder' or 'entry'...
 
 %% plot basics setup. 
 
@@ -19,7 +20,7 @@ C = 5;
 f_list = dir([data_dir filesep '**' filesep '*rate.fig']);
 
 for iF = length(f_list) :-1:1
-   if contains(f_list(iF).name, 'entry') 
+   if contains(f_list(iF).name, fname) 
        keep_idx(iF) = 0;
    else
        keep_idx(iF) = 1;
@@ -101,7 +102,7 @@ plot(velo.XData, velo.YData)
         mkdir([out_dir filesep 'Screeners']);
         mkdir([out_dir filesep 'Screeners_fig']);
         saveas(gcf, [out_dir filesep 'Screeners' filesep parts{end-1} '_' f_list(iF).name(1:5) '.png'])
-        saveas(gcf, [out_dir filesep 'Screeners_fig' filesep parts{end-1} '_' f_list(iF).name(1:5) '.png'])
+        saveas(gcf, [out_dir filesep 'Screeners_fig' filesep parts{end-1} '_' f_list(iF).name(1:5) '.fig'])
 
 end
 

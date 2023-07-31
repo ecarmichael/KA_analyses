@@ -1,13 +1,24 @@
 %% KA screener master script. 
 
 % load data
-addpath(genpath('/Users/jericcarmichael/Documents/Github/vandermeerlab/code-matlab/shared'))
-addpath(genpath('/Users/jericcarmichael/Documents/Github/EC_State'));
-addpath(genpath('/Users/jericcarmichael/Documents/Github/KA_analyses'));
-data_dir = '/Users/jericcarmichael/Downloads/filtered_eric'; % where all the NLX data is. 
-% inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs. 
-inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_approach_2p5_new_sig';
-inter_dir_app = [];
+if ismac
+    addpath(genpath('/Users/jericcarmichael/Documents/Github/vandermeerlab/code-matlab/shared'))
+    addpath(genpath('/Users/jericcarmichael/Documents/Github/EC_State'));
+    addpath(genpath('/Users/jericcarmichael/Documents/Github/KA_analyses'));
+    data_dir = '/Users/jericcarmichael/Downloads/filtered_eric'; % where all the NLX data is.
+    % inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs.
+    inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_approach_2p5_new_sig';
+elseif ispc
+    % load data
+    addpath(genpath('C:\Users\ecarm\Documents\GitHub\vandermeerlab\code-matlab\shared'))
+    addpath(genpath('C:\Users\ecarm\Documents\GitHub\EC_State'));
+    addpath(genpath('C:\Users\ecarm\Documents\GitHub\KA_analyses'));
+    data_dir = 'C:\Users\ecarm\Desktop\for_eric_only'; % where all the NLX data is.
+    inter_dir = 'J:\KA_Data\inter_reward_23';
+    inter_dir_app = 'J:\KA_Data\inter_reward_23_approach';
+
+end
+
 cd(data_dir); % move to the data dir. 
 
 % make an intermediate directory if it doesn't exist. 
@@ -19,9 +30,9 @@ if ~exist(inter_dir_app,'dir')
     mkdir(inter_dir_app)
 end
 %% loop over sessions / cells
-
+cd(data_dir)
 % get all the sessions
-this_dir = dir(data_dir);
+this_dir = dir('*DONE');
 sess_list = [];
 for ii = 1:length(this_dir)
     if strcmp(this_dir(ii).name(1), '.') % check for hidden dirs 
@@ -34,17 +45,20 @@ sess_list =   sess_list(~cellfun('isempty',sess_list));
 
 success = []; FR = []; 
 % loop over sessions in the data dir.
-for iS = 1:length(sess_list)
-    
+for iS =57:length(sess_list)
+
     cd([data_dir filesep sess_list{iS}])
     
     % example
     
-    cells_to_process = FindFiles('*.t');
+    cells_to_process = FindFiles('*.t64');
     
     % check if there are any .t files.  if not continue. 
     if isempty(cells_to_process)
         continue
+    end
+    if ~isempty(dir('*VT*.zip')) && isempty(dir('*.nvt'))
+        unzip('VT1.zip')
     end
     
     for iT = 1:length(cells_to_process)
@@ -55,12 +69,13 @@ for iS = 1:length(sess_list)
 
 %         This_cell = KA_screener_approach(this_file); 
 %         This_cell = KA_screener(this_file);
-        This_cell = KA_screener_feeder(this_file);
+%         This_cell = KA_screener_feeder(this_file);
+        This_cell = KA_screener_v2(this_file);
 
 %         This_cell = KA_screener_pseudo_baseline(this_file); 
         
         % if there were too few spikes in the .t then skip this file. 
-        if ischar(This_cell)
+        if ischar(This_cell) || isempty(This_cell)
             fprintf('<strong>%s</strong>: Minimum requirments not met: %s  -   <strong>%s</strong>\n', mfilename, this_file, This_cell)
             if strcmpi(This_cell, 'too short')
                 success(end+1) = 2;
@@ -80,7 +95,7 @@ for iS = 1:length(sess_list)
         This_cell.session = parts{3}; % get the session type and number Acquisition, Criteria, Overtrain, Extinction, Reacquisition. nSessions: A ? C 3, O 7, E 1, R 3-5
         This_cell.date = parts{end}; 
         
-        save([inter_dir filesep sess_list{iS} '_' this_file(1:end-2) '_Feeder.mat'], 'This_cell')
+        save([inter_dir filesep sess_list{iS} '_' this_file(1:strfind(this_file, '.')-1) '_Feeder.mat'], 'This_cell')
         
         close all
     end

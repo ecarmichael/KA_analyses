@@ -1,21 +1,38 @@
-function [out] = KA_screener(cell_to_process)
+function [out] = KA_screener_feeder(cell_to_process)
 
 
 c_ord = linspecer(5); % nice colours.
+
+%%% load the events. 
+evt = LoadEvents([]);
+% add in check for multiple recording periods.  Some seem to have a pre and post recoding.
+s_rec_idx = find(contains(evt.label, 'Starting Record')); 
+e_rec_idx = find(contains(evt.label, 'Stopping Record')); 
+
+nRec = length(evt.t{s_rec_idx}); 
+if nRec >1
+    for iR = nRec:-1:1
+        rec_dur(iR) = evt.t{e_rec_idx}(iR) - evt.t{s_rec_idx}(iR);
+    end
+    [~, task_rec_idx] = max(rec_dur); 
+    
+else
+   task_rec_idx = 1;  
+   rec_dur = evt.t{e_rec_idx}(task_rec_idx) - evt.t{s_rec_idx}(task_rec_idx);
+end
+
+% check for sessions that are too short. If less than 15mins skip. 
+if max(rec_dur)/60 < 10
+    fprintf('<strong>Minumum recording duration (15mins) not met: %2.1fmins</strong>\n', max(rec_dur)/60);
+    out = 'too short';  
+    return
+end
 %% load data
 cfg = [];
 cfg.getTTnumbers = 0;
 cfg.fc = {cell_to_process};
 out.S = LoadSpikes(cfg);
 
-if length(out.S.t{1}) < 1200
-    out = []; 
-    fprintf('%s has insufficient spikes (< %0.2f)...\n', cfg.fc{1}, 1200); 
-    return
-end
-%load('TT1.ntt_01-wv.mat');
-
-evt = LoadEvents([]);
 % relabel the events file for arm/feeders
 evt.label{3} = 'NorthPellets';
 evt.label{4} = 'EastPellets';
@@ -48,6 +65,13 @@ out.pos = LoadPos(cfg_pos);
 
 
 out.S = restrict(out.S, evt.t{1}(1), evt.t{2}(end)); % restrict the spikes recording periods.avoids odd thing where spike trains contains zeros.  MClust issue?
+if length(out.S.t{1}) / (out.pos.tvec(end) - out.pos.tvec(1)) < .25
+    fprintf('<strong>Minumum mean spike rate (0.5Hz) not met: %2.1fhz</strong>\n', length(out.S.t{1}) / (out.pos.tvec(end) - out.pos.tvec(1)));
+    out =  length(out.S.t{1}) / (out.pos.tvec(end) - out.pos.tvec(1));  
+    return
+end
+
+
 
 out.velo = getLinSpd([], out.pos); 
 out.velo.data = interp1(out.velo.tvec,out.velo.data(1,:),out.pos.tvec,'linear');
@@ -69,12 +93,39 @@ load(PM_dir.name)
 Feeder_names = {'North', 'West', 'South', 'East', 'All'};
 Feeder_mag = [3 3 1 1];
 Feeder_type = {'Banana', 'Grain', 'Banana', 'Grain'};
+% 
+% % check for trials beyond the recording time
+beyond_idx = (FeederTimes/1000000) > out.pos.tvec(end);
+
+FeedersFired = FeedersFired(~beyond_idx); 
+FeederTimes = FeederTimes(~beyond_idx); 
+
 
 for ii = length(FeederTimes):-1:1
     Feeder_cord(ii,:) = c_ord(FeedersFired(ii),:);
 end
 
-
+%% make a movie of the tracking for debugging
+% figure(909)
+% hold on
+% plot(out.pos.data(1,:), out.pos.data(2,:), 'color', [.8 .8 .8])
+% xlim([min(out.pos.data(1,:)) max(out.pos.data(1,:))]);
+% ylim([min(out.pos.data(2,:)) max(out.pos.data(2,:))]);
+% set(gca, 'YDir','reverse', 'XDir','reverse')
+% Fs = mode(diff(out.pos.tvec)); 
+% F1 = nearest_idx(FeederTimes(5)/1000000, out.pos.tvec); 
+% 
+% for ii = 1:2:length(out.pos.tvec)
+%     if ii > F1 - 30 && ii < F1+30
+%             h = plot(out.pos.data(1,ii), out.pos.data(2,ii), 'ob');
+%     else
+%     h = plot(out.pos.data(1,ii), out.pos.data(2,ii), 'or');
+%     end
+%     title(['time: ' num2str(out.pos.tvec(ii))])% - out.pos.tvec(1))]) 
+%    drawnow 
+%    pause(0.005)
+%    delete(h)
+% end
 
 %% infer nosepoke from FeedersFired and tracking data. 
 % S_pix_x = [85 98]; S_pix_y = 130;      
@@ -91,7 +142,7 @@ trial_vec= NaN(1,length(out.pos.tvec));
 
     
 figure(109)
-cla
+clf
 hold on
 plot(out.pos.data(1,:), out.pos.data(2,:), 'color', [.8 .8 .8])
 xlim([min(out.pos.data(1,:)) max(out.pos.data(1,:))]);
@@ -118,7 +169,6 @@ for iF = 1:length(FeedersFired)
         this_trial.pos = restrict(out.pos, FeederTimes(iF)/1000000, FeederTimes(iF+1)/1000000);
         this_trial.velo_smooth = restrict(out.velo_smooth, FeederTimes(iF)/1000000, FeederTimes(iF+1)/1000000);
         trial_vec(nearest_idx(FeederTimes(iF)/1000000, out.pos.tvec): nearest_idx(FeederTimes(iF+1)/1000000, out.pos.tvec)) = FeedersFired(iF); % make an array of the trial type.
-        
     end
     
     %get the points within the corresponding pixels
@@ -144,9 +194,11 @@ for iF = 1:length(FeedersFired)
     trial_idx = trial_idx & (this_trial.velo_smooth.data <= 2);
     % get the longest 
 
-    [~, p_idx, p_w] = findpeaks(double(trial_idx), 'MinPeakWidth',floor(.5/mode(diff(this_trial.pos.tvec))));
+    [~, p_idx, p_w] = findpeaks(double(trial_idx), 'MinPeakWidth',floor(.2/mode(diff(this_trial.pos.tvec))));
     if isempty(p_idx)
        error_trial(iF)  = 1; enter_t(iF) = NaN; exit_t(iF) = NaN; 
+%                plot(this_trial.pos.data(1,:), this_trial.pos.data(2,:),'--', 'color', [c_ord(FeedersFired(iF),:) .2], 'linewidth', 2)
+%         pause
        continue
     else
         error_trial(iF) = 0; 
@@ -156,8 +208,13 @@ for iF = 1:length(FeedersFired)
         enter_idx = p_idx(1);
         exit_idx = enter_idx +p_w(1); 
 
-        plot(this_trial.pos.data(1,:), this_trial.pos.data(2,:), 'color', [c_ord(FeedersFired(iF),:) .5])
+        % plot only the entry to the feeder
+        
+%         plot(this_trial.pos.data(1,:), this_trial.pos.data(2,:), 'color', [c_ord(FeedersFired(iF),:) .1], 'linewidth', 2)
+        plot(this_trial.pos.data(1,1:exit_idx), this_trial.pos.data(2,1:exit_idx), 'color', [c_ord(FeedersFired(iF),:) .8], 'linewidth', 2)
+
 % for ii = enter_idx:exit_idx
+    plot(this_trial.pos.data(1,1), this_trial.pos.data(2,1),'d', 'color', c_ord(FeedersFired(iF),:)*.8, 'markersize', 14);
     plot(this_trial.pos.data(1,enter_idx), this_trial.pos.data(2,enter_idx),'o', 'color', c_ord(FeedersFired(iF),:)*.8, 'markersize', 14);
     plot(this_trial.pos.data(1,exit_idx), this_trial.pos.data(2,exit_idx),'x', 'color', c_ord(FeedersFired(iF),:)*.8, 'markersize', 14);
 
@@ -167,12 +224,14 @@ for iF = 1:length(FeedersFired)
 %     delete(h); delete(hp)
 % end
         drawnow
+        pause(.05)
+        disp(iF)
     enter_t(iF) = this_trial.pos.tvec(enter_idx); 
     exit_t(iF) = this_trial.pos.tvec(exit_idx); 
 end
 
     fprintf('Trial hit rate: %0.2f%%\n', (1 -  sum(error_trial)/length(error_trial))*100)
-legend({'path', 'N trial', 'N poke', 'N exit', 'E trial', 'E poke', 'E exit', 'S trial', 'S poke', 'S exit', 'W trial', 'W poke', 'W exit'})
+legend({'path','Center',  'N trial','N enter', 'N poke', 'N exit', 'E trial',' E enter', 'E poke', 'E exit', 'S trial', 'S enter', 'S poke', 'S exit', 'W trial', 'W enter','W poke', 'W exit'})
 
 %% test position and heading in time
 
@@ -222,7 +281,7 @@ legend({'path', 'N trial', 'N poke', 'E trial', 'E poke', 'S trial', 'S poke', '
 
 
 %% Summary of spiking in time and space.
-figure(101)
+figure(1091)
 subplot(2,3,1:2)
 hold on
 hold on
@@ -373,12 +432,16 @@ figure(1001)
 subplot(212)
 hold on
 for ii =unique(FeedersFired)
+    if ~isempty(All_trial.mean_S_gau{ii})
     if All_trial.H{ii} == 1
         plot(All_trial.outputIT{1}, All_trial.mean_S_gau{ii},'-',  'color', [c_ord(ii,:), .8])
     elseif isnan(All_trial.H{ii})
         continue
     else
         plot(All_trial.outputIT{1}, All_trial.mean_S_gau{ii},'--',  'color', [c_ord(ii,:), .8])
+    end
+    else
+        All_trial.mean_S_gau{ii} = nan(size(All_trial.mean_S_gau{5})); 
     end
 end
 
@@ -397,7 +460,7 @@ enter_t_correct = enter_t(~error_trial);
 for ii = length(enter_t_correct):-1:1
     this_idx = nearest_idx(enter_t_correct(ii), out.velo_smooth.tvec);
     
-        if this_idx < abs(velo_window(1))
+        if this_idx < abs(velo_window(1)) || (this_idx + abs(velo_window(1)) > length(out.velo_smooth.data))
             continue
         end
 
