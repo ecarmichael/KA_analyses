@@ -50,13 +50,13 @@ for iS = 1:length(sess_list)
         copyfile(t_list(iT).name, [this_new_dir filesep t_list(iT).name])
     end
     
-    qc_list = dir('*.qc'); 
+    qc_list = dir('*ClaQual'); 
     
     for iT = 1:length(qc_list)
         copyfile(qc_list(iT).name, [this_new_dir filesep qc_list(iT).name])
     end
     
-    wav_list = dir('*.wav'); 
+    wav_list = dir('*-wv'); 
     
     for iT = 1:length(wav_list)
         copyfile(wav_list(iT).name, [this_new_dir filesep wav_list(iT).name])
