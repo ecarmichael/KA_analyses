@@ -922,6 +922,7 @@ print(gcf,['Zone_plots' filesep out.S.label{1}(1:strfind(out.S.label{1}, '.')-1)
 %% collect everything
 out_temp = out;
 out = All_trial;
+out.cfg_peth = cfg_peth; 
 out.S = out_temp.S;
 out.pos = out_temp.pos;
 out.velo = out_temp.velo;
@@ -929,6 +930,7 @@ out.velo = out_temp.velo;
 out.Zone_names = Zone_names;
 out.Zone_cord = rew_cord;
 out.Zone_times = rew_t;
+out.Zone_ids = rew_in; 
 out.type = 'reward';
 out.fcn = mfilename;
 out.date_processed = datestr(date, 'yyyy-mm-dd');

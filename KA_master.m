@@ -29,6 +29,16 @@ end
 if ~exist(inter_dir_app,'dir')
     mkdir(inter_dir_app)
 end
+
+% flagged sessions which contain some oddity like events outside of the
+% recording
+
+omit_list = {'C5_2_O7_2021-04-30_DONE',... % Feeders start way before the recording. 
+    'C6_3_O1_2021-09-24_DONE',...
+    'C6_3_O4_2021-09-27_DONE',...
+    'C6_3_O5_2021-09-29_DONE',... 
+    'C6_4_O6_2021-09-27_DONE',... % HS likly fell out. 
+    };
 %% loop over sessions / cells
 cd(data_dir)
 % get all the sessions
@@ -45,8 +55,13 @@ sess_list =   sess_list(~cellfun('isempty',sess_list));
 
 success = []; FR = []; 
 % loop over sessions in the data dir.
-for iS =57:length(sess_list)
+for iS =1:length(sess_list)
 
+    if ismember(sess_list{iS}, omit_list)
+        success(iS) = 99;
+        continue
+    end
+    
     cd([data_dir filesep sess_list{iS}])
     
     % example
@@ -55,6 +70,8 @@ for iS =57:length(sess_list)
     
     % check if there are any .t files.  if not continue. 
     if isempty(cells_to_process)
+                success(iS) = 404;
+
         continue
     end
     if ~isempty(dir('*VT*.zip')) && isempty(dir('*.nvt'))
@@ -78,15 +95,15 @@ for iS =57:length(sess_list)
         if ischar(This_cell) || isempty(This_cell)
             fprintf('<strong>%s</strong>: Minimum requirments not met: %s  -   <strong>%s</strong>\n', mfilename, this_file, This_cell)
             if strcmpi(This_cell, 'too short')
-                success(end+1) = 2;
+                success(iS) = -1;
                 continue
             end
         elseif isnumeric(This_cell)
-                success(end+1) = 3;
+                success(iS) = -3;
                 FR(length(success)) = This_cell; 
             continue
         end
-        success(end+1) = 1;
+        success(iS) = 1;
         
         FR(length(success)) = length(This_cell.S.t{1})/(This_cell.pos.tvec(end) - This_cell.pos.tvec(1)); 
         
