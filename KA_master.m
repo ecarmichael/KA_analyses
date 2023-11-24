@@ -16,6 +16,16 @@ elseif ispc
     data_dir = 'C:\Users\ecarm\Desktop\for_eric_only'; % where all the NLX data is.
     inter_dir = 'J:\KA_Data\inter_reward_23';
     inter_dir_app = 'J:\KA_Data\inter_reward_23_approach';
+    
+    
+else
+    % load data
+    addpath(genpath('/home/williamslab/Documents/Github/vandermeerlab/code-matlab/shared'))
+    addpath(genpath('/home/williamslab/Documents/Github/EC_State'));
+    addpath(genpath('/home/williamslab/Documents/Github/KA_analyses'));
+    data_dir = '/home/williamslab/Desktop/for_eric_only'; % where all the NLX data is.
+    inter_dir = '/media/williamslab/Fenrir/KA_Data/inter_reward_simple';
+    inter_dir_app = '/media/williamslab/Fenrir/KA_Data/inter_reward_simple';
 
 end
 
@@ -83,11 +93,12 @@ for iS =1:length(sess_list)
         parts = strsplit(cells_to_process{iT}, filesep);
         this_file = parts{end};
 %         This_cell = KA_screener_zscore(this_file);
-
 %         This_cell = KA_screener_approach(this_file); 
 %         This_cell = KA_screener(this_file);
 %         This_cell = KA_screener_feeder(this_file);
-        This_cell = KA_screener_v2(this_file);
+%         This_cell = KA_screener_v2(this_file);
+        This_cell = KA_screener_simple(this_file);
+
 
 %         This_cell = KA_screener_pseudo_baseline(this_file); 
         
