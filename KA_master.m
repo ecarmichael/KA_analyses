@@ -1,3 +1,4 @@
+
 %% KA screener master script. 
 
 % load data
@@ -19,13 +20,20 @@ elseif ispc
     
     
 else
-    % load data
-    addpath(genpath('/home/williamslab/Documents/Github/vandermeerlab/code-matlab/shared'))
-    addpath(genpath('/home/williamslab/Documents/Github/EC_State'));
-    addpath(genpath('/home/williamslab/Documents/Github/KA_analyses'));
-    data_dir = '/home/williamslab/Desktop/for_eric_only'; % where all the NLX data is.
-    inter_dir = '/media/williamslab/Fenrir/KA_Data/inter_reward_simple';
-    inter_dir_app = '/media/williamslab/Fenrir/KA_Data/inter_reward_simple';
+    addpath(genpath('/home/ecar/Github/vandermeerlab/code-matlab/shared'))
+    addpath(genpath('/home/ecar/Github/EC_State'));
+    addpath(genpath('/home/ecar/Github/KA_analyses'));
+    data_dir = '/lustre06/project/6064766/ecar/for_eric_only'; % where all the NLX data is.
+    % inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs.
+    inter_dir = '/lustre06/project/6064766/ecar/KA_Data/inter_approach_2p5_new_sig';
+    
+%     % load data
+%     addpath(genpath('/home/williamslab/Documents/Github/vandermeerlab/code-matlab/shared'))
+%     addpath(genpath('/home/williamslab/Documents/Github/EC_State'));
+%     addpath(genpath('/home/williamslab/Documents/Github/KA_analyses'));
+%     data_dir = '/home/williamslab/Desktop/for_eric_only'; % where all the NLX data is.
+%     inter_dir = '/media/williamslab/Fenrir/KA_Data/inter_reward_simple';
+%     inter_dir_app = '/media/williamslab/Fenrir/KA_Data/inter_reward_simple';
 
 end
 
@@ -36,14 +44,15 @@ if ~exist(inter_dir,'dir')
     mkdir(inter_dir)
 end
     
-if ~exist(inter_dir_app,'dir')
-    mkdir(inter_dir_app)
-end
+% if ~exist(inter_dir_app,'dir')
+%     mkdir(inter_dir_app)
+% end
 
 % flagged sessions which contain some oddity like events outside of the
 % recording
 
-omit_list = {'C5_2_O7_2021-04-30_DONE',... % Feeders start way before the recording. 
+omit_list = {'C4_3_C3_2021-02-25_DONE',...
+    'C5_2_O7_2021-04-30_DONE',... % Feeders start way before the recording. 
     'C6_3_O1_2021-09-24_DONE',...
     'C6_3_O4_2021-09-27_DONE',...
     'C6_3_O5_2021-09-29_DONE',... 
@@ -65,7 +74,7 @@ sess_list =   sess_list(~cellfun('isempty',sess_list));
 
 success = []; FR = []; 
 % loop over sessions in the data dir.
-for iS =1:length(sess_list)
+for iS =58:length(sess_list)
 
     if ismember(sess_list{iS}, omit_list)
         success(iS) = 99;

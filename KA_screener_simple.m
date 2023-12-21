@@ -678,9 +678,9 @@ subplot(212)
 hold on
 for ii =unique(rew_in)
     if All_trial.rew_exit_z{ii} < -2.58 || All_trial.rew_exit_z{ii} > 2.58
-        plot(All_trial.outputIT{1}, All_trial.mean_S_gau{ii},'-',  'color', [c_ord(ii,:), .8])
+        plot(All_trial.outputIT{5}, All_trial.mean_S_gau{ii},'-',  'color', [c_ord(ii,:), .8])
     else
-        plot(All_trial.outputIT{1}, All_trial.mean_S_gau{ii},'--',  'color', [c_ord(ii,:), .8])
+        plot(All_trial.outputIT{5}, All_trial.mean_S_gau{ii},'--',  'color', [c_ord(ii,:), .8])
     end
 end
 
