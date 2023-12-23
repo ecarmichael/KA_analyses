@@ -6,7 +6,7 @@ if ismac
     addpath(genpath('/Users/jericcarmichael/Documents/Github/vandermeerlab/code-matlab/shared'))
     addpath(genpath('/Users/jericcarmichael/Documents/Github/EC_State'));
     addpath(genpath('/Users/jericcarmichael/Documents/Github/KA_analyses'));
-    data_dir = '/Users/jericcarmichael/Downloads/filtered_eric'; % where all the NLX data is.
+    data_dir = '/Users/jericcarmichael/Downloads/for_eric_only'; % where all the NLX data is.
     % inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs.
     inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_approach_2p5_new_sig';
 elseif ispc

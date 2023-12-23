@@ -1,4 +1,8 @@
-function [out] = KA_screener_simple(cell_to_process)
+function [out] = KA_screener_simple(cell_to_process, rotation)
+
+if nargin <2
+    rotation = 0; 
+end
 
 if ~exist('Zone_plots', 'dir')
     mkdir('Zone_plots')
@@ -101,6 +105,17 @@ Feeder_type = {'Banana', 'Grain', 'Banana', 'Grain'};
 keep_idx = (FeederTimes/1000000 > out.pos.tvec(1))  & (FeederTimes/1000000 < out.pos.tvec(end));
 FeedersTimes = FeederTimes(keep_idx);  % remove any events after the end of the recording.
 FeedersFired = FeedersFired(keep_idx);
+
+if rotation == 90
+    F_temp = NaN(size(FeedersFired));
+    F_temp(FeedersFired == 4) = 1;
+    F_temp(FeedersFired == 1) = 2;
+    F_temp(FeedersFired == 2) = 3;
+    F_temp(FeedersFired == 3) = 4;
+    FeedersFired = F_temp; 
+    clear F_temp
+end
+    
 % zone_idx = nearest_idx3(EnteringZoneTime/1000000, out.pos.tvec);
 
 %% make a movie of the tracking for debugging
@@ -112,7 +127,7 @@ FeedersFired = FeedersFired(keep_idx);
 % set(gca, 'YDir','reverse', 'XDir','reverse')
 % Fs = mode(diff(out.pos.tvec));
 % F1 = nearest_idx(FeederTimes(5)/1000000, out.pos.tvec);
-%
+% 
 % for ii = 1:2:length(out.pos.tvec)
 %     if ii > F1 - 30 && ii < F1+30
 %             h = plot(out.pos.data(1,ii), out.pos.data(2,ii), 'ob');
@@ -221,9 +236,9 @@ for iF = 1:length(FeedersFired)
     %     pause(1)
     %     delete(h); delete(hp)
     % end
-%     drawnow
-    %         pause(.05)
-%     disp(iF)
+    drawnow
+            pause(.05)
+    disp(iF)
     enter_t(iF) = this_trial.pos.tvec(enter_idx);
     exit_t(iF) = this_trial.pos.tvec(exit_idx);
 end
@@ -250,6 +265,8 @@ rew_cord = Zone_cord(~logical(error_trial),:);
 rew_err_cord = Zone_cord(logical(error_trial),:);
 
 
+saveas(gcf, ['Zone_plots' filesep out.pos.cfg.SessionID '_Behav_trace.png'])
+close(109)
 %% Summary of spiking in time and space.
 figure(101)
 subplot(2,3,1)
@@ -1042,6 +1059,7 @@ out.pos = out_temp.pos;
 out.velo = out_temp.velo;
 % out.Shuff = Shuff;
 out.Zone_names = Zone_names;
+out.Zone_ids = rew_in; 
 out.Zone_cord = rew_cord;
 out.Zone_times = rew_t;
 out.type = 'reward';
