@@ -74,7 +74,7 @@ sess_list =   sess_list(~cellfun('isempty',sess_list));
 
 success = []; FR = []; 
 % loop over sessions in the data dir.
-for iS =58:length(sess_list)
+for iS =1:length(sess_list)
 
     if ismember(sess_list{iS}, omit_list)
         success(iS) = 99;
