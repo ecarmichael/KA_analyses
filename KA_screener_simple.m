@@ -237,8 +237,8 @@ for iF = 1:length(FeedersFired)
     %     delete(h); delete(hp)
     % end
     drawnow
-            pause(.05)
-    disp(iF)
+    %        pause(.05)
+    %disp(iF)
     enter_t(iF) = this_trial.pos.tvec(enter_idx);
     exit_t(iF) = this_trial.pos.tvec(exit_idx);
 end
@@ -264,8 +264,11 @@ error_t = enter_t(logical(error_trial));
 rew_cord = Zone_cord(~logical(error_trial),:);
 rew_err_cord = Zone_cord(logical(error_trial),:);
 
-
-saveas(gcf, ['Zone_plots' filesep out.pos.cfg.SessionID '_Behav_trace.png'])
+up_dir = fileparts(fileparts(cd)); 
+if ~exist([up_dir filesep 'KA_behav_plots'])
+    mkdir([up_dir filesep 'KA_behav_plots'])
+end
+saveas(gcf, [up_dir filesep 'KA_behav_plots' filesep out.pos.cfg.SessionID '_Behav_trace.png'])
 close(109)
 %% Summary of spiking in time and space.
 figure(101)
