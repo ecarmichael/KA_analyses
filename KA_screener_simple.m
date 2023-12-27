@@ -1054,6 +1054,7 @@ print(gcf,['Zone_plots' filesep out.S.label{1}(1:strfind(out.S.label{1}, '.')-1)
 %% collect everything
 out_temp = out;
 out = All_trial;
+out.cfg_peth = cfg_peth; 
 out.S = out_temp.S;
 out.pos = out_temp.pos;
 out.velo = out_temp.velo;
