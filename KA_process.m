@@ -30,8 +30,8 @@ cfg = ProcessConfig(cfg_def, cfg_in);
 cd(inter_dir)
 sess_list = dir('*.mat');
 
-keep_idx = [];
-for ii = length(sess_list):-1:1
+keep_idx = [];nR = []; nT = []; 
+for ii =1:length(sess_list)%:-1:1
    
     load(sess_list(ii).name)
     
@@ -39,38 +39,47 @@ for ii = length(sess_list):-1:1
     
     trials = This_cell.Zone_ids;
     
-    nS = []; nR = []; nT = []; 
+    nS = []; nT = []; 
     for iT = 1:4
         this_trial = This_cell.Zone_times(trials == iT); 
         
-        for jj = length(this_trial):-1:1
-           s_t = restrict(This_cell.S, this_trial(jj) + This_cell.cfg_peth.window(1), this_trial(jj) + This_cell.cfg_peth.window(2));
-            
-           nS{iT}(jj) = length(s_t.t{1}); 
-          
-        end
+        % remove
         nT(iT) = length(this_trial); 
-        nR(iT) = sum(nS{iT} >0) ./length(nS{iT}); 
     end
     
-    fprintf('%s %s %s N: %0.0f%% | W: %0.0f%% | S: %0.0f%% | E: %0.0f%% \n', This_cell.subject, This_cell.session, This_cell.S.label{1}, nR(1)*100, nR(2)*100, nR(3)*100, nR(4)*100) 
-    
+    fprintf('%s %s %s N: %0.0f%% | W: %0.0f%% | S: %0.0f%% | E: %0.0f%% \n', This_cell.subject, This_cell.session, This_cell.S.label{1}, nT(1), nT(2), nT(3), nT(4))
+
+    %end remove
+        
+%         for jj = length(this_trial):-1:1
+%            s_t = restrict(This_cell.S, this_trial(jj) + This_cell.cfg_peth.window(1), this_trial(jj) + This_cell.cfg_peth.window(2));
+%             
+%            nS{iT}(jj) = length(s_t.t{1}); 
+%           
+%         end
+%         nT(ii,iT) = length(this_trial); 
+%         nR(ii,iT) = sum(nS{iT} >0) ./length(nS{iT}); 
+%     end
+%     
+%     fprintf('%s %s %s N: %0.0f%% | W: %0.0f%% | S: %0.0f%% | E: %0.0f%% \n', This_cell.subject, This_cell.session, This_cell.S.label{1}, nR(ii,1)*100, nR(ii,2)*100, nR(ii,3)*100, nR(ii,4)*100)
+%     
     
 %     sum(sum(This_cell.outputS{end},2) == 0)/size(This_cell.outputGau{end},2)
     
-    wave_prop{ii} = MS_get_wave_properties(This_cell.S, [(0:length(This_cell.cfg_peth.waves.mWV)-1)./1/32000; This_cell.cfg_peth.waves.mWV'], This_cell.pos.tvec, 1); 
+% wave_prop{ii} = MS_get_wave_properties(This_cell.S, [(0:length(This_cell.cfg_peth.waves.mWV)-1)./1/32000; This_cell.cfg_peth.waves.mWV'], This_cell.pos.tvec, 1);
     
 
 
 end
 
+%% make a plot of the firing per 
 
 %% waveform class
 
 for ii = length(sess_list):-1:1
     
     
-        fr(ii) = wave_prop{ii}.firing_rate; 
+    fr(ii) = wave_prop{ii}.firing_rate; 
     isi(ii) = mean(wave_prop{ii}.ISI);
     pt(ii) = wave_prop{ii}.pt_ratio; 
     slp(ii) = wave_prop{ii}.slopes_ratio; 
