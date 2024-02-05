@@ -52,18 +52,19 @@ cfg = ProcessConfig(cfg_def, cfg_in);
 
 %% Align spikes to trials.
 
-HN_k = makedist('HalfNormal','mu',0,'sigma',cfg.sd/2); 
+% HN_k = makedist('HalfNormal','mu',0,'sigma',cfg.sd/2); 
 
 gauss_window = cfg.gauss_window./cfg.binsize; % 1 second window
 gauss_SD = cfg.gauss_sd./cfg.binsize; % 0.02 seconds (20ms) SD
-gk = gausskernel(gauss_window,gauss_SD); gk = gk./cfg.binsize; % normalize by binsize
+gk = gausskernel(gauss_window,gauss_SD); 
 
-%%
+%
 hn_gk = gk;
 [~, m_idx] = max(gk); 
 hn_gk(1:m_idx) = 0; 
-hn_gk = hn_gk*2; 
-
+hn_gk = (hn_gk*2)./cfg.binsize; 
+hn_gk(1:m_idx) = []; 
+gk = gk./cfg.binsize; % normalize by binsize
 
 S_out = []; 
 for iT = length(t):-1:1
@@ -90,6 +91,9 @@ S_rate = sum(S_out,1)./(tbin_edges(end) - tbin_edges(1));
 
 S_gau = sum(S_gau_out);
 
+
+peth.S_gau = mean(S_gau_out)/cfg.binsize;
+peth.tbins = tbin_edges(1:end-2); 
 %% apply filtering
 
 
@@ -100,6 +104,6 @@ clf
 
 subplot(2,1,1);
 cla
-plot(tbin_edges(1:end-2), mean(S_gau_out))
+plot(tbin_edges(1:end-2), mean(S_gau_out)/cfg.binsize)
 hold on
-plot(tbin_edges(1:end-2), conv2(mean(S_out), gk, 'same'), 'b')
+% plot(tbin_edges(1:end-2), conv2(mean(S_out), gk, 'same'), 'b')
