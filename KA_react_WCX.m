@@ -48,7 +48,7 @@ for ii = unique(id)
         if isempty(base_S.t{1})
             base_fr(jj) = 0;
         else
-            base_fr(jj) = length(base_S.t{1})./ abs(t(F_idx(jj))+cfg.baseline(2) - t(F_idx(jj))+cfg.baseline(1));
+            base_fr(jj) = length(base_S.t{1})./ ((t(F_idx(jj))+cfg.baseline(2)) - (t(F_idx(jj))+cfg.baseline(1)));
         end
     end
     
@@ -67,8 +67,8 @@ for ii = unique(id)
     
     [p(ii), h(ii)] = signrank(base_fr, trial_fr, 'tail', 'both', 'alpha', 0.05);
     if h(ii)
-    fprintf('<strong>%s</strong> Cell:  %s has significantly activity change at %0.2f - %0.2f s (%0.2fHz) vs baseline  (%0.2f) <strong>(p = %0.5f) at arm %s </strong>\n',...
-        mfilename, S.label{1}, cfg.win(1), cfg.win(2),mean(trial_fr), mean(base_fr), p(ii), cfg.label{id(ii)});
+    fprintf('<strong>%s</strong> Cell:  %s has significantly activity change at %0.2f : %0.2f s (%0.2fHz) vs baseline  (%0.2fHz | %0.2f : %0.2fs) <strong>(p = %0.5f) at  %s </strong> arm \n',...
+        mfilename, S.label{1}, cfg.win(1), cfg.win(2),mean(trial_fr), mean(base_fr),cfg.baseline(1), cfg.baseline(2), p(ii), cfg.label{id(ii)});
     end
     all_base_fr(ii) = mean(base_fr); 
     all_trial_fr(ii) = mean(trial_fr); 
@@ -86,7 +86,7 @@ for jj = length(F_idx):-1:1
     if isempty(base_S.t{1})
         base_fr(jj) = 0;
     else
-        base_fr(jj) = length(base_S.t{1})./ abs(t(F_idx(jj))+cfg.baseline(2) - t(F_idx(jj))+cfg.baseline(1));
+        base_fr(jj) = length(base_S.t{1})./ ((t(F_idx(jj))+cfg.baseline(2)) - (t(F_idx(jj))+cfg.baseline(1)));
     end
 end
 
@@ -105,8 +105,8 @@ end
 
 [p(ii), h(ii)] = signrank(base_fr, trial_fr, 'tail', 'both', 'alpha', 0.05);
 if h(ii)
-    fprintf('<strong>%s</strong> Cell:  %s has significantly activity change at %0.2f - %0.2fs (%0.2fHz) vs baseline  (%0.2f) <strong>(p = %0.5f) overall </strong>\n',...
-        mfilename, S.label{1}, cfg.win(1), cfg.win(2),mean(trial_fr), mean(base_fr), p(ii));
+    fprintf('<strong>%s</strong> Cell:  %s has significantly activity change at %0.2f : %0.2fs (%0.2fHz) vs baseline (%0.2fHz | %0.2f : %0.2fs) <strong>(p = %0.5f) overall </strong>\n',...
+        mfilename, S.label{1}, cfg.win(1), cfg.win(2),mean(trial_fr), mean(base_fr),cfg.baseline(1), cfg.baseline(2), p(ii));
 end
 
     all_base_fr(ii) = mean(base_fr); 
