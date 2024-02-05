@@ -180,7 +180,7 @@ for iS = 1:length(sess_list)
         cfg_peth.window = [-5 5];
         cfg_peth. plot_type = 'raw';
         cfg_peth.dt = 0.05;
-        cfg_peth.gauss_sd = .1; 
+        cfg_peth.gauss_sd = .1;
         for jj = unique(data.rew.in)
             this_idx = data.rew.in == jj;
             [~,~,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t(this_idx) );
@@ -200,8 +200,8 @@ for iS = 1:length(sess_list)
 
         % reward centered.
         cfg_wcx_r = [];
-        cfg_wcx_r.win = [-1 2]; % window
-        cfg_wcx_r.baseline = [-4 -1];
+        cfg_wcx_r.win = [0 2]; % window
+        cfg_wcx_r.baseline = [-3 -1];
 
         % get the response using the Wilcoxon from Frazer 2023
         [rew_out.p(k,:), rew_out.h(k,:), rew_out.base_fr(k,:), rew_out.rew_fr(k,:)] = KA_react_WCX(cfg_wcx_r, this_S, data.rew.t, data.rew.in);
@@ -280,9 +280,16 @@ for ii = 1:length(unique(g_idx))
     for jj = 1:4
         plot(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(jj+1,:, g_idx == ii),3))
     end
-    title(['Group ' num2str(ii) ' | n=' num2str(sum(g_idx == ii))  ' | FR:' num2str(mean(fr(g_idx == ii)))])
+    title(['Group ' num2str(ii) ' | n=' num2str(sum(g_idx == ii))  ' | FR:' num2str(round(mean(fr(g_idx == ii)),2)) '\pm' num2str(round(std(fr(g_idx == ii)),2))])
 
 end
+
+set(gcf,'Units','Inches');
+pos = get(gcf,'Position');
+set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(gcf,[parent_path filesep 'wave_feature.pdf'],'-dpdf','-r300')
+
+
 
 %% check for cells with the 25ms spike width
 % N_25_idx = find(s_w == .25);
@@ -733,7 +740,7 @@ O_l_sig  = rew_out.rew_fr(P.OL_idx & sig_idx,5) ./ rew_out.base_fr(P.OL_idx & si
 R_sig  = rew_out.rew_fr(P.R_idx & sig_idx,5) ./ rew_out.base_fr(P.R_idx & sig_idx,5);
 
 % export as csv
-mat_out = NaN(4, max([length(Cs_sig),length(O_e_sig),length(O_l_sig),length(R_sig)]));
+mat_out = NaN(4, max([length(C_sig),length(O_e_sig),length(O_l_sig),length(R_sig)]));
 
 
 mat_out(1,1:length(C_sig)) = C_sig';
@@ -753,7 +760,7 @@ aO_l_sig  = app_out.rew_fr(P.OL_idx & sig_idx,5) ./ app_out.base_fr(P.OL_idx & s
 aR_sig  = app_out.rew_fr(P.R_idx & sig_idx,5) ./ app_out.base_fr(P.R_idx & sig_idx,5);
 
 % export as csv
-mat_out = NaN(4, max([length(aCs_sig),length(aO_e_sig),length(aO_l_sig),length(aR_sig)]));
+mat_out = NaN(4, max([length(aC_sig),length(aO_e_sig),length(aO_l_sig),length(aR_sig)]));
 
 
 mat_out(1,1:length(aC_sig)) = aC_sig';
@@ -765,7 +772,7 @@ mat_out= mat_out';
 
 csvwrite([parent_path filesep 'Sig_App_perc.csv'], mat_out)
 
-%% collect all response %
+% collect all response %
 for ii = size(rew_out.h,1):-1:1
 
     for jj = size(rew_out.rew_fr, 2):-1:1
@@ -822,7 +829,7 @@ csvwrite([parent_path filesep 'all_Rew_sig_idx.csv'], mat_out_s)
 nRew_S_pos = sum(mat_out_s > 0, 'all') ./ length(rew_out.h);
 nRew_S_neg = sum(mat_out_s < 0, 'all') ./ length(rew_out.h);
 
-%% collect the percentage response for significantly modulated cells
+% collect the percentage response for significantly modulated cells
 sig_idx = (rew_out.h(:,5) ==1)';
 C_sig  = rew_out.rew_fr(P.C_idx & sig_idx,5)./ rew_out.base_fr(P.C_idx & sig_idx,5);
 O_e_sig  = rew_out.rew_fr(P.OE_idx & sig_idx,5) ./ rew_out.base_fr(P.OE_idx & sig_idx,5);
@@ -830,7 +837,7 @@ O_l_sig  = rew_out.rew_fr(P.OL_idx & sig_idx,5) ./ rew_out.base_fr(P.OL_idx & si
 R_sig  = rew_out.rew_fr(P.R_idx & sig_idx,5) ./ rew_out.base_fr(P.R_idx & sig_idx,5);
 
 % export as csv
-mat_out = NaN(4, max([length(Cs_sig),length(O_e_sig),length(O_l_sig),length(R_sig)]));
+mat_out = NaN(4, max([length(C_sig),length(O_e_sig),length(O_l_sig),length(R_sig)]));
 
 
 mat_out(1,1:length(C_sig)) = C_sig';
@@ -843,6 +850,153 @@ mat_out= mat_out';
 csvwrite([parent_path filesep 'Sig_Rew_perc.csv'], mat_out)
 
 
+
+
+
+
+
+%% %%%%% the 'Good Figure' %%%%%%%%%%%
+
+%prepare the data
+all_p_id = NaN(size(cell_id));
+% convert the cell_id to a numerical
+for ii = length(cell_id):-1:1
+    P_id{ii}=  cell_id{ii}(6:7);
+end
+
+S.C_idx = contains(P_id, 'C1') | contains(P_id, 'C2') | contains(P_id, 'C3');
+S.OE_idx = contains(P_id, 'O1') | contains(P_id, 'O2') | contains(P_id, 'O3');
+S.OL_idx = contains(P_id, 'O4') | contains(P_id, 'O5') | contains(P_id, 'O6') | contains(P_id, 'O7');
+S.R_idx = contains(P_id, 'R');
+
+lump_p_id = all_p_id  ;
+lump_p_id(S.C_idx) = 1;
+lump_p_id(S.OE_idx) = 2;
+lump_p_id(S.OL_idx) = 3;
+lump_p_id(S.R_idx) = 4;
+
+all_p_id(contains(P_id, 'C1')) = 1;
+all_p_id(contains(P_id, 'C2')) = 2;
+all_p_id(contains(P_id, 'C3')) = 3;
+all_p_id(contains(P_id, 'O1')) = 4;
+all_p_id(contains(P_id, 'O2')) = 5;
+all_p_id(contains(P_id, 'O3')) = 6;
+all_p_id(contains(P_id, 'O4')) = 7;
+all_p_id(contains(P_id, 'O5')) = 8;
+all_p_id(contains(P_id, 'O6')) = 9;
+all_p_id(contains(P_id, 'O7')) = 10;
+all_p_id(contains(P_id, 'R1')) = 11;
+all_p_id(contains(P_id, 'R2')) = 12;
+all_p_id(contains(P_id, 'R3')) = 13;
+
+[s_all_p_id, sort_idx] = sort(all_p_id);
+
+s_P_id = P_id(sort_idx);
+
+s_d_idx = logical([1 (diff(s_all_p_id) > 0)]);
+
+
+
+s_lump_p_id = lump_p_id(sort_idx);
+s_cell_id = cell_id(sort_idx);
+
+s_g_idx = g_idx(sort_idx);
+
+s_H = rew_out.h(sort_idx,:);
+s_rFR = rew_out.rew_fr(sort_idx,:);
+s_bFR = rew_out.base_fr(sort_idx,:);
+
+t = linspecer(5);
+
+c_ord = linspecer(5); % one for each session type C, O, E, R.
+c_ord(2,:) =  c_ord(4,:);
+c_ord(3,:) = t(2,:);
+c_ord(4,:) = t(5,:);
+
+blues = parula(16); reds = jet(64); oranges = autumn(16);
+sess_cord = [flipud(blues(3:2:7,:));(reds(end-7:end-1,:)); c_ord(3,:); flipud(oranges(end-9:end-6,:))];
+
+
+%% z score the peth gaussian outputs
+for k = size(all_peth,3):-1:1
+    for ii  = 1:5
+        z_peth(:,ii,k) = (all_peth(:,ii, k) - mean(stats{k}.firing_rate))./ stats{k}.std;
+    end
+end
+
+z_peth_s = z_peth(:,:, sort_idx);
+
+Z_sig_min = -5;
+Z_sig_max = 5;
+
+f_id = {'North', 'West', 'South',  'East', 'Overall'};
+flav_id = {'Grape x3','Orange x3', 'Grape x1', 'Orange x1', '   '};
+
+%% plot
+figure(999)
+cla
+
+for ii = 1:5
+
+    subplot(1,5,ii)
+
+    imagesc(tvec, 1:size(all_peth,3), squeeze(z_peth_s(:,ii,:))')
+
+    title({f_id{ii}; flav_id{ii}}, 'fontsize', 20)
+    set(gca, 'ytick', [])
+    set(gca, 'xtick', tvec(1):2.5:tvec(end))
+    set(gca,'xticklabel', [get(gca, 'XTicklabel') ; num2str(tvec(end),0)]   )
+    vl = xline(0, '-k');
+    vl.LineWidth = 2;
+
+    vl = xline(cfg_wcx_r.win(1), '--r');
+    vl.LineWidth = 2;
+    vl = xline(cfg_wcx_r.win(2), '--r');
+    vl.LineWidth = 2;
+
+    vl = xline(cfg_wcx_r.baseline(1), '--r');
+    vl.LineWidth = 2;
+    vl = xline(cfg_wcx_r.baseline(2), '--r');
+    vl.LineWidth = 2;
+
+    caxis([Z_sig_min Z_sig_max]);
+
+
+    hl = hline(find(diff(s_lump_p_id))+.5, {'k', 'k', 'k'});
+    for kk = 1:length(hl)
+        hl(kk).LineWidth = 3;
+        hl(kk).Color = c_ord(kk+1,:);
+    end
+
+    % add in sig markers
+    for jj = 1:length(s_H)
+        if s_d_idx(jj) && ii == 1
+            text(tvec(1)-mode(diff(tvec))*1, jj, s_P_id{jj}, 'fontweight', 'bold','fontsize', 20, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'right', 'VerticalAlignment','cap');
+
+        end
+
+        if s_H(jj, ii) && (s_bFR(jj,ii) > s_rFR(jj,ii))
+            text(tvec(end)+mode(diff(tvec))*5, jj, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+        elseif s_H(jj, ii) && (s_bFR(jj,ii) < s_rFR(jj,ii))
+            text(tvec(end)+mode(diff(tvec))*10, jj, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+        end
+        if s_g_idx(jj) == 2
+            text(tvec(end)+mode(diff(tvec))*15, jj, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+        end
+    end
+end
+cb=colorbar;
+cb.Position(1) = cb.Position(1) + .075;
+cb.Label.String = 'Mean activity (zscore)';
+cb.Label.FontSize = 12;
+cb.FontSize = 12;
+maximize
+pause(2)
+%%
+set(gcf,'Units','Inches');
+pos = get(gcf,'Position');
+set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(gcf,[parent_path filesep 'Good_figure.pdf'],'-dpdf','-r300')
 
 
 
@@ -976,177 +1130,141 @@ mat_out= mat_out';
 
 csvwrite([parent_path filesep 'Mean_Velo_min' strrep(num2str(thresh), '.', 'p') '.csv'], mat_out)
 
+%% check the mean response for modulated cells
 
-%% %%%%% the 'Good Figure' %%%%%%%%%%%
-
-%prepare the data
-all_p_id = NaN(size(cell_id));
-% convert the cell_id to a numerical
-for ii = length(cell_id):-1:1
-    P_id{ii}=  cell_id{ii}(6:7);
-end
-
-S.C_idx = contains(P_id, 'C1') | contains(P_id, 'C2') | contains(P_id, 'C3');
-S.OE_idx = contains(P_id, 'O1') | contains(P_id, 'O2') | contains(P_id, 'O3');
-S.OL_idx = contains(P_id, 'O4') | contains(P_id, 'O5') | contains(P_id, 'O6') | contains(P_id, 'O7');
-S.R_idx = contains(P_id, 'R');
-
-lump_p_id = all_p_id  ;
-lump_p_id(S.C_idx) = 1;
-lump_p_id(S.OE_idx) = 2;
-lump_p_id(S.OL_idx) = 3;
-lump_p_id(S.R_idx) = 4;
-
-all_p_id(contains(P_id, 'C1')) = 1;
-all_p_id(contains(P_id, 'C2')) = 2;
-all_p_id(contains(P_id, 'C3')) = 3;
-all_p_id(contains(P_id, 'O1')) = 4;
-all_p_id(contains(P_id, 'O2')) = 5;
-all_p_id(contains(P_id, 'O3')) = 6;
-all_p_id(contains(P_id, 'O4')) = 7;
-all_p_id(contains(P_id, 'O5')) = 8;
-all_p_id(contains(P_id, 'O6')) = 9;
-all_p_id(contains(P_id, 'O7')) = 10;
-all_p_id(contains(P_id, 'R1')) = 11;
-all_p_id(contains(P_id, 'R2')) = 12;
-all_p_id(contains(P_id, 'R3')) = 13;
-
-[s_all_p_id, sort_idx] = sort(all_p_id);
-
-s_P_id = P_id(sort_idx); 
-
-s_d_idx = logical([1 (diff(s_all_p_id) > 0)]); 
+C_idx = find(contains(s_P_id, 'C'));
+% C_idx = find(contains(s_P_id, 'O1') | contains(s_P_id, 'O2') | contains(s_P_id, 'O3'));
 
 
-
-s_lump_p_id = lump_p_id(sort_idx);
-s_cell_id = cell_id(sort_idx);
-
-s_g_idx = g_idx(sort_idx);
-
-s_H = rew_out.h(sort_idx,:); 
-s_rFR = rew_out.rew_fr(sort_idx,:); 
-s_bFR = rew_out.base_fr(sort_idx,:); 
-
-t = linspecer(5);
-
-c_ord = linspecer(5); % one for each session type C, O, E, R.
-c_ord(2,:) =  c_ord(4,:);
-c_ord(3,:) = t(2,:);
-c_ord(4,:) = t(5,:);
-
-blues = parula(16); reds = jet(64); oranges = autumn(16);
-sess_cord = [flipud(blues(3:2:7,:));(reds(end-7:end-1,:)); c_ord(3,:); flipud(oranges(end-9:end-6,:))];
-
-
-%% z score the peth gaussian outputs
-for k = size(all_peth,3):-1:1
-    for ii  = 1:5
-        z_peth(:,ii,k) = (all_peth(:,ii, k) - mean(stats{k}.firing_rate))./ stats{k}.std;
-    end
-end
-
-z_peth_s = z_peth(:,:, sort_idx);
-
-Z_sig_min = -5;
-Z_sig_max = 5;
-
-f_id = {'North', 'West', 'South',  'East', 'Overall'};
-flav_id = {'Grape x3','Orange x3', 'Grape x1', 'Orange x1', '   '};
-
-%% plot
-figure(999)
+figure(666)
 cla
-
-for ii = 1:5
-
-    subplot(1,5,ii)
-
-    imagesc(tvec, 1:size(all_peth,3), squeeze(z_peth_s(:,ii,:))')
-
-    title({f_id{ii}; flav_id{ii}}, 'fontsize', 20)
-    set(gca, 'ytick', [])
-    set(gca, 'xtick', tvec(1):2.5:tvec(end))
-    set(gca,'xticklabel', [get(gca, 'XTicklabel') ; num2str(tvec(end),0)]   )
-    vl = xline(0, '-k');
-    vl.LineWidth = 2;
-
-    vl = xline(cfg_wcx_r.win(1), '--r');
-    vl.LineWidth = 2;
-    vl = xline(cfg_wcx_r.win(2), '--r');
-    vl.LineWidth = 2;
-
-    vl = xline(cfg_wcx_r.baseline(1), '--r');
-    vl.LineWidth = 2;
-    vl = xline(cfg_wcx_r.baseline(2), '--r');
-    vl.LineWidth = 2;
-
-    caxis([Z_sig_min Z_sig_max]);
-
-
-    hl = hline(find(diff(s_lump_p_id))+.5, {'k', 'k', 'k'});
-    for kk = 1:length(hl)
-        hl(kk).LineWidth = 3;
-        hl(kk).Color = c_ord(kk+1,:);
+hold on
+for ii = length(C_idx):-1:1
+    if s_H(C_idx(ii), 5) && (s_bFR(ii,5) < s_rFR(ii,5))
+        plot(tvec, z_peth_s(:,5,C_idx(ii)), 'color', c_ord(1,:))
     end
 
-    % add in sig markers
-    for jj = 1:length(s_H)
-        if s_d_idx(jj) && ii == 1
-            text(tvec(1)-mode(diff(tvec))*1, jj, s_P_id{jj}, 'fontweight', 'bold','fontsize', 20, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'right', 'VerticalAlignment','cap');
-
-        end
-
-        if s_H(jj, ii) && (s_bFR(jj,ii) > s_rFR(jj,ii))
-            text(tvec(end)+mode(diff(tvec))*5, jj, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'left','Interpreter','tex');
-        elseif s_H(jj, ii) && (s_bFR(jj,ii) < s_rFR(jj,ii))
-            text(tvec(end)+mode(diff(tvec))*10, jj, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'left','Interpreter','tex');
-        end
-        if s_g_idx(jj) == 2
-            text(tvec(end)+mode(diff(tvec))*15, jj, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'left','Interpreter','tex');
-        end
-    end
 end
-cb=colorbar;
-cb.Position(1) = cb.Position(1) + .075;
-cb.Label.String = 'Mean activity (zscore)';
-cb.Label.FontSize = 12; 
-cb.FontSize = 12; 
-maximize
-
-set(gcf,'Units','Inches');
-pos = get(gcf,'Position');
-set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-print(gcf,[parent_path filesep 'Good_figure.pdf'],'-dpdf','-r300')
 
 
-%% old code
-set(gca, 'ytick', [])
-title({'East'; 'grain x 1'})
-% set(gca, 'ytick', 1:size(mean_E_mat,1), 'yTickLabel', sess_label)
-set(gca, 'ytick', [])
-set(gca, 'xtick', -5:2.5:5)
-vl = vline(0, '--k');
-vl.LineWidth = 2;
-caxis([Z_sig_min Z_sig_max]);
-hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
-for ii = 1:length(hl)
-    hl(ii).LineWidth = 3;
-    hl(ii).Color = c_ord(ii+1,:);
-end
-for ii = 1:length(all_mat_order)
-    if east_mat_sig_pre(ii)
-        text(max(tvec.C1)+mode(diff(tvec.C1))*2, ii, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
-    elseif east_mat_sig_post(ii)
-        text(max(tvec.C1)+mode(diff(tvec.C1))*4, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+OL6_idx = find(contains(s_P_id, 'O5') | contains(s_P_id, 'O6') | contains(s_P_id, 'O7'));
+
+
+for ii = length(OL6_idx):-1:1
+    if s_H(OL6_idx(ii), 5) && (s_bFR(ii,5) < s_rFR(ii,5))
+        plot(tvec, z_peth_s(:,5,OL6_idx(ii)), 'color', c_ord(3,:))
     end
-    if E_deval_mat(ii)
-        text(max(tvec.C1)+mode(diff(tvec.C1))*6, ii, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
-    end
+
 end
 
 
 
+%%  example PETHS
+
+ex_cells ={'C3_3_O2_2020-09-03_DONE_maze_data_TT1_01.t64'};
+
+for iC = 1:length(ex_cells)
+
+    c_idx = find(contains(s_cell_id, ex_cells{iC})); 
+
+    parts = strsplit(ex_cells{iC}, '_TT');
+    load([parts{1} '.mat'])
+
+    this_S =  KA_isolate_S(data.S,['TT' parts{2}]);
+
+    cfg_peth = [];
+    cfg_peth.window = [-5 5];
+    cfg_peth. plot_type = 'raw';
+    cfg_peth.dt = 0.05;
+    cfg_peth.gauss_sd = .1;
+    cfg_peth.waves = this_S.waves{1};
+
+
+    for jj = unique(data.rew.in)
+        this_idx = data.rew.in == jj;
+        [~,outputIT{jj},this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t(this_idx) );
+        example_peth(:,jj) = nanmean(this_peth,2);
+    end
+
+        [~,outputIT{5},this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t);
+        example_peth(:,5) = nanmean(this_peth,2);
+
+    %% collect data from PETHs
+
+    figure(1001)
+    subplot(212)
+    cla
+    hold on
+    for ii =size(example_peth,2):-1:1
+        if s_H(c_idx, ii)
+            plot(outputIT{5}, example_peth(:,ii),'-',  'color', [c_ord(ii,:), 1])
+        else
+            plot(outputIT{5}, example_peth(:,ii),'--',  'color', [c_ord(ii,:), .8])
+        end
+    end
+
+    y_lim = [min(example_peth, [], 'all') max(example_peth, [], 'all')];
+    ylim(y_lim);
+    % move the pre post means up
+    chil = get(gca, 'Children');
+
+    % make the text finder adaptive.
+    for ii = length(chil):-1:1
+        type{ii} = chil(ii).Type;
+    end
+    text_idx = find(contains(type, 'text'));
+    rec_idx = find(contains(type, 'rectangle'));
+
+    chil(text_idx(1)).Position = [chil(text_idx(1)).Position(1) max(example_peth, [], 'all')*.3 chil(text_idx(1)).Position(3)];
+    chil(text_idx(2)).Position = [chil(text_idx(2)).Position(1) max(example_peth, [], 'all')*.5 chil(text_idx(2)).Position(3)];
+    % adjust the vertical line at 0 which is a rectanlge.
+    chil(rec_idx).Position = [chil(rec_idx).Position(1) y_lim(1) chil(rec_idx).Position(3) y_lim(2) - y_lim(1)];
+    leg = legend(['All', f_id(1:4)], 'Orientation', 'horizontal', 'Location', 'northwest','FontSize',14);
+    set(leg, 'box', 'off')
+
+    %% add velocity
+    velo_window = [cfg_peth.window(1)*floor(1/mode(diff(out.velo_smooth.tvec))), cfg_peth.window(2)*floor(1/mode(diff(out.velo_smooth.tvec)))];
+    all_velo = NaN(length(rew_t), (abs(velo_window(1)) + abs(velo_window(2)) +1));
+    for ii = length(rew_t):-1:1
+        this_idx = nearest_idx3(rew_t(ii), out.velo_smooth.tvec);
+
+        if this_idx < abs(velo_window(1)) || velo_window(2)+this_idx > length(out.velo_smooth.data)
+            continue
+        end
+        all_velo(ii,:) = out.velo_smooth.data((velo_window(1)+this_idx):(velo_window(2)+this_idx));
+    end
+
+    velo_mean = nanmedian(all_velo, 1);
+    velo_SEM = nanstd(all_velo)./sqrt(length(all_velo));
+    velo_tvec = cfg_peth.window(1) : 1/floor(1/mode(diff(out.velo_smooth.tvec))):cfg_peth.window(2);
+
+    yyaxis right
+    hv = shadedErrorBar(velo_tvec,velo_mean,nanstd(all_velo) / sqrt(size(all_velo,1)));
+    hv.mainLine.Color =  [.5 .5 .5 .3];
+    hv.edge(1).Color =  [.5 .5 .5 .3];
+    hv.edge(2).Color =  [.5 .5 .5 .3];
+
+    hv.patch.FaceAlpha =  .2;
+    ax = gca;
+    ax.YAxis(1).Color = [.5 .5 .5];
+    ax.YAxis(2).Color = [.5 .5 .5];
+    ylabel('speed (cm/s)')
+
+
+    subplot(212)
+    y_lim = ylim;
+    rectangle('position', [0 y_lim(1) 0.001  y_lim(2) - y_lim(1)], 'facecolor', [[4,172,218]./255 0.5], 'edgecolor', [[4,172,218]./255 0.5])
+
+    ax = gca;
+    ax.YAxis(1).Color = 'k';
+    ax.YAxis(2).Color = [.5 .5 .5];
+
+    leg = legend(['All', Zone_names(1:4) , 'speed'], 'Orientation', 'horizontal', 'Location', 'northwest','FontSize',14);
+    set(leg, 'box', 'off')
+
+    SetFigure([], gcf);
+
+end
 %%
 
 %     for iT = 1:length(cells_to_process)
@@ -1195,3 +1313,28 @@ end
 % fprintf('<strong>Total Sessions: %2.0f\nnSucess: %2.0f (%2.2f%%)\nToo short: %2.0f (%2.2f%%)\nFR too low: %2.0f (%2.2f%%)\n</strong>',...
 %     length(success),sum(success==1), ((sum(success==1))/length(success))*100,sum(success==2), ((sum(success==2))/length(success))*100,...
 %     sum(success==3),((sum(success==3))/length(success))*100)
+%
+% %% old code
+% set(gca, 'ytick', [])
+% title({'East'; 'grain x 1'})
+% % set(gca, 'ytick', 1:size(mean_E_mat,1), 'yTickLabel', sess_label)
+% set(gca, 'ytick', [])
+% set(gca, 'xtick', -5:2.5:5)
+% vl = vline(0, '--k');
+% vl.LineWidth = 2;
+% caxis([Z_sig_min Z_sig_max]);
+% hl = hline(find(diff(all_nCells_c_ord))+.5, {'k', 'k', 'k'});
+% for ii = 1:length(hl)
+%     hl(ii).LineWidth = 3;
+%     hl(ii).Color = c_ord(ii+1,:);
+% end
+% for ii = 1:length(all_mat_order)
+%     if east_mat_sig_pre(ii)
+%         text(max(tvec.C1)+mode(diff(tvec.C1))*2, ii, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+%     elseif east_mat_sig_post(ii)
+%         text(max(tvec.C1)+mode(diff(tvec.C1))*4, ii, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+%     end
+%     if E_deval_mat(ii)
+%         text(max(tvec.C1)+mode(diff(tvec.C1))*6, ii, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(all_nCells_c_ord(ii),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+%     end
+% end

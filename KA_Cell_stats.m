@@ -42,7 +42,7 @@ end
 % [s_stats.ISI_hist.n, s_stats.ISI_hist.b] = hist(diff(data_in.t{1}*1000), 0:1:500);
 % 
 rng(123, "twister"); 
-for ii = 5000:-1:1
+for ii = 1000:-1:1
     t0 = randsample(pos.tvec(100:end-100), 1, true); 
 
     S0 = restrict(data_in, t0-2.5, t0+2.5); 
