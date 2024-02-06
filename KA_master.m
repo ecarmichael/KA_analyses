@@ -82,6 +82,9 @@ c_map = [.05 .05 0.05 ; c_ord(2,:)]; %[6, 25, 34; 249, 160, 27]/255; % SUNS colo
 [parent_path] = fileparts(inter_dir);
 [~, parent_dir] = fileparts(parent_path);
 
+f_id = {'North', 'West', 'South',  'East', 'Overall'};
+flav_id = {'Grape x3','Orange x3', 'Grape x1', 'Orange x1', '   '};
+
 %% loop over sessions / cells
 cd(data_dir)
 % get all the sessions
@@ -177,10 +180,10 @@ for iS = 1:length(sess_list)
 
         % summary for plotting
         cfg_peth = [];
-        cfg_peth.window = [-5 5];
+        cfg_peth.window = [-6 6];
         cfg_peth. plot_type = 'raw';
         cfg_peth.dt = 0.05;
-        cfg_peth.gauss_sd = .1;
+        cfg_peth.gauss_sd = .2;
         for jj = unique(data.rew.in)
             this_idx = data.rew.in == jj;
             [~,~,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t(this_idx) );
@@ -729,8 +732,29 @@ mat_out(4,1:length(aR)) = aR';
 mat_out= mat_out';
 
 csvwrite([parent_path filesep 'all_App_perc.csv'], mat_out)
+%% collect responses based on feeder locations
+
+for ii = 1:4
+
+C = rew_prct(P.C_idx,ii);
+O_e = rew_prct(P.OE_idx,ii);
+O_l = rew_prct(P.OL_idx,ii);
+R = rew_prct(P.R_idx,ii);
+
+% export as csv
+mat_out = NaN(4, max([length(C),length(O_e),length(O_l),length(R)]));
 
 
+mat_out(1,1:length(C)) = C';
+mat_out(2,1:length(O_e)) = O_e';
+mat_out(3,1:length(O_l)) = O_l';
+mat_out(4,1:length(R)) = R';
+
+mat_out= mat_out';
+
+csvwrite([parent_path filesep 'all_Rew_perc_' f_id{ii} '.csv'], mat_out)
+
+end
 
 %% collect the percentage response for significantly modulated cells
 sig_idx = (rew_out.h(:,5) ==1)';
@@ -944,8 +968,8 @@ for ii = 1:5
 
     title({f_id{ii}; flav_id{ii}}, 'fontsize', 20)
     set(gca, 'ytick', [])
-    set(gca, 'xtick', tvec(1):2.5:tvec(end))
-    set(gca,'xticklabel', [get(gca, 'XTicklabel') ; num2str(tvec(end),0)]   )
+    set(gca, 'xtick', -5:2.5:5)
+    % set(gca,'xticklabel', [get(gca, 'XTicklabel') ; num2str(tvec(end),0)]   )
     vl = xline(0, '-k');
     vl.LineWidth = 2;
 
@@ -984,6 +1008,7 @@ for ii = 1:5
             text(tvec(end)+mode(diff(tvec))*15, jj, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'left','Interpreter','tex');
         end
     end
+    xlim([-5 5])
 end
 cb=colorbar;
 cb.Position(1) = cb.Position(1) + .075;
@@ -1160,25 +1185,36 @@ end
 
 
 %%  example PETHS
-
-ex_cells ={'C3_3_O2_2020-09-03_DONE_maze_data_TT1_01.t64'};
-
+% 27 36 111 144 72 44 23inter
+% 27 36 111 144 72
+ex_cells ={s_cell_id{[23 27 36 44 111 144 72]}};%{'C5_2_C1_2021-04-20_DONE_maze_data_TT2_02.t64'};
+c_ord = linspecer(5); 
+  
 for iC = 1:length(ex_cells)
+close all
 
     c_idx = find(contains(s_cell_id, ex_cells{iC})); 
 
     parts = strsplit(ex_cells{iC}, '_TT');
     load([parts{1} '.mat'])
 
+    % make a color map
+      for ii = length(data.rew.in):-1:1
+        Zone_cord(ii,:) = c_ord(data.rew.in(ii),:);
+    end
+
+
     this_S =  KA_isolate_S(data.S,['TT' parts{2}]);
 
     cfg_peth = [];
-    cfg_peth.window = [-5 5];
+    cfg_peth.window = [-6 6];
     cfg_peth. plot_type = 'raw';
     cfg_peth.dt = 0.05;
-    cfg_peth.gauss_sd = .1;
+    cfg_peth.gauss_sd = .2;
     cfg_peth.waves = this_S.waves{1};
+    cfg_peth.evt_color_mat = Zone_cord; 
 
+    example_peth = [];  
 
     for jj = unique(data.rew.in)
         this_idx = data.rew.in == jj;
@@ -1186,25 +1222,33 @@ for iC = 1:length(ex_cells)
         example_peth(:,jj) = nanmean(this_peth,2);
     end
 
+         cfg_peth.evt_color_mat = Zone_cord;
+         cfg_peth.markersize = 15; 
         [~,outputIT{5},this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t);
         example_peth(:,5) = nanmean(this_peth,2);
 
-    %% collect data from PETHs
+    % collect data from PETHs
 
-    figure(1001)
+    subplot(211)
+    title([strrep(parts{1}(1:18),'_', '-') ' TT' strrep(parts{2}(1:end-4), '_', '-')])
+        xlim([-5 5])
+
     subplot(212)
     cla
     hold on
-    for ii =size(example_peth,2):-1:1
+    for ii =1: size(example_peth,2)
         if s_H(c_idx, ii)
-            plot(outputIT{5}, example_peth(:,ii),'-',  'color', [c_ord(ii,:), 1])
+            plot(outputIT{5}, example_peth(:,ii),'-',  'color', [c_ord(ii,:), 1], 'linewidth', 3)
         else
-            plot(outputIT{5}, example_peth(:,ii),'--',  'color', [c_ord(ii,:), .8])
+            plot(outputIT{5}, example_peth(:,ii),'--',  'color', [c_ord(ii,:), .8], 'linewidth', 2)
         end
     end
 
     y_lim = [min(example_peth, [], 'all') max(example_peth, [], 'all')];
     ylim(y_lim);
+        leg = legend([ fliplr(f_id(1:4)), 'All', ], 'Orientation', 'horizontal', 'Location', 'northwest','FontSize',14);
+    set(leg, 'box', 'off')
+
     % move the pre post means up
     chil = get(gca, 'Children');
 
@@ -1212,31 +1256,29 @@ for iC = 1:length(ex_cells)
     for ii = length(chil):-1:1
         type{ii} = chil(ii).Type;
     end
-    text_idx = find(contains(type, 'text'));
-    rec_idx = find(contains(type, 'rectangle'));
+    % text_idx = find(contains(type, 'text'));
+    % rec_idx = find(contains(type, 'rectangle'));
+    % 
+    % chil(text_idx(1)).Position = [chil(text_idx(1)).Position(1) max(example_peth, [], 'all')*.3 chil(text_idx(1)).Position(3)];
+    % chil(text_idx(2)).Position = [chil(text_idx(2)).Position(1) max(example_peth, [], 'all')*.5 chil(text_idx(2)).Position(3)];
+    % % adjust the vertical line at 0 which is a rectanlge.
+    % chil(rec_idx).Position = [chil(rec_idx).Position(1) y_lim(1) chil(rec_idx).Position(3) y_lim(2) - y_lim(1)];
 
-    chil(text_idx(1)).Position = [chil(text_idx(1)).Position(1) max(example_peth, [], 'all')*.3 chil(text_idx(1)).Position(3)];
-    chil(text_idx(2)).Position = [chil(text_idx(2)).Position(1) max(example_peth, [], 'all')*.5 chil(text_idx(2)).Position(3)];
-    % adjust the vertical line at 0 which is a rectanlge.
-    chil(rec_idx).Position = [chil(rec_idx).Position(1) y_lim(1) chil(rec_idx).Position(3) y_lim(2) - y_lim(1)];
-    leg = legend(['All', f_id(1:4)], 'Orientation', 'horizontal', 'Location', 'northwest','FontSize',14);
-    set(leg, 'box', 'off')
+    % add velocity
+    velo_window = [cfg_peth.window(1)*floor(1/mode(diff(data.velo_smooth.tvec))), cfg_peth.window(2)*floor(1/mode(diff(data.velo_smooth.tvec)))];
+    all_velo = NaN(length(data.rew.t), (abs(velo_window(1)) + abs(velo_window(2)) +1));
+    for ii = length(data.rew.t):-1:1 
+        this_idx = nearest_idx3(data.rew.t(ii), data.velo_smooth.tvec);
 
-    %% add velocity
-    velo_window = [cfg_peth.window(1)*floor(1/mode(diff(out.velo_smooth.tvec))), cfg_peth.window(2)*floor(1/mode(diff(out.velo_smooth.tvec)))];
-    all_velo = NaN(length(rew_t), (abs(velo_window(1)) + abs(velo_window(2)) +1));
-    for ii = length(rew_t):-1:1
-        this_idx = nearest_idx3(rew_t(ii), out.velo_smooth.tvec);
-
-        if this_idx < abs(velo_window(1)) || velo_window(2)+this_idx > length(out.velo_smooth.data)
+        if this_idx < abs(velo_window(1)) || velo_window(2)+this_idx > length(data.velo_smooth.data)
             continue
         end
-        all_velo(ii,:) = out.velo_smooth.data((velo_window(1)+this_idx):(velo_window(2)+this_idx));
+        all_velo(ii,:) = data.velo_smooth.data((velo_window(1)+this_idx):(velo_window(2)+this_idx));
     end
 
     velo_mean = nanmedian(all_velo, 1);
     velo_SEM = nanstd(all_velo)./sqrt(length(all_velo));
-    velo_tvec = cfg_peth.window(1) : 1/floor(1/mode(diff(out.velo_smooth.tvec))):cfg_peth.window(2);
+    velo_tvec = cfg_peth.window(1) : 1/floor(1/mode(diff(data.velo_smooth.tvec))):cfg_peth.window(2);
 
     yyaxis right
     hv = shadedErrorBar(velo_tvec,velo_mean,nanstd(all_velo) / sqrt(size(all_velo,1)));
@@ -1253,16 +1295,25 @@ for iC = 1:length(ex_cells)
 
     subplot(212)
     y_lim = ylim;
-    rectangle('position', [0 y_lim(1) 0.001  y_lim(2) - y_lim(1)], 'facecolor', [[4,172,218]./255 0.5], 'edgecolor', [[4,172,218]./255 0.5])
+    % rectangle('position', [0 y_lim(1) 0.001  y_lim(2) - y_lim(1)], 'facecolor', [[4,172,218]./255 0.5], 'edgecolor', [[4,172,218]./255 0.5])
 
     ax = gca;
     ax.YAxis(1).Color = 'k';
     ax.YAxis(2).Color = [.5 .5 .5];
 
-    leg = legend(['All', Zone_names(1:4) , 'speed'], 'Orientation', 'horizontal', 'Location', 'northwest','FontSize',14);
+    leg = legend([f_id(1:4),'All' , 'speed'], 'Orientation', 'horizontal', 'Location', 'northwest','FontSize',14);
     set(leg, 'box', 'off')
 
     SetFigure([], gcf);
+    xlim([-5 5])
+% maximize
+set(gcf,'Units','Inches');
+pos = get(gcf,'Position');
+set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+pause(2)
+
+print(gcf,[parent_path filesep strrep(parts{1}(1:18), '-', '_') ' TT' strrep(parts{2}(1:end-4), '-', '_') '_PETH.pdf'],'-dpdf','-r300')
+
 
 end
 %%
