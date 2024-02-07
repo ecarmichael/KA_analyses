@@ -234,7 +234,7 @@ rew_no_mod = sum(sum(rew_out.h(:,1:5),2) == 0);
 app_no_mod = sum(sum(app_out.h(:,1:5),2) == 0);
 
 %% classify cells based on waveform properties
-fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = []
+fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = []; 
 for ii = length(stats):-1:1
     fr(ii) = stats{ii}.firing_rate;
     bur_idx(ii) = stats{ii}.burst_idx;
@@ -281,7 +281,9 @@ for ii = 1:length(unique(g_idx))
     cla
     hold on
     for jj = 1:4
+        shadedErrorBar(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(jj+1,:, g_idx == ii),3),std(wave_forms(jj+1,:, g_idx == ii),[],3) )
         plot(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(jj+1,:, g_idx == ii),3))
+        % errorbar(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(jj+1,:, g_idx == ii),3) +std(wave_forms(jj+1,:, g_idx == ii),[],3))
     end
     title(['Group ' num2str(ii) ' | n=' num2str(sum(g_idx == ii))  ' | FR:' num2str(round(mean(fr(g_idx == ii)),2)) '\pm' num2str(round(std(fr(g_idx == ii)),2))])
 
@@ -685,20 +687,47 @@ title('Approach')
 
 
 %% collect the percentage response
-for ii = size(rew_out.h,1):-1:1
+k = 0; 
+rew_prct = NaN(size(rew_out.h,1), size(rew_out.rew_fr, 2)); 
+app_prct = rew_prct; 
+sub_id = cell(1,size(rew_out.h,1)); 
+rew_all = NaN(size(rew_out.h,1)*(size(rew_out.rew_fr, 2)-1),1); 
+rew_id = cell(size(rew_out.h,1)*(size(rew_out.rew_fr, 2)-1),1); 
+rew_feeder = rew_id; 
+rew_phase = rew_id; 
+R_idx = rew_all; 
+for ii = 1:size(rew_out.h,1)
 
-    for jj = size(rew_out.rew_fr, 2):-1:1
+    for jj = 1:size(rew_out.rew_fr, 2)
         rew_prct(ii,jj) = rew_out.rew_fr(ii,jj)./ rew_out.base_fr(ii,jj);
 
         app_prct(ii,jj) = app_out.rew_fr(ii,jj) / app_out.base_fr(ii,jj);
 
+        sub_id{ii} = cell_id{ii}(1:4);
+
+        if jj~=5
+                    k = k+1;
+
+            rew_all(k) = rew_out.rew_fr(ii,jj)./ rew_out.base_fr(ii,jj);
+            rew_id{k} = cell_id{ii}(1:4); 
+            rew_feeder{k} = f_id{jj}; 
+            rew_phase{k} = cell_id{ii}(6:7); 
+        end
+        if contains(cell_id{ii}, '_R')
+            R_idx(k) = 1; 
+        else
+            R_idx(k) = 0; 
+        end
     end
 end
+
+R_idx = logical(R_idx); 
 
 C = rew_prct(P.C_idx,5);
 O_e = rew_prct(P.OE_idx,5);
 O_l = rew_prct(P.OL_idx,5);
 R = rew_prct(P.R_idx,5);
+
 
 % export as csv
 mat_out = NaN(4, max([length(C),length(O_e),length(O_l),length(R)]));
@@ -712,6 +741,11 @@ mat_out(4,1:length(R)) = R';
 mat_out= mat_out';
 
 csvwrite([parent_path filesep 'all_Rew_perc.csv'], mat_out)
+
+R_tab = table(rew_id(R_idx),rew_phase(R_idx), rew_feeder(R_idx), rew_all(R_idx), 'VariableNames', {'ID','Phase' 'Arm', 'Response'}); 
+
+writetable(R_tab,[parent_path filesep 'R_only_table.csv'] )
+
 
 
 aC = app_prct(P.C_idx,5);
@@ -1199,7 +1233,7 @@ close all
     load([parts{1} '.mat'])
 
     % make a color map
-      for ii = length(data.rew.in):-1:1
+    for ii = length(data.rew.in):-1:1
         Zone_cord(ii,:) = c_ord(data.rew.in(ii),:);
     end
 
@@ -1316,8 +1350,196 @@ print(gcf,[parent_path filesep strrep(parts{1}(1:18), '-', '_') ' TT' strrep(par
 
 
 end
-%%
+%% collect the position data for E and R sessions. 
+E.map = []; R1.map = []; R2.map = []; R3.map = []; 
+E.dur = []; R1.dur = []; R2.dur = []; R3.dur = []; 
+EG.map = []; R1G.map = []; R2G.map = []; R3G.map = []; 
 
+cd(data_dir)
+% get all the sessions
+this_dir = dir('*DONE');
+sess_list = [];
+for ii = 1:length(this_dir)
+    if strcmp(this_dir(ii).name(1), '.') % check for hidden dirs
+        continue
+    else
+        sess_list{ii} = this_dir(ii).name;
+    end
+end
+sess_list =   sess_list(~cellfun('isempty',sess_list));
+
+keep_idx = (contains(sess_list, 'E1') | contains(sess_list, 'R')); 
+
+sess_list(~keep_idx) = [];
+
+for iS = length(sess_list):-1:1
+    cd([data_dir filesep sess_list{iS}])
+
+    disp([ num2str(iS) '_' sess_list{iS}])
+    s_phase{iS}= sess_list{iS}(6:7);
+
+    if ~isempty(dir('*VT*.zip')) && isempty(dir('*.nvt'))
+        unzip('VT1.zip')
+    end
+
+    evt = LoadEvents([]);
+    % add in check for multiple recording periods.  Some seem to have a pre and post recoding.
+    s_rec_idx = find(contains(evt.label, 'Starting Record'));
+    e_rec_idx = find(contains(evt.label, 'Stopping Record'));
+    if length(evt.t{s_rec_idx}) > length(evt.t{e_rec_idx})
+        evt.t{s_rec_idx}  = evt.t{s_rec_idx}(1:length(evt.t{e_rec_idx})); 
+
+    end
+    nRec = length(evt.t{s_rec_idx});
+    if nRec >1
+        for iR = nRec:-1:1
+            rec_dur(iR) = evt.t{e_rec_idx}(iR) - evt.t{s_rec_idx}(iR);
+        end
+        [~, task_rec_idx] = max(rec_dur);
+    else
+        task_rec_idx = 1;
+        rec_dur = evt.t{e_rec_idx}(task_rec_idx) - evt.t{s_rec_idx}(task_rec_idx);
+    end
+    task_rec_idx_s = task_rec_idx;
+    task_rec_idx_e = task_rec_idx;
+
+    if exist('PM-2021-04-29-09_41_50.mat', 'file') % odd session with a momentary stop in recording.
+        task_rec_idx_s = 1;
+        task_rec_idx_e = 2;
+        rec_dur = evt.t{e_rec_idx}(task_rec_idx_e) - evt.t{s_rec_idx}(task_rec_idx_s);
+    end
+
+    % check for sessions that are too short. If less than 15mins skip.
+    % if max(rec_dur)/60 < 10
+    %     fprintf('<strong>Minumum recording duration (10mins) not met: %2.1fmins</strong>\n', max(rec_dur)/60);
+    %     continue
+    % end
+
+
+    cfg_pos.convFact = [560/142 480/142];
+    data.pos = LoadPos(cfg_pos);
+    data.pos = restrict(data.pos, evt.t{s_rec_idx}(task_rec_idx_s), evt.t{e_rec_idx}(task_rec_idx_e)); % restrict position to time on track.
+
+% occupancy histogram. 
+    SET_xmin = 0; SET_ymin = 0; % set up bins
+    SET_xmax = 180; SET_ymax = 180;
+    SET_xBinSz = (SET_xmax - SET_xmin)/30; SET_yBinSz = (SET_xmax - SET_xmin)/30;
+
+
+    x_edges = SET_xmin:SET_xBinSz:SET_xmax;
+    y_edges = SET_ymin:SET_yBinSz:SET_ymax;
+
+    % set up gaussian
+    kernel = gausskernel([8 8],4); % 2d gaussian in bins
+
+    % compute occupancy
+    occ_hist = hist3(data.pos.data(1:2,:)', 'edges', {y_edges x_edges});
+    %     occ_hist = histcn(out.pos.data(1:2,:)',y_edges,x_edges); % 2-D version of histc()
+    low_occ_idx = find(occ_hist <7.5 );
+    occ_hist(low_occ_idx) = 0;
+
+    %     occ_hist = conv2(occ_hist,kernel,'same');
+
+    no_occ_idx = find(occ_hist == 0 ); % NaN out bins never visited
+    occ_hist(no_occ_idx) = NaN;
+    %
+    occ_hist = occ_hist .* mode(diff(data.pos.tvec)); % convert samples to seconds using video frame rate (30 Hz)
+
+
+    if contains(sess_list{iS}, 'C1_1') || contains(sess_list{iS}, 'C4_3') || contains(sess_list{iS}, 'C5_3') || contains(sess_list{iS}, 'C6_4')
+        if contains(sess_list{iS}, 'E1')
+            E.map = cat(3,E.map, occ_hist);
+            E.dur = [E.dur rec_dur];
+        elseif contains(sess_list{iS}, 'R1')
+            R1.map = cat(3,R1.map, occ_hist);
+        elseif contains(sess_list{iS}, 'R2')
+            R2.map = cat(3,R2.map, occ_hist);
+        elseif contains(sess_list{iS}, 'R3')
+            R3.map = cat(3,R3.map, occ_hist);
+        end
+
+    elseif contains(sess_list{iS}, 'C3_2') || contains(sess_list{iS}, 'C3_3') || contains(sess_list{iS}, 'C5_2') || contains(sess_list{iS}, 'C6_2')
+
+        if contains(sess_list{iS}, 'E1')
+            EG.map = cat(3,EG.map, occ_hist);
+            E.dur = [E.dur rec_dur];
+        elseif contains(sess_list{iS}, 'R1')
+            R1G.map = cat(3,R1G.map, occ_hist);
+        elseif contains(sess_list{iS}, 'R2')
+            R2G.map = cat(3,R2G.map, occ_hist);
+        elseif contains(sess_list{iS}, 'R3')
+            R3G.map = cat(3,R3G.map, occ_hist);
+        end
+    else
+
+        disp(sess_list{iS})
+    end
+
+
+
+
+end
+
+figure(880)
+cla
+subplot(2,4,1)
+imagesc(nanmean(E.map, 3))
+title('E Orange (E/W)')
+
+subplot(2,4,2)
+imagesc(nanmean(R1.map, 3))
+title('R1')
+
+subplot(2,4,3)
+imagesc(nanmean(R2.map, 3))
+title('R2')
+
+subplot(2,4,4)
+imagesc(nanmean(R3.map, 3))
+title('R3')
+
+
+subplot(2,4,5)
+imagesc(nanmean(EG.map, 3))
+title('E grape (N/S)')
+
+subplot(2,4,6)
+imagesc(nanmean(R1G.map, 3))
+title('R1')
+
+subplot(2,4,7)
+imagesc(nanmean(R2G.map, 3))
+title('R2')
+
+subplot(2,4,8)
+imagesc(nanmean(R3G.map, 3))
+title('R3')
+
+cmap = [1 1 1; parula(256)]; 
+
+colormap(cmap)
+
+
+%% count the feeder fires 
+
+for iS = length(sess_list):-1:1
+    cd([data_dir filesep sess_list{iS}])
+
+
+
+
+        this_data = KA_trialfun_noS(plot_dir);
+
+        for ii = unique(this_data.rew.in)
+            this_idx = this_data.rew.in == ii; 
+            this_ratio(ii) = sum(this_idx) / sum(this_data.PM.FeedersFired == ii); 
+        end
+
+
+
+end
+
+%%
 %     for iT = 1:length(cells_to_process)
 %
 %         parts = strsplit(cells_to_process{iT}, filesep);
