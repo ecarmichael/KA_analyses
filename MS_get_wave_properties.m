@@ -218,6 +218,7 @@ wave_prop.wave_dur = wave_dur;
 wave_prop.slopes_ratio = slopes_ratio;
 wave_prop.rise_fall_inter = rise_fall_inter;
 wave_prop.burst_idx = burst_idx;
+wave_prop.best_wave_idx = best_wave_idx+1; 
 
 if plot_flag
     wave_prop.auto_corr.ac = ac;

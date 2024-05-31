@@ -3,13 +3,16 @@
 
 % load data
 if ismac
-    addpath(genpath('/Users/jericcarmichael/Documents/Github/vandermeerlab/code-matlab/shared'))
-    addpath(genpath('/Users/jericcarmichael/Documents/Github/EC_State'));
-    addpath(genpath('/Users/jericcarmichael/Documents/Github/KA_analyses'));
-    data_dir = '/Users/jericcarmichael/Desktop/KA_Data/for_eric_only'; % where all the NLX data is.
+
+usr_name = char(java.lang.System.getProperty('user.name')); 
+
+    addpath(genpath(['/Users/' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared']))
+    addpath(genpath(['/Users/' usr_name '/Documents/Github/EC_State']));
+    addpath(genpath(['/Users/' usr_name '/Documents/Github/KA_analyses']));
+        data_dir = ['/Users/' usr_name '/Desktop/KA_Data/for_eric_only']; % where all the NLX data is.
     % inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs.
-    inter_dir = '/Users/jericcarmichael/Desktop/KA_Data/inter_data';
-    plot_dir = '/Users/jericcarmichael/Desktop/KA_Data/Behav_plots';
+    inter_dir = ['/Users/' usr_name '/Desktop/KA_Data/inter_data'];
+    plot_dir = ['/Users/' usr_name '/Desktop/KA_Data/Behav_plots'];
 elseif ispc
     % load data
     addpath(genpath('C:\Users\ecarm\Documents\GitHub\vandermeerlab\code-matlab\shared'))
@@ -149,6 +152,7 @@ spd_mod = [];
 spd_p = [];
 spd_corr = [];
 stats = [];
+spd_data= []; 
 k = 0;
 for iS = 1:length(sess_list)
 
@@ -177,6 +181,11 @@ for iS = 1:length(sess_list)
         spd_mod(k) = data.spd_mod.spd_mod;
         spd_p(k) = data.spd_mod.p_val;
         spd_corr(k) = data.spd_mod.spd_corr;
+        spd_z(k) = data.spd_mod.z_mod; 
+
+        spd_data{k}.FR = data.spd_mod.FR_velo_int;
+        spd_data{k}.tvec =  data.velo_smooth.tvec; 
+        spd_data{k}.spd = data.velo_smooth.data; 
 
         % summary for plotting
         cfg_peth = [];
@@ -1538,6 +1547,87 @@ for iS = length(sess_list):-1:1
 
 
 end
+
+
+%% speed plots
+
+figure(868)
+clf
+subplot(6,3,[1 4 7])
+bins = -.6:0.01:.6;
+hold on
+histogram(spd_corr(~logical(spd_mod)), bins, 'FaceColor',[.7 .7 .7])
+histogram(spd_corr(logical(spd_mod)), bins, 'FaceColor',c_ord(2,:))
+ylabel('count')
+xlabel('speed corr')
+
+subplot(6,3,[10 13 16])
+
+hold on
+scatter(spd_corr(logical(spd_mod)), fr(logical(spd_mod)),  35, 'markerfacecolor', c_ord(2,:), 'markeredgecolor', c_ord(2,:))
+scatter(spd_corr(~logical(spd_mod)), fr(~logical(spd_mod)),  35, 'markerfacecolor', [.7 .7 .7], 'markeredgecolor', [.7 .7 .7])
+xlabel('speed corr')
+
+% bins = -10:0.25:10; 
+% hold on; 
+% histogram(spd_z(abs(spd_z) <2.58) , bins, 'FaceColor',[.7 .7 .7])
+% histogram(spd_z(abs(spd_z) >=2.58) , bins, 'FaceColor',c_ord(2,:))
+% ylabel('count')
+% xlabel('z score corr')
+
+
+% rank the spd corr; 
+[~, spd_mod_max_idx] = sort(spd_corr, 'descend'); 
+[~, spd_mod_min_idx] = sort(abs(spd_corr), 'descend'); 
+
+ex_idx = [spd_mod_max_idx(1) spd_mod_max_idx(3) spd_mod_max_idx(end-3) spd_mod_max_idx(end) spd_mod_min_idx(end-3) spd_mod_min_idx(end) ]; 
+% spd_c_ord  = [0.2238    0.4408    0.7226;0.2069    0.5754    0.7336; ...
+%     0.7598    0.1518    0.3010; 0.9745    0.5140    0.2853;...
+%      .6769    0.4447    0.7114 ; .6769    0.4447    0.7114];
+
+spd_c_ord = [67, 127, 151; 132 147 35; 255 179 13; 253 22 26; 80 80 80; 80 80 80]/255;
+splt_idx = 2:3:17; 
+
+for ii =1:length(ex_idx)
+
+subplot(6,3,[1 4 7])
+scatter(spd_corr(ex_idx(ii)), 5, 35, 'markerfacecolor', spd_c_ord(ii,:), 'markeredgecolor', spd_c_ord(ii,:))
+
+subplot(6,3,[10 13 16])
+scatter(spd_corr(ex_idx(ii)), fr(ex_idx(ii)), 55, 'd',  'markerfacecolor', spd_c_ord(ii,:), 'markeredgecolor', spd_c_ord(ii,:))
+
+
+
+subplot(6, 3, [splt_idx(ii) splt_idx(ii)+1])
+yyaxis right
+plot(spd_data{ex_idx(ii)}.tvec - spd_data{ex_idx(ii)}.tvec(1), spd_data{ex_idx(ii)}.spd, 'LineWidth',1,'color',  [.5 .5 .5])
+ylabel('speed (cm/s)')
+
+yyaxis left
+
+plot(spd_data{ex_idx(ii)}.tvec - spd_data{ex_idx(ii)}.tvec(1), spd_data{ex_idx(ii)}.FR, 'LineWidth',2, 'color', spd_c_ord(ii,:))
+ylabel('firing rate (Hz)')
+
+xlim([60 180])
+
+ax = gca; 
+ax.YAxis(1).Color = spd_c_ord(ii,:); 
+ax.YAxis(2).Color = [.5 .5 .5];
+
+if ii ~= length(ex_idx)
+    set(gca, 'xtick', [])
+else
+    set(gca, 'xtick', [0:60:180])
+    xlabel('times (sec)')
+end
+
+title([ 'Speed Corr: ' num2str(spd_corr(ex_idx(ii)),'%4.2f') ' | ' strrep([cell_id{ex_idx(ii)}(1:7) ' | ' cell_id{ex_idx(ii)}(end-9:end-4)], '_', ' ') ])
+end
+
+
+subplot(6,3,[10 13 16])
+set(gca, 'YScale', 'log')
+ylabel('log firing rate (Hz)')
 
 %%
 %     for iT = 1:length(cells_to_process)

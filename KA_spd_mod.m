@@ -65,7 +65,12 @@ else
     out.spd_mod = 0; 
 end
 
+% zscore spd mod
+out.z_mod = (out.spd_corr - mean(spd_shuff))./std(spd_shuff); 
+
 out.p_val = sum(spd_shuff > out.spd_corr,2)/nShuf; 
+
+out.FR_velo_int = FR_velo_int./cfg.binsize; 
 
 %% for plotting later on
 
@@ -75,7 +80,7 @@ out.p_val = sum(spd_shuff > out.spd_corr,2)/nShuf;
 % ylabel('Firing rate (Hz)')
 % yyaxis('left')
 % ylabel('Speed (cm/s)')
-
+% 
 % % simple acceleration
 % plot(velo.tvec(1:end-1), diff(velo.data(1,:)), 'color', [.4 .4 .4], 'linewidth', 1.5)
 % yyaxis('right')
