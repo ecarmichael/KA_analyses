@@ -9,6 +9,8 @@ usr_name = char(java.lang.System.getProperty('user.name'));
     addpath(genpath(['/Users/' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared']))
     addpath(genpath(['/Users/' usr_name '/Documents/Github/EC_State']));
     addpath(genpath(['/Users/' usr_name '/Documents/Github/KA_analyses']));
+        % addpath(genpath(['/Users/' usr_name '/Documents/Github/NeuroLearning/M1_compiled_loaders_functions/releaseDec2015/binaries'])); % Apple silicon compiled Nlx Loaders
+
         data_dir = ['/Users/' usr_name '/Desktop/KA_Data/for_eric_only']; % where all the NLX data is.
     % inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs.
     inter_dir = ['/Users/' usr_name '/Desktop/KA_Data/inter_data'];
@@ -201,6 +203,8 @@ for iS = 1:length(sess_list)
 
         [~,tvec,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t );
         all_peth(:,5, k) = nanmean(this_peth,2);
+
+        app_t{iS}= data.app; 
 
 
         % PETH for plotting
@@ -1069,7 +1073,7 @@ print(gcf,[parent_path filesep 'Good_figure.pdf'],'-dpdf','-r300')
 
 
 %% save the mean velocity per condition
-s_phase= []; mVelo = [];
+s_phase= []; mVelo = []; all_velo_mean = []; all_velo_max = []; 
 
 thresh = 2.5;
 
@@ -1092,6 +1096,7 @@ sess_list(find(contains(sess_list, 'C6_3_E1_2021-10-13_DONE'))) = [];
 
 for iS = length(sess_list):-1:1
     cd([data_dir filesep sess_list{iS}])
+
 
     disp([ num2str(iS) '_' sess_list{iS}])
     s_phase{iS}= sess_list{iS}(6:7);
@@ -1148,6 +1153,30 @@ for iS = length(sess_list):-1:1
 
     % get the mean velocity when the animal is moving.
     mVelo(iS) = mean(data.velo_smooth.data(data.velo_smooth.data>thresh));
+
+%     % get the mean/max velocity per trial type. 
+%     trial_mean_velo = NaN(length(data.app.t), 4); % fill with NaNs. 
+%     trial_max_velo = NaN(length(data.app.t), 4); 
+% 
+%     for iT = length(data.app.t):-1:1
+%         if (data.app.t(iT) < data.velo_smooth.tvec(1)) || (data.rew.t(iT) > data.velo_smooth.tvec(end))
+%             continue
+%         end
+%         A_velo = restrict(data.velo_smooth, data.app.t(iT), data.rew.t(iT)); 
+%         fprintf('Approach dur: %0.2f  velo: %0.2f \n', A_velo.tvec(end) - A_velo.tvec(1), mean(A_velo.data))
+% 
+%         if A_velo.tvec(end) - A_velo.tvec(1) <= 10 % skip indirect trials that took more than 10s. 
+% 
+% 
+%             trial_mean_velo(iT,data.app.in(iT)) = mean(A_velo.data); 
+%             trial_max_velo(iT,data.app.in(iT)) = max(A_velo.data);
+%         end
+% 
+%     end
+% 
+% all_velo_mean(iS,:) = nanmean(trial_mean_velo); 
+% all_velo_max(iS,:) = nanmean(trial_mean_velo); 
+
 
 end
 %%
@@ -1628,6 +1657,104 @@ end
 subplot(6,3,[10 13 16])
 set(gca, 'YScale', 'log')
 ylabel('log firing rate (Hz)')
+
+
+%% collect the speed mod responses
+
+% export as csv
+mat_out = [];
+mat_out = array2table([logical(spd_mod); spd_z; spd_p]', 'VariableNames',{'spd_mod' 'spd_zscore' 'spd_pval' }); 
+
+c_type = []; 
+for ii  = length(g_idx):-1:1
+    if g_idx(ii) ==1
+        c_type{ii} = 'RS';
+    elseif g_idx(ii) == 2
+        c_type{ii} = 'FS';
+    end
+end
+mat_out.cell_type = c_type'; 
+mat_out.phase = phase'; 
+
+
+% add in the reward modulation per cell
+
+mat_out.rew_N_p = rew_out.p(:,1); 
+mat_out.rew_E_p = rew_out.p(:,2); 
+mat_out.rew_S_p = rew_out.p(:,3); 
+mat_out.rew_W_p = rew_out.p(:,4); 
+mat_out.rew_A_p = rew_out.p(:,5); 
+
+mat_out.app_N_p = app_out.p(:,1); 
+mat_out.app_E_p = app_out.p(:,2); 
+mat_out.app_S_p = app_out.p(:,3); 
+mat_out.app_W_p = app_out.p(:,4); 
+mat_out.app_A_p = app_out.p(:,5); 
+
+writetable(mat_out, [parent_path filesep 'Spd_mod.csv'])
+
+%% get the trial velocity per condition
+
+cd(inter_dir)
+sess_list = dir([inter_dir filesep '*.mat']);
+
+s_phase= []; mVelo = []; all_velo_mean = NaN(length(sess_list), 5); all_velo_max = NaN(length(sess_list), 5); 
+
+
+for iS = length(sess_list):-1:1
+
+
+    load([inter_dir filesep sess_list(iS).name])
+
+
+    % get the mean/max velocity per trial type.
+    trial_mean_velo = NaN(length(data.app.t), 4); % fill with NaNs.
+    trial_max_velo = NaN(length(data.app.t), 4);
+
+    for iT = length(data.app.t):-1:1
+        if (data.app.t(iT) < data.velo_smooth.tvec(1)) || (data.rew.t(iT) > data.velo_smooth.tvec(end)) || ((data.rew.t(iT) - data.app.t(iT))<0)
+            continue
+        end
+        A_velo = restrict(data.velo_smooth, data.app.t(iT)-2.5, data.rew.t(iT));
+        % fprintf('Approach dur: %0.2f  velo: %0.2f \n', A_velo.tvec(end) - A_velo.tvec(1), mean(A_velo.data))
+
+        if A_velo.tvec(end) - A_velo.tvec(1) <= 10 % skip indirect trials that took more than 10s.
+
+            trial_mean_velo(iT,data.app.in(iT)) = mean(A_velo.data);
+            trial_max_velo(iT,data.app.in(iT)) = max(A_velo.data);
+        end
+
+    end
+
+    all_velo_mean(iS,1:4) = nanmean(trial_mean_velo);
+    all_velo_mean(iS,5)  = nanmean(trial_mean_velo, 'all'); 
+
+    all_velo_max(iS,1:4) = nanmean(trial_max_velo); 
+    all_velo_max(iS,5)  = nanmean(trial_max_velo, 'all');
+
+    all_velo(iS) = mean(data.velo_smooth.data); 
+    all_mvelo(iS) = mean(data.velo_smooth.data(data.velo_smooth.data>2.5)); 
+
+    s_ID{iS} = sess_list(iS).name(6:7); 
+    c_ID{iS} = sess_list(iS).name(1:4); 
+    F_id{iS} = data.PM.Feeder_type; 
+    F_val(iS,1:4) = data.PM.Feeder_mag; 
+
+end
+
+% export as csv
+mat_out = [];
+mat_out = array2table([all_velo_mean';  all_velo_max'; all_velo; all_mvelo]', 'VariableNames',{'Mean_B3', 'Mean_G3', 'Mean_B1', 'Mean_G1', 'Mean_all',...
+    'Max_B3', 'Max_G3', 'Max_B1', 'Max_G1', 'Max_all', 'overall_mean', 'overall_mean_mov_only'}); 
+
+c_type = []; 
+
+mat_out.sess_id = s_ID'; 
+mat_out.sub_id = c_ID'; 
+
+% 
+writetable(mat_out, [parent_path filesep 'Sess_spd_2p5.csv'])
+
 
 %%
 %     for iT = 1:length(cells_to_process)
