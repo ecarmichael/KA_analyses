@@ -1766,6 +1766,9 @@ for kk = 1:length(spd_data)
     [z_err(kk), R2(kk), S_R2(kk)] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd); 
 
 end
+
+MS_bar_w_err(R2, S_R2, [c_ord(1,:); .7 .7 .7] , 1, 'ttest2', 1:2);
+saveas(gcf, 'R2.fig')
 %%
 %     for iT = 1:length(cells_to_process)
 %
