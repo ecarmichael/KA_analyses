@@ -23,6 +23,7 @@ elseif ispc
     data_dir = 'C:\Users\ecarm\Desktop\for_eric_only'; % where all the NLX data is.
     inter_dir = 'J:\KA_Data\inter_reward_23';
     inter_dir_app = 'J:\KA_Data\inter_reward_23_approach';
+    plot_dir = 'C:\Users\ecarm\Desktop\Behav_plots';
 
 
 else
@@ -1755,7 +1756,34 @@ mat_out.sub_id = c_ID';
 % 
 writetable(mat_out, [parent_path filesep 'Sess_spd_2p5.csv'])
 
+%% try some linear decoding
 
+kk = 0
+for iS = 1:length(sess_list)
+
+    load([inter_dir filesep sess_list(iS).name])
+
+
+    for iC = 1:length(data.S.t)
+
+        if ismember([sess_list(iS).name(1:end-4) '_' data.S.label{iC}], omit_cells)
+            continue
+        end
+        kk = kk+1;
+
+        % cell_id{k} = [sess_list(iS).name(1:end-4) '_' data.S.label{iC}];
+
+        % isolate the cell of interest in the session (if there are
+        this_S = KA_isolate_S(data.S, data.S.label{iC});
+
+
+        % simple linear decoding
+        
+
+    end
+
+
+end
 %%
 %     for iT = 1:length(cells_to_process)
 %
