@@ -22,4 +22,4 @@ function sem =  MS_SEM(data_in)
 
 nan_idx = isnan(data_in);
 
-sem = std(data_in(~nan_idx)) / sqrt(length(data_in(~nan_idx))); 
+sem = std(data_in(~nan_idx)) ./ sqrt(length(data_in(~nan_idx))); 

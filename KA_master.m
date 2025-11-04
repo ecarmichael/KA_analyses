@@ -20,10 +20,10 @@ elseif ispc
     addpath(genpath('C:\Users\ecarm\Documents\GitHub\vandermeerlab\code-matlab\shared'))
     addpath(genpath('C:\Users\ecarm\Documents\GitHub\EC_State'));
     addpath(genpath('C:\Users\ecarm\Documents\GitHub\KA_analyses'));
-    data_dir = 'C:\Users\ecarm\Desktop\for_eric_only'; % where all the NLX data is.
-    inter_dir = 'J:\KA_Data\inter_reward_23';
-    inter_dir_app = 'J:\KA_Data\inter_reward_23_approach';
-    plot_dir = 'C:\Users\ecarm\Desktop\Behav_plots';
+    data_dir = 'C:\Users\ecarm\Williams Lab Dropbox\Eric Carmichael\for_eric_only'; % where all the NLX data is.
+    inter_dir = 'C:\Users\ecarm\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23';
+    inter_dir_app = 'C:\Users\ecarm\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23_approach';
+    plot_dir = 'C:\Users\ecarm\Williams Lab Dropbox\Eric Carmichael\KA_Data\Behav_plots';
 
 
 else
@@ -190,6 +190,7 @@ for iS = 1:length(sess_list)
         spd_data{k}.tvec =  data.velo_smooth.tvec; 
         spd_data{k}.spd = data.velo_smooth.data; 
 
+
         % summary for plotting
         cfg_peth = [];
         cfg_peth.window = [-6 6];
@@ -247,6 +248,7 @@ end
 rew_no_mod = sum(sum(rew_out.h(:,1:5),2) == 0);
 app_no_mod = sum(sum(app_out.h(:,1:5),2) == 0);
 
+save([parent_path filesep 'Spd_data.mat'], 'spd_data')
 %% classify cells based on waveform properties
 fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = []; 
 for ii = length(stats):-1:1
@@ -1757,31 +1759,11 @@ mat_out.sub_id = c_ID';
 writetable(mat_out, [parent_path filesep 'Sess_spd_2p5.csv'])
 
 %% try some linear decoding
+load([parent_dir filesep 'Spd_data.mat']); 
 
-kk = 0
-for iS = 1:length(sess_list)
-
-    load([inter_dir filesep sess_list(iS).name])
-
-
-    for iC = 1:length(data.S.t)
-
-        if ismember([sess_list(iS).name(1:end-4) '_' data.S.label{iC}], omit_cells)
-            continue
-        end
-        kk = kk+1;
-
-        % cell_id{k} = [sess_list(iS).name(1:end-4) '_' data.S.label{iC}];
-
-        % isolate the cell of interest in the session (if there are
-        this_S = KA_isolate_S(data.S, data.S.label{iC});
-
-
-        % simple linear decoding
-        
-
-    end
-
+for kk = 1:length(spd_data)
+   
+    [z_err(kk), R2(kk), S_R2(kk)] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd); 
 
 end
 %%
