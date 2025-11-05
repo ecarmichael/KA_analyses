@@ -1661,12 +1661,65 @@ subplot(6,3,[10 13 16])
 set(gca, 'YScale', 'log')
 ylabel('log firing rate (Hz)')
 
+%% try some linear decoding
+load([parent_dir filesep 'Spd_data.mat']); 
+
+z_err = NaN(length(spd_data),1);
+R2 = z_err; 
+S_R2 = z_err; 
+
+parfor kk = 1:length(spd_data)
+   disp(kk)
+    [z_err(kk), R2(kk), S_R2(kk)] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd); 
+
+end
+
+figure(1011)
+clf
+subplot(2,3,1)
+MS_bar_w_err(R2(:,1)', S_R2(:,1)', [.25 .25 .25 ; .7 .7 .7] , 1, 'ttest', 1:2);
+set(gca, 'xticklabel', {'All Cells' 'Shuffle'})
+axis square
+ylabel('Decoding accuracy R^2')
+
+subplot(2,3,4)
+MS_bar_w_err(R2(:,1)', S_R2(:,1)', [.25 .25 .25 ; .7 .7 .7] , 1, 'ttest', 1:2);
+set(gca, 'xticklabel', {'All Cells' 'Shuffle'})
+set(gca, 'YScale', 'log')
+axis square
+ylabel('Decoding accuracy log R^2')
+
+subplot(2,3,2)
+MS_bar_w_err(R2(logical(spd_mod),1)', R2(~logical(spd_mod),1)', [c_ord(1,:); c_ord(1,:)*2] , 1, 'ttest2', 1:2);
+set(gca, 'xticklabel', {'Speed Cells' 'Other'})
+% set(gca, 'YScale', 'log')
+axis square
+
+subplot(2,3,5)
+MS_bar_w_err(R2(logical(spd_mod),1)', R2(~logical(spd_mod),1)', [c_ord(1,:); c_ord(1,:)*2] , 1, 'ttest2', 1:2);
+set(gca, 'xticklabel', {'Speed Cells' 'Other'})
+set(gca, 'YScale', 'log')
+axis square
+
+subplot(2,3,3)
+MS_bar_w_err(R2(~FS_idx' & logical(spd_mod),1)', R2(FS_idx' & logical(spd_mod),1)', [c_ord(1,:); c_ord(2,:)] , 1, 'ttest2', 1:2);
+set(gca, 'xticklabel', {'Pyr Speed Cells' 'FS Speed Cells'})
+axis square
+
+subplot(2,3,6)
+MS_bar_w_err(R2(~FS_idx' & logical(spd_mod),1)', R2(FS_idx' & logical(spd_mod),1)', [c_ord(1,:); c_ord(2,:)] , 1, 'ttest2', 1:2);
+set(gca, 'xticklabel', {'Pyr Speed Cells' 'FS Speed Cells'})
+set(gca, 'YScale', 'log')
+axis square
+
+saveas(gcf,[parent_path filesep 'R2.fig']);
+print(gcf,[parent_path filesep 'R2.pdf'],'-dpdf','-r300')
 
 %% collect the speed mod responses
 
 % export as csv
 mat_out = [];
-mat_out = array2table([logical(spd_mod); spd_z; spd_p]', 'VariableNames',{'spd_mod' 'spd_zscore' 'spd_pval' }); 
+mat_out = array2table([logical(spd_mod); round(spd_z,4); spd_p]', 'VariableNames',{'spd_mod' 'spd_zscore' 'spd_pval' }); 
 
 c_type = []; 
 for ii  = length(g_idx):-1:1
@@ -1676,12 +1729,17 @@ for ii  = length(g_idx):-1:1
         c_type{ii} = 'FS';
     end
 end
+
+mat_out.R2 = round(R2, 3); 
+mat_out.S_R2 = round(S_R2, 3); 
+
 mat_out.cell_type = c_type'; 
 mat_out.phase = phase'; 
 
 
-% add in the reward modulation per cell
 
+
+% add in the reward modulation per cell
 mat_out.rew_N_p = rew_out.p(:,1); 
 mat_out.rew_E_p = rew_out.p(:,2); 
 mat_out.rew_S_p = rew_out.p(:,3); 
@@ -1693,6 +1751,7 @@ mat_out.app_E_p = app_out.p(:,2);
 mat_out.app_S_p = app_out.p(:,3); 
 mat_out.app_W_p = app_out.p(:,4); 
 mat_out.app_A_p = app_out.p(:,5); 
+
 
 writetable(mat_out, [parent_path filesep 'Spd_mod.csv'])
 
@@ -1758,17 +1817,13 @@ mat_out.sub_id = c_ID';
 % 
 writetable(mat_out, [parent_path filesep 'Sess_spd_2p5.csv'])
 
-%% try some linear decoding
-load([parent_dir filesep 'Spd_data.mat']); 
 
-for kk = 1:length(spd_data)
-   
-    [z_err(kk), R2(kk), S_R2(kk)] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd); 
+%% try some GLM modeling
 
-end
+x = spd_data{27}.FR; 
+y = spd_data{27}.spd; 
 
-MS_bar_w_err(R2, S_R2, [c_ord(1,:); .7 .7 .7] , 1, 'ttest2', 1:2);
-saveas(gcf, 'R2.fig')
+k = glmfit(x, y, 'Poisson')
 %%
 %     for iT = 1:length(cells_to_process)
 %

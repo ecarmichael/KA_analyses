@@ -18,8 +18,8 @@ if data_flag == 1
 end
 hold on
 
-offsets_a = x_vals(1)+ sort(MS_randn_range(length(data_a), 1, -.1, .1));
-offsets_b = x_vals(2)+ sort(MS_randn_range(length(data_b), 1, -.1, .1));
+offsets_a = x_vals(1)+ sort((.1--.1).*rand(length(data_a),1) + -.1); %MS_randn_range(length(data_a), 1, -.1, .1));
+offsets_b = x_vals(2)+ sort((.1--.1).*rand(length(data_b),1) + -.1); %MS_randn_range(length(data_b), 1, -.1, .1));
 
 
 
