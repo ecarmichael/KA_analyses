@@ -1818,8 +1818,8 @@ mat_out.sub_id = c_ID';
 writetable(mat_out, [parent_path filesep 'Sess_spd_2p5.csv'])
 
 
-%% try some GLM modeling
-
+%% try some information theory modeling
+data
 x = spd_data{27}.FR; 
 y = spd_data{27}.spd; 
 
