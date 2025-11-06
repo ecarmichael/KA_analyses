@@ -11,10 +11,10 @@ usr_name = char(java.lang.System.getProperty('user.name'));
     addpath(genpath(['/Users/' usr_name '/Documents/Github/KA_analyses']));
         % addpath(genpath(['/Users/' usr_name '/Documents/Github/NeuroLearning/M1_compiled_loaders_functions/releaseDec2015/binaries'])); % Apple silicon compiled Nlx Loaders
 
-        data_dir = ['/Users/' usr_name '/Desktop/KA_Data/for_eric_only']; % where all the NLX data is.
+        data_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/for_eric_only']; % where all the NLX data is.
     % inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs.
-    inter_dir = ['/Users/' usr_name '/Desktop/KA_Data/inter_data'];
-    plot_dir = ['/Users/' usr_name '/Desktop/KA_Data/Behav_plots'];
+    inter_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/inter_data'];
+    plot_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/Behav_plots'];
 elseif ispc
     % load data
     addpath(genpath('C:\Users\ecarm\Documents\GitHub\vandermeerlab\code-matlab\shared'))
