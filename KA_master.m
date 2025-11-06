@@ -1661,8 +1661,8 @@ subplot(6,3,[10 13 16])
 set(gca, 'YScale', 'log')
 ylabel('log firing rate (Hz)')
 
-%% try some linear decoding
-load([parent_dir filesep 'Spd_data.mat']); 
+%% try some linear decoding using the Lopes et al. 2025 PlosOne method with a 3rd order polynomial fit. 
+%load([parent_dir filesep 'Spd_data.mat']); 
 
 z_err = NaN(length(spd_data),1);
 R2 = z_err; 
@@ -1670,10 +1670,17 @@ S_R2 = z_err;
 
 parfor kk = 1:length(spd_data)
    disp(kk)
+   if kk == 27
+    [z_err(kk), R2(kk), S_R2(kk), plt_mat, plt_s_mat] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd); 
+   else
     [z_err(kk), R2(kk), S_R2(kk)] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd); 
+
+   end
 
 end
 
+
+% reproduce the Lopes et al. Fig 7. 
 figure(1011)
 clf
 subplot(2,3,1)
