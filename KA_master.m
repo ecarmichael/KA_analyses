@@ -1670,57 +1670,92 @@ S_R2 = z_err;
 
 parfor kk = 1:length(spd_data)
    disp(kk)
-   if kk == 27
-    [z_err(kk), R2(kk), S_R2(kk), plt_mat, plt_s_mat] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd); 
-   else
-    [z_err(kk), R2(kk), S_R2(kk)] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd); 
 
-   end
+    [z_err(kk), R2(kk), S_R2(kk)] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd); 
 
 end
 
+    [~, ~, ~, plt_mat, plt_s_mat] = KA_lin_decode([], spd_data{27}.FR, spd_data{27}.spd); 
 
-% reproduce the Lopes et al. Fig 7. 
+    nan_idx = isnan(spd_data{27}.FR) | isnan(spd_data{27}.spd); % remove nans to match plt_mat
+
+%% reproduce the Lopes et al. Fig 7. 
 figure(1011)
 clf
-subplot(2,3,1)
-MS_bar_w_err(R2(:,1)', S_R2(:,1)', [.25 .25 .25 ; .7 .7 .7] , 1, 'ttest', 1:2);
-set(gca, 'xticklabel', {'All Cells' 'Shuffle'})
-axis square
-ylabel('Decoding accuracy R^2')
+subplot(2,3,1:2)
+hold on
+plot(spd_data{27}.tvec(~nan_idx) - spd_data{27}.tvec(1), spd_data{27}.spd(~nan_idx), 'k', 'linewidth', 3); 
+plot(spd_data{27}.tvec(~nan_idx)- spd_data{27}.tvec(1), mean(plt_mat, 2, 'omitnan'),'-', 'color', c_ord(2,:), 'linewidth', 3); 
+plot(spd_data{27}.tvec(~nan_idx)- spd_data{27}.tvec(1), mean(plt_s_mat, 2, 'omitnan'), '--', 'color', [.7 .7 .7], 'linewidth', 3); 
+xlim([260 360])
+ylim([0 inf])
+legend('Actual', 'Decoded', 'Shuffle', 'box',  'off')
 
-subplot(2,3,4)
-MS_bar_w_err(R2(:,1)', S_R2(:,1)', [.25 .25 .25 ; .7 .7 .7] , 1, 'ttest', 1:2);
-set(gca, 'xticklabel', {'All Cells' 'Shuffle'})
-set(gca, 'YScale', 'log')
-axis square
-ylabel('Decoding accuracy log R^2')
-
-subplot(2,3,2)
-MS_bar_w_err(R2(logical(spd_mod),1)', R2(~logical(spd_mod),1)', [c_ord(1,:); c_ord(1,:)*2] , 1, 'ttest2', 1:2);
-set(gca, 'xticklabel', {'Speed Cells' 'Other'})
-% set(gca, 'YScale', 'log')
-axis square
-
-subplot(2,3,5)
-MS_bar_w_err(R2(logical(spd_mod),1)', R2(~logical(spd_mod),1)', [c_ord(1,:); c_ord(1,:)*2] , 1, 'ttest2', 1:2);
-set(gca, 'xticklabel', {'Speed Cells' 'Other'})
-set(gca, 'YScale', 'log')
-axis square
 
 subplot(2,3,3)
 MS_bar_w_err(R2(~FS_idx' & logical(spd_mod),1)', R2(FS_idx' & logical(spd_mod),1)', [c_ord(1,:); c_ord(2,:)] , 1, 'ttest2', 1:2);
-set(gca, 'xticklabel', {'Pyr Speed Cells' 'FS Speed Cells'})
-axis square
-
-subplot(2,3,6)
-MS_bar_w_err(R2(~FS_idx' & logical(spd_mod),1)', R2(FS_idx' & logical(spd_mod),1)', [c_ord(1,:); c_ord(2,:)] , 1, 'ttest2', 1:2);
-set(gca, 'xticklabel', {'Pyr Speed Cells' 'FS Speed Cells'})
+set(gca, 'xticklabel', {'Pyr Speed Cells' 'FS Speed Cells'}, 'XTickLabelRotation', 45)
+ylabel('Decoding accuracy R^2')
 set(gca, 'YScale', 'log')
-axis square
+
+% axis square
+
+
+subplot(2,3,4)
+MS_bar_w_err(R2(spd_z > 1.98,1)', R2(spd_z<-1.98,1)', [c_ord(1,:); c_ord(1,:)*2] , 1, 'ttest2', 1:2);
+set(gca, 'xticklabel', {'Pos Speed Cells' 'Neg Speed Cells'}, 'XTickLabelRotation', 45)
+ylabel('Decoding accuracy R^2')
+
+set(gca, 'YScale', 'log')
+% axis square
+
+
+subplot(2,3,5:6)
+MS_bar_w_err3(R2(logical(spd_mod),1)', R2(~logical(spd_mod),1)',S_R2(:,1)', [c_ord(1,:); c_ord(1,:)*2; .7 .7 .7], 1, 'anova1', 1:3);
+set(gca, 'xticklabel', {'Speed Cells' 'Non-Speed Cells' 'shuffle'}, 'XTickLabelRotation', 45)
+set(gca, 'YScale', 'log')
+% axis square
+
+% MS_bar_w_err(R2(:,1)', S_R2(:,1)', [.25 .25 .25 ; .7 .7 .7] , 1, 'ttest', 1:2);
+% set(gca, 'xticklabel', {'All Cells' 'Shuffle'})
+% axis square
+% ylabel('Decoding accuracy R^2')
+
+% subplot(2,3,4)
+% MS_bar_w_err(R2(:,1)', S_R2(:,1)', [.25 .25 .25 ; .7 .7 .7] , 1, 'ttest', 1:2);
+% set(gca, 'xticklabel', {'All Cells' 'Shuffle'})
+% set(gca, 'YScale', 'log')
+% axis square
+% ylabel('Decoding accuracy log R^2')
+
+
+
+% subplot(2,3,3)
+% MS_bar_w_err(R2(logical(spd_mod),1)', R2(~logical(spd_mod),1)', [c_ord(1,:); c_ord(1,:)*2] , 1, 'ttest2', 1:2);
+% set(gca, 'xticklabel', {'Speed Cells' 'Other'})
+% set(gca, 'YScale', 'log')
+% axis square
+
+
+
+
+% subplot(2,3,6)
+% MS_bar_w_err(R2(~FS_idx' & logical(spd_mod),1)', R2(FS_idx' & logical(spd_mod),1)', [c_ord(1,:); c_ord(2,:)] , 1, 'ttest2', 1:2);
+% set(gca, 'xticklabel', {'Pyr Speed Cells' 'FS Speed Cells'})
+% set(gca, 'YScale', 'log')
+% axis square
+
+% maximize
+set(gcf,'Units','Inches');
+pos = get(gcf,'Position');
+
+set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+pause(2)
+
+print(gcf,[parent_path filesep 'lin_dec_R2_log.pdf'],'-dpdf','-r300', '-bestfit')
 
 saveas(gcf,[parent_path filesep 'R2.fig']);
-print(gcf,[parent_path filesep 'R2.pdf'],'-dpdf','-r300')
+% print(gcf,[parent_path filesep 'R2.pdf'],'-dpdf','-r300')
 
 %% collect the speed mod responses
 
@@ -1826,11 +1861,11 @@ writetable(mat_out, [parent_path filesep 'Sess_spd_2p5.csv'])
 
 
 %% try some information theory modeling
-data
-x = spd_data{27}.FR; 
-y = spd_data{27}.spd; 
-
-k = glmfit(x, y, 'Poisson')
+% data
+% x = spd_data{27}.FR; 
+% y = spd_data{27}.spd; 
+% 
+% k = glmfit(x, y, 'Poisson')
 %%
 %     for iT = 1:length(cells_to_process)
 %
