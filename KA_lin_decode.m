@@ -1,4 +1,4 @@
-function [z_err, R2_out, S_R2_out] = KA_lin_decode(cfg_in, x, y, plt_flag)
+function [z_err, R2_out, S_R2_out, plt_mat, plt_s_mat] = KA_lin_decode(cfg_in, x, y, plt_flag)
 %% KA_lin_decode: uses the built in fitrlinear function to use linear regression to predict y given x. Uses a 10 fld cross validation and compares it to a shuffle/
 if nargin < 4
     plt_flag = 0;
@@ -26,6 +26,8 @@ f_err = [];
 s_idx = datasample(1:length(x), cfg.nShuff, 'Replace', false);
 s_err = [];
 
+plt_mat = NaN(length(y), 10);
+plt_s_mat = NaN(length(y), 10);
 
 % loop for x val
 for ii = 1:10
@@ -48,7 +50,7 @@ for ii = 1:10
 
     f_err(ii) = mean((y(test_idx)' - pred(:,ii)).^2);
 
-
+plt_mat(test_idx, ii) = pred(:,ii); 
 
     for kk = 1:length(s_idx) % shuffles
 
@@ -61,6 +63,8 @@ for ii = 1:10
 
         s_err(ii, kk) = mean((y(test_idx)' - pred_s(:,ii)).^2);
     end
+    plt_s_mat(test_idx, ii) = pred_s(:,ii); 
+
 end
 
 f_mean_err = mean(f_err);
@@ -71,29 +75,6 @@ z_err = (f_mean_err - s_mean_err) / std(s_err,[], 'all');
 R2_out = mean(R2); 
 
 S_R2_out = mean(s_R2, 'all'); 
-%% same thing but with shuffles
-% s_idx = datasample(1:length(x), cfg.nShuff, 'Replace', false);
-% s_err = [];
-%
-% for kk = 1:length(s_idx) % shuffles
-%
-%     x_s = circshift(x, s_idx(kk));
-%
-%     for ii = 1:10 % folds
-%
-%         cvp = cvpartition(length(y), HoldOut = .3);
-%         t_idx  = training(cvp);
-%         test_idx = test(cvp);
-%
-%         [p, ~, mu] = polyfit(x_s(t_idx)', y(t_idx)', 3); % predict y given x
-%
-%         pred_s = polyval(p, x_s(test_idx)', [], mu);
-%
-%         s_err(ii, kk) = mean((y(test_idx)' - pred_s).^2);
-%     end
-%
-% end
-
 
 %% plot if needed
 
@@ -102,12 +83,12 @@ if plt_flag
     figure(909)
     clf
     ax(1) = subplot(4,1,1);
-    plot(0:length(y(test_idx))-1, x(test_idx), 'b')
+    plot(1:length(y), x, 'b')
     ylabel('FR')
 
     ax(2) = subplot(4,1,2);
     hold on
-    plot(0:length(y(test_idx))-1, pred(:,end), '-', 'color', 'r')
+    plot(1:length(y), mean(plt_mat, 2, 'omitnan'), '-', 'color', 'r')
 
     ylabel('predicted spd')
     ylim([0 inf])
@@ -115,19 +96,19 @@ if plt_flag
     ax(3) = subplot(4,1,3);
     % yyaxis right
     % hold on
-    plot(0:length(y(test_idx))-1, y(test_idx))
+    plot(1:length(y), y)
     ylabel('Spd')
 
 
     ax(4) = subplot(4,1,4);
-    plot(0:length(y(test_idx))-1, y(test_idx))
+    plot(1:length(y), y)
     ylabel('Spd')
     y_lim = ylim;
 
     yyaxis right
     hold on
-    plot(0:length(y(test_idx))-1,pred(:,end), '--')
-    plot(0:length(y(test_idx))-1, pred_s(:, end), '--', 'Color', [.7 .7 .7])
+    plot(1:length(plt_mat),mean(plt_mat, 2, 'omitnan'), '--')
+    plot(1:length(plt_mat), mean(plt_s_mat, 2, 'omitnan'), '--', 'Color', [.7 .7 .7])
 
     ylabel('predicted spd')
 
