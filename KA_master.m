@@ -1666,12 +1666,12 @@ ylabel('log firing rate (Hz)')
 
 z_err = NaN(length(spd_data),1);
 R2 = z_err; 
-S_R2 = z_err; 
+S_R2 = cell(size(R2)); 
 
 parfor kk = 1:length(spd_data)
    disp(kk)
 
-    [z_err(kk), R2(kk), S_R2(kk)] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd); 
+    [z_err(kk), R2(kk), S_R2{kk}] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd); 
 
 end
 
@@ -1702,7 +1702,7 @@ set(gca, 'YScale', 'log')
 
 
 subplot(2,3,4)
-MS_bar_w_err(R2(spd_z > 1.98,1)', R2(spd_z<-1.98,1)', [c_ord(1,:); c_ord(1,:)*2] , 1, 'ttest2', 1:2);
+MS_bar_w_err(R2(spd_z > 1.98,1)', R2(spd_z<-1.98,1)', [c_ord(4,:)*1.5; c_ord(5,:)*2] , 1, 'ttest2', 1:2);
 set(gca, 'xticklabel', {'Pos Speed Cells' 'Neg Speed Cells'}, 'XTickLabelRotation', 45)
 ylabel('Decoding accuracy R^2')
 
@@ -1711,7 +1711,7 @@ set(gca, 'YScale', 'log')
 
 
 subplot(2,3,5:6)
-MS_bar_w_err3(R2(logical(spd_mod),1)', R2(~logical(spd_mod),1)',S_R2(:,1)', [c_ord(1,:); c_ord(1,:)*2; .7 .7 .7], 1, 'anova1', 1:3);
+MS_bar_w_err3(R2(logical(spd_mod),1)', R2(~logical(spd_mod),1)',S_R2(:,1)', [c_ord(3,:); .7 .7 .7; .3 .3 .3], 1, 'anova1', 1:3);
 set(gca, 'xticklabel', {'Speed Cells' 'Non-Speed Cells' 'shuffle'}, 'XTickLabelRotation', 45)
 set(gca, 'YScale', 'log')
 % axis square
