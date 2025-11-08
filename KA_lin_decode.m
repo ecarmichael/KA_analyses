@@ -74,7 +74,7 @@ z_err = (f_mean_err - s_mean_err) / std(s_err,[], 'all');
 
 R2_out = mean(R2); 
 
-S_R2_out = mean(s_R2, 'all'); 
+S_R2_out = mean(s_R2, 2); 
 
 %% plot if needed
 
