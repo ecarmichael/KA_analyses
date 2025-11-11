@@ -1682,11 +1682,11 @@ end
 %% reproduce the Lopes et al. Fig 7. 
 figure(1011)
 clf
-subplot(2,3,1:2)
+subplot(2,3,1:2); cla
 hold on
 plot(spd_data{27}.tvec(~nan_idx) - spd_data{27}.tvec(1), spd_data{27}.spd(~nan_idx), 'k', 'linewidth', 3); 
 plot(spd_data{27}.tvec(~nan_idx)- spd_data{27}.tvec(1), mean(plt_mat, 2, 'omitnan'),'-', 'color', c_ord(2,:), 'linewidth', 3); 
-plot(spd_data{27}.tvec(~nan_idx)- spd_data{27}.tvec(1), mean(plt_s_mat, 2, 'omitnan'), '--', 'color', [.7 .7 .7], 'linewidth', 3); 
+plot(spd_data{27}.tvec(~nan_idx)- spd_data{27}.tvec(1), mean(plt_s_mat, 2, 'omitnan'), 'color', [.7 .7 .7], 'linewidth', 3); 
 xlim([260 360])
 ylim([0 inf])
 legend('Actual', 'Decoded', 'Shuffle', 'box',  'off')
