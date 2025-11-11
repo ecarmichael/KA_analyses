@@ -50,12 +50,12 @@ A{1} = [ posgrid  speedgrid tminus_grid]; modelType{1} = [1 0 1 1];
 % two variables
 A{2} = [ posgrid  speedgrid ]; modelType{2} = [1 0 1 0];
 A{3} = [ posgrid  tminus_grid]; modelType{3} = [1 0 0 1];
-A{4} = [ speedgrid  tminus_grid]; modelType{3} = [0 0 1 1];
+A{4} = [ speedgrid  tminus_grid]; modelType{4} = [0 0 1 1];
 
 % individuals
-A{5} = posgrid ; modelType{4} = [1 0 0 0];
-A{6} = speedgrid ; modelType{5} = [0 0 1 0];
-A{7} = tminus_grid; modelType{6} = [0 0 0 1];
+A{5} = posgrid ; modelType{5} = [1 0 0 0];
+A{6} = speedgrid ; modelType{6} = [0 0 1 0];
+A{7} = tminus_grid; modelType{7} = [0 0 0 1];
 
 % % THREE VARIABLES
 % A{2} = [ posgrid hdgrid speedgrid ]; modelType{2} = [1 1 1 0];
