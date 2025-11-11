@@ -19,7 +19,7 @@ nan_idx = isnan(x)  | isnan(y);
 x(nan_idx) = [];
 y(nan_idx) = [];
 
-%% 10 fold xval decoding using a 70/30 split
+%% 10 fold xval decoding using a 80/20 split
 rng(100, 'twister');
 f_err = [];
 
@@ -28,14 +28,14 @@ s_err = [];
 
 plt_mat = NaN(length(y), 10);
 plt_s_mat = NaN(length(y), 10);
+    cvp = cvpartition(length(y), 'kFold', 10); %HoldOut = cfg.hold_out);
 
 % loop for x val
 for ii = 1:10
 
-    cvp = cvpartition(length(y), HoldOut = cfg.hold_out);
     %
-    t_idx  = training(cvp);
-    test_idx = test(cvp);
+    t_idx  = training(cvp, ii);
+    test_idx = test(cvp, ii);
     idx_n = find(t_idx);
 
     % disp(idx_n(1:10)')
@@ -46,11 +46,11 @@ for ii = 1:10
 
     R2(ii) = 1 - (S.normr/norm(y(t_idx) - mean(y(t_idx))))^2; 
 
-    pred(:,ii) = polyval(p, x(test_idx)', [], mu);
+    pred = polyval(p, x(test_idx)', [], mu);
 
-    f_err(ii) = mean((y(test_idx)' - pred(:,ii)).^2);
+    f_err(ii) = mean((y(test_idx)' - pred).^2);
 
-plt_mat(test_idx, ii) = pred(:,ii); 
+plt_mat(test_idx, ii) = pred; 
 
     for kk = 1:length(s_idx) % shuffles
 
@@ -59,11 +59,11 @@ plt_mat(test_idx, ii) = pred(:,ii);
 
         s_R2(ii,kk) = 1 - (S.normr/norm(y(t_idx) - mean(y(t_idx))))^2; 
 
-        pred_s(:,ii) = polyval(p, x_s(test_idx)', [], mu);
+        pred_s = polyval(p, x_s(test_idx)', [], mu);
 
-        s_err(ii, kk) = mean((y(test_idx)' - pred_s(:,ii)).^2);
+        s_err(ii, kk) = mean((y(test_idx)' - pred_s).^2);
     end
-    plt_s_mat(test_idx, ii) = pred_s(:,ii); 
+    plt_s_mat(test_idx, ii) = pred_s; 
 
 end
 
