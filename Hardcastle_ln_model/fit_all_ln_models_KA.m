@@ -8,7 +8,7 @@
 % initialize the number of bins that position, head direction, speed, and
 % theta phase will be divided into
 n_pos_bins = 20;
-% n_dir_bins = 18;
+n_dir_bins = 18;
 n_speed_bins = 10;
 % n_theta_bins = 18;
 n_tminus_bins = 20; 
@@ -16,11 +16,12 @@ n_tminus_bins = 20;
 % compute position matrix
 [posgrid, posVec] = pos_map([posx_c posy_c], n_pos_bins, boxSize);
 
-% compute head direction matrix
-% [hdgrid,hdVec,direction] = hd_map(posx,posx2,posy,posy2,n_dir_bins);
+% compute head direction matrix  [USED as a Placeholder as the HD tracking
+% was not setup on the NLX systems. 
+[hdgrid,hdVec,direction] = hd_nlx_map(hd_data,n_dir_bins);
 
 % compute speed matrix
-[speedgrid,speedVec,speed] = speed_map(posx_c,posy_c,n_speed_bins);
+[speedgrid,speedVec] = velo_map(velo_smooth,n_speed_bins);
 
 % compute theta matrix
 [tminus_grid,tminusVec] = tminus_map(-t_minus_r,n_tminus_bins);
@@ -36,7 +37,7 @@ spiketrain(ITI_idx) = [];
 
 %% Fit all 15 LN models
 
-numModels = 6;
+numModels = 7;
 testFit = cell(numModels,1);
 trainFit = cell(numModels,1);
 param = cell(numModels,1);
@@ -49,11 +50,12 @@ A{1} = [ posgrid  speedgrid tminus_grid]; modelType{1} = [1 0 1 1];
 % two variables
 A{2} = [ posgrid  speedgrid ]; modelType{2} = [1 0 1 0];
 A{3} = [ posgrid  tminus_grid]; modelType{3} = [1 0 0 1];
+A{4} = [ speedgrid  tminus_grid]; modelType{3} = [0 0 1 1];
 
 % individuals
-A{4} = posgrid ; modelType{4} = [1 0 0 0];
-A{5} = speedgrid ; modelType{5} = [0 0 1 0];
-A{6} = tminus_grid; modelType{6} = [0 0 0 1];
+A{5} = posgrid ; modelType{4} = [1 0 0 0];
+A{6} = speedgrid ; modelType{5} = [0 0 1 0];
+A{7} = tminus_grid; modelType{6} = [0 0 0 1];
 
 % % THREE VARIABLES
 % A{2} = [ posgrid hdgrid speedgrid ]; modelType{2} = [1 1 1 0];
@@ -83,5 +85,5 @@ numFolds = 10;
 
 for n = 1:numModels
     fprintf('\t- Fitting model %d of %d\n', n, numModels);
-    [testFit{n},trainFit{n},param{n}] = fit_model(A{n},dt,spiketrain,filter,modelType{n},numFolds);
+    [testFit{n},trainFit{n},param{n}] = fit_model_KA(A{n},dt,spiketrain,filter,modelType{n},numFolds);
 end

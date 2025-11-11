@@ -28,10 +28,15 @@ clear all; close all; clc
 
 % load the data
 fprintf('(1/5) Loading data from example cell \n')
-load data_for_cell77
+% load data_for_cell77
 
+if ismac
+load(strrep('/Users/ecar/Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23\C3_4_C3_2020-08-31_DONE_maze_data.mat', '\', filesep))
+
+else
 load('C:\Users\ecarm\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23\C3_4_C3_2020-08-31_DONE_maze_data.mat')
 
+end
 iC = 1;
         % isolate the cell of interest in the session (if there are
         this_S = KA_isolate_S(data.S, data.S.label{iC});
@@ -41,16 +46,16 @@ iC = 1;
 
 % firing rate to match data samples
 dt = mode(diff(data.pos.tvec)); 
-tbin_edges = data.pos.tvec(1):dt:data.pos.tvec(end);
+tbin_edges = data.pos.tvec;
 
 spk_count = histc(this_S.t{1},tbin_edges);
 FR_velo_int = interp1(tbin_edges(1:end-1), spk_count(1:end-1), data.pos.tvec); 
-
-
-% compute a filter, which will be used to smooth the firing rate
-filter = gaussmf(-4:4,[2 0]); filter = filter/sum(filter); 
- fr = FR_velo_int/dt;
-smooth_fr = conv(fr,filter,'same');
+% 
+% 
+% % compute a filter, which will be used to smooth the firing rate
+% filter = gaussmf(-4:4,[2 0]); filter = filter/sum(filter); 
+%  fr = FR_velo_int/dt;
+% smooth_fr = conv(fr,filter,'same');
 
 
 % convert the time into time from events (rewards and approach time)
@@ -58,24 +63,40 @@ t_minus_r = NaN(size(data.pos.tvec));
 
 for ii = length(data.rew.t):-1:1
     if ii == 1
-        this_idx = nearest_idx3(data.rew.t(ii), data.pos.tvec);
+        this_idx = nearest_idx(data.rew.t(ii), data.pos.tvec);
         prior_idx = 1;
     else
-        this_idx = nearest_idx3(data.rew.t(ii), data.pos.tvec);
-        prior_idx = nearest_idx3(data.rew.t(ii-1), data.pos.tvec);
+        this_idx = nearest_idx(data.rew.t(ii), data.pos.tvec);
+        prior_idx = nearest_idx(data.rew.t(ii-1), data.pos.tvec);
     end
 
     t_minus_r(prior_idx:this_idx) = data.pos.tvec(prior_idx:this_idx) - data.rew.t(ii); 
 end
 
+hd_data = data.pos.data(3,:); 
+velo_smooth = data.velo_smooth.data(1,:); 
 post = data.pos.tvec; 
-spiketrain = FR_velo_int; 
+spiketrain = FR_velo_int'; 
 posx_c = data.pos.data(1,:)'; 
 posy_c = data.pos.data(2,:)'; 
 boxSize = 150-20; 
 
+spiketrain = fillmissing(spiketrain, "nearest"); 
+
+% remove nans from the signal. 
+nan_idx = isnan(spiketrain); 
+% 
+% spiketrain(nan_idx) = []; 
+% post(nan_idx) = []; 
+% velo_smooth(nan_idx) = []; 
+% posx_c(nan_idx) = []; 
+% posy_c(nan_idx) = []; 
+% hd_data(nan_idx) = []; 
+% t_minus_r(nan_idx) = []; 
 mov_idx = data.velo_smooth.data > 5; % keep data when moving. 
 
+
+clear data
 % description of variables included:
 % boxSize = length (in cm) of one side of the square box
 % post = vector of time (seconds) at every 20 ms time bin
@@ -92,11 +113,11 @@ mov_idx = data.velo_smooth.data > 5; % keep data when moving.
 
 %% fit the model
 fprintf('(2/5) Fitting all linear-nonlinear (LN) models\n')
-fit_all_ln_models
+fit_all_ln_models_KA
 
 %% find the simplest model that best describes the spike train
 fprintf('(3/5) Performing forward model selection\n')
-select_best_model
+select_best_model_KA
 
 %% Compute the firing-rate tuning curves
 fprintf('(4/5) Computing tuning curves\n')
