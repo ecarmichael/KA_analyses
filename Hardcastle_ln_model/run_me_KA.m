@@ -30,6 +30,7 @@ clear all; close all; clc
 fprintf('(1/5) Loading data from example cell \n')
 % load data_for_cell77
 
+%%
 if ismac
 load(strrep('/Users/ecar/Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23\C3_4_C3_2020-08-31_DONE_maze_data.mat', '\', filesep))
 
@@ -53,9 +54,9 @@ FR_velo_int = interp1(tbin_edges(1:end-1), spk_count(1:end-1), data.pos.tvec);
 % 
 % 
 % % compute a filter, which will be used to smooth the firing rate
-% filter = gaussmf(-4:4,[2 0]); filter = filter/sum(filter); 
-%  fr = FR_velo_int/dt;
-% smooth_fr = conv(fr,filter,'same');
+filter = gaussmf(-4:4,[2 0]); filter = filter/sum(filter); 
+ fr = FR_velo_int/dt;
+smooth_fr = conv(fr,filter,'same');
 
 
 % convert the time into time from events (rewards and approach time)
@@ -73,6 +74,8 @@ for ii = length(data.rew.t):-1:1
     t_minus_r(prior_idx:this_idx) = data.pos.tvec(prior_idx:this_idx) - data.rew.t(ii); 
 end
 
+t_minus_r = -t_minus_r; %make positive
+
 hd_data = data.pos.data(3,:); 
 velo_smooth = data.velo_smooth.data(1,:); 
 post = data.pos.tvec; 
@@ -81,10 +84,10 @@ posx_c = data.pos.data(1,:)';
 posy_c = data.pos.data(2,:)'; 
 boxSize = 150-20; 
 
-spiketrain = fillmissing(spiketrain, "nearest"); 
+% spiketrain = fillmissing(spiketrain, "nearest"); 
 
 % remove nans from the signal. 
-nan_idx = isnan(spiketrain); 
+% nan_idx = isnan(spiketrain); 
 % 
 % spiketrain(nan_idx) = []; 
 % post(nan_idx) = []; 
@@ -93,7 +96,12 @@ nan_idx = isnan(spiketrain);
 % posy_c(nan_idx) = []; 
 % hd_data(nan_idx) = []; 
 % t_minus_r(nan_idx) = []; 
+
+% remove periods that were too far removed from a reward. 
 mov_idx = data.velo_smooth.data > 5; % keep data when moving. 
+ITI_idx = t_minus_r >= 20;
+
+rm_idx = ITI_idx | ~mov_idx; % remove periods of immobility too far from next reward. 
 
 
 clear data
@@ -121,7 +129,12 @@ select_best_model_KA
 
 %% Compute the firing-rate tuning curves
 fprintf('(4/5) Computing tuning curves\n')
-compute_all_tuning_curves
+
+compute_all_tuning_curves_KA
+% function version 
+
+% [pos_curve, hd_curve, speed_curve, theta_curve]  = compute_all_tuning_curves(posx_c, posy_c, hd_data, velo_smooth, t_minus_r, mov_idx); 
+
 
 %% plot the results
 fprintf('(5/5) Plotting performance and parameters\n') 

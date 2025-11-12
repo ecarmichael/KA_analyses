@@ -24,15 +24,15 @@ n_tminus_bins = 20;
 [speedgrid,speedVec] = velo_map(velo_smooth,n_speed_bins);
 
 % compute theta matrix
-[tminus_grid,tminusVec] = tminus_map(-t_minus_r,n_tminus_bins);
+[tminus_grid,tminusVec] = tminus_map(t_minus_r,n_tminus_bins);
 
-% remove times when the animal ran > 50 cm/s (these data points may contain artifacts)
-ITI_idx = find(tminus_grid >= 20);
+% OG: remove times when the animal ran > 50 cm/s (these data points may contain artifacts)
+% these indices are identified in the data loading phase (cell 1 in run_me_KA). 
 
-posgrid(ITI_idx,:) = []; 
-speedgrid(ITI_idx,:) = []; 
-tminus_grid(ITI_idx,:) = [];
-spiketrain(ITI_idx) = [];
+posgrid(rm_idx,:) = []; 
+speedgrid(rm_idx,:) = []; 
+tminus_grid(rm_idx,:) = [];
+spiketrain(rm_idx) = [];
 
 
 %% Fit all 15 LN models
