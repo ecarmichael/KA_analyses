@@ -13,7 +13,7 @@ usr_name = char(java.lang.System.getProperty('user.name'));
 
         data_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/for_eric_only']; % where all the NLX data is.
     % inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs.
-    inter_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/inter_data'];
+    inter_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/inter_reward_23'];
     plot_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/Behav_plots'];
 elseif ispc
     % load data
