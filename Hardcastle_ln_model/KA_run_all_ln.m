@@ -38,11 +38,12 @@ cd(inter_dir)
 sess_list = dir([inter_dir filesep '*.mat']);
 
 k = 0;
+warning off
+for iS = 12:length(sess_list)
 
-for iS = 1:length(sess_list)
+     data = load([inter_dir filesep sess_list(iS).name]);
 
-     load([inter_dir filesep sess_list(iS).name])
-
+     data = data.data; 
     % get the mean velocity when the animal is moving.
     % mVelo(iS) = mean(data.velo_smooth.data(data.velo_smooth.data>5));
 
@@ -57,7 +58,7 @@ for iS = 1:length(sess_list)
 
         % run the ln model
         
-        KA_run_ln(data, iC, sess_list(iS).name(1:end-4), save_dir)
+        % KA_run_ln(data, iC, sess_list(iS).name(1:end-4), save_dir)
 
     end
 
