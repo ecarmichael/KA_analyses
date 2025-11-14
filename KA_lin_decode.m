@@ -23,7 +23,7 @@ y(nan_idx) = [];
 rng(100, 'twister');
 f_err = [];
 
-s_idx = datasample(1:length(x), cfg.nShuff, 'Replace', false);
+s_idx = datasample(floor(length(x)*.2):floor(length(x)*.5), cfg.nShuff, 'Replace', false);
 s_err = [];
 
 plt_mat = NaN(length(y), 10);
