@@ -2,9 +2,9 @@
 %% KA screener master script.
 
 % load data
-if ismac
-
 usr_name = char(java.lang.System.getProperty('user.name')); 
+
+if ismac
 
     addpath(genpath(['/Users/' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared']))
     addpath(genpath(['/Users/' usr_name '/Documents/Github/EC_State']));
@@ -16,14 +16,16 @@ usr_name = char(java.lang.System.getProperty('user.name'));
     inter_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/inter_reward_23'];
     plot_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/Behav_plots'];
 elseif ispc
+
+
     % load data
-    addpath(genpath('C:\Users\ecarm\Documents\GitHub\vandermeerlab\code-matlab\shared'))
-    addpath(genpath('C:\Users\ecarm\Documents\GitHub\EC_State'));
-    addpath(genpath('C:\Users\ecarm\Documents\GitHub\KA_analyses'));
-    data_dir = 'C:\Users\ecarm\Williams Lab Dropbox\Eric Carmichael\for_eric_only'; % where all the NLX data is.
-    inter_dir = 'C:\Users\ecarm\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23';
-    inter_dir_app = 'C:\Users\ecarm\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23_approach';
-    plot_dir = 'C:\Users\ecarm\Williams Lab Dropbox\Eric Carmichael\KA_Data\Behav_plots';
+    addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\vandermeerlab\code-matlab\shared']))
+    addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\EC_State']));
+    addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\KA_analyses']));
+    data_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\for_eric_only']; % where all the NLX data is.
+    inter_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23'];
+    inter_dir_app = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23_approach'];
+    plot_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\Behav_plots'];
 
 
 else
