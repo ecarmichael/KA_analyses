@@ -1707,6 +1707,8 @@ set(gca, 'xticklabel', {'Pyr Speed Cells' 'FS Speed Cells'}, 'XTickLabelRotation
 ylabel('Decoding accuracy log R^2')
 set(gca, 'YScale', 'log')
 xlim([-0.2 4.2])
+set(gca, 'YTick', [0.0001 0.001 0.01 0.1 1])
+ylim([ 0.0001 1])
 
 
 fprintf('<strong>Decoding accuracy: Regularly spiking Speed cells (%0.3f +/- %0.3f) vs Fastspiking speed cells (%0.3f +/- %0.3f); t(%d) = %0.3f, p = %0.3f</strong>\n', ...
@@ -1725,7 +1727,8 @@ fprintf('<strong>Decoding accuracy: Pos Speed cells (%0.3f +/- %0.3f) vs Neg-Spe
     mean(R2(spd_z > 1.98,1)'),  MS_SEM(R2(spd_z > 1.98,1)'), mean(R2(spd_z<-1.98,1)'), MS_SEM(R2(spd_z<-1.98,1)'), ...
     R2_stats.df, R2_stats.tstat, p)
 xlim([-0.2 4.2])
-
+set(gca, 'YTick', [0.0001 0.001 0.01 0.1 1])
+ylim([ 0.0001 1])
 
 subplot(2,3,5)
 [~,~,~,p, R2_stats] = MS_bar_w_err3(R2(logical(spd_mod),1)', R2(~logical(spd_mod),1)',S_R2_means', [c_ord(3,:); .7 .7 .7; .3 .3 .3], 1, 'anova1', 1:3);
@@ -1736,6 +1739,8 @@ fprintf('<strong>Decoding accuracy: Speed Cells (%0.3f +/- %0.3f) vs Non-Speed (
     mean(R2(logical(spd_mod),1)'),MS_SEM(R2(logical(spd_mod),1)'), mean(R2(~logical(spd_mod),1)'), MS_SEM(R2(~logical(spd_mod),1)'), mean(S_R2_means'), MS_SEM(S_R2_means'), ...
    R2_stats.a_tbl{2,3}, R2_stats.a_tbl{end,3}, R2_stats.stats.F, R2_stats.a_tbl{2, end})
 xlim([-0.2 4.2])
+set(gca, 'YTick', [0.0001 0.001 0.01 0.1 1])
+ylim([ 0.0001 1])
 
 % MS_bar_w_err(R2(:,1)', S_R2(:,1)', [.25 .25 .25 ; .7 .7 .7] , 1, 'ttest', 1:2);
 % set(gca, 'xticklabel', {'All Cells' 'Shuffle'})

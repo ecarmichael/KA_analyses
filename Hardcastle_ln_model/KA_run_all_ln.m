@@ -39,7 +39,7 @@ sess_list = dir([inter_dir filesep '*.mat']);
 
 k = 0;
 warning off
-for iS = 12:length(sess_list)
+parfor iS = 1:length(sess_list)
 
      data = load([inter_dir filesep sess_list(iS).name]);
 
@@ -52,13 +52,13 @@ for iS = 12:length(sess_list)
         if ismember([sess_list(iS).name(1:end-4) '_' data.S.label{iC}], omit_cells)
             continue
         end
-        k = k+1;
+        % k = k+1;
 
-        cell_id{k} = [sess_list(iS).name(1:end-4) '_' data.S.label{iC}];
+        % cell_id{k} = [sess_list(iS).name(1:end-4) '_' data.S.label{iC}];
 
         % run the ln model
         
-        % KA_run_ln(data, iC, sess_list(iS).name(1:end-4), save_dir)
+        KA_run_ln(data, iC, sess_list(iS).name(1:end-4), save_dir)
 
     end
 

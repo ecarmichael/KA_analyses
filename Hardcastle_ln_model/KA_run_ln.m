@@ -97,7 +97,7 @@ close(gcf)
 
 % remove periods that were too far removed from a reward. 
 mov_idx = data.velo_smooth.data > 5; % keep data when moving. 
-ITI_idx = t_minus_r >= 20;
+ITI_idx = t_minus_r >= 10;
 
 rm_idx = ITI_idx | ~mov_idx; % remove periods of immobility too far from next reward. 
 

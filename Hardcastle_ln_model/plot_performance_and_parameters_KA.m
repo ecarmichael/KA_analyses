@@ -11,7 +11,7 @@ hd_vector = 2*pi/n_dir_bins/2:2*pi/n_dir_bins:2*pi - 2*pi/n_dir_bins/2;
 speed_vector = 2.5:50/n_speed_bins:47.5;
 
 % plot the tuning curves
-figure(1)
+% figure(1)
 subplot(2,3,1)
 imagesc(pos_curve); colorbar
 axis off

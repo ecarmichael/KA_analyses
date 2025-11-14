@@ -173,9 +173,9 @@ end
 
 % add in the data points (after the lines) so they are the top layer
 if data_flag > 0 %&& length(data_a) == length(data_b)
-        sc{1} = scatter( offsets_a, data_a,15, 'markerfacecolor', 'k', 'MarkerEdgeColor', 'none');
+        sc{1} = scatter( offsets_a, data_a,10, 'markerfacecolor', 'k', 'MarkerEdgeColor', 'none');
     sc{2} = scatter(offsets_b, data_b,15,  'markerfacecolor', 'k', 'MarkerEdgeColor', 'none');
-        sc{3} = scatter(offsets_c, data_c,15,  'markerfacecolor', 'k', 'MarkerEdgeColor', 'none');
+        sc{3} = scatter(offsets_c, data_c,10,  'markerfacecolor', 'k', 'MarkerEdgeColor', 'none');
 
     % sc{1} = scatter( offsets_a, data_a,25, 'markerfacecolor', color(1,:), 'MarkerEdgeColor', [.2 .2 .2]);
     % sc{2} = scatter(offsets_b, data_b,25,  'markerfacecolor', color(2,:), 'MarkerEdgeColor', [.2 .2 .2]);
