@@ -42,13 +42,13 @@ for iM = length(out):-1:1
 end
 
 
-m1 = (sum(winning_model == 1) ./ sum(~isnan(winning_model)))*100; 
-m2 = (sum(winning_model == 2) ./ sum(~isnan(winning_model)))*100; 
-m3 = (sum(winning_model == 3) ./ sum(~isnan(winning_model)))*100; 
-m4 = (sum(winning_model == 4) ./ sum(~isnan(winning_model)))*100; 
-m5 = (sum(winning_model == 5) ./ sum(~isnan(winning_model)))*100; 
-m6 = (sum(winning_model == 6) ./ sum(~isnan(winning_model)))*100; 
-m7 = (sum(winning_model == 7) ./ sum(~isnan(winning_model)))*100; 
+m1 = (sum(winning_model == 1) ./ length((winning_model)))*100; 
+m2 = (sum(winning_model == 2) ./ length((winning_model)))*100; 
+m3 = (sum(winning_model == 3) ./ length((winning_model)))*100; 
+m4 = (sum(winning_model == 4) ./ length((winning_model)))*100; 
+m5 = (sum(winning_model == 5) ./ length((winning_model)))*100; 
+m6 = (sum(winning_model == 6) ./ length((winning_model)))*100; 
+m7 = (sum(winning_model == 7) ./ length((winning_model)))*100; 
 
 
 figure(1010)

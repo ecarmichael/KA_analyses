@@ -38,8 +38,8 @@ cd(inter_dir)
 sess_list = dir([inter_dir filesep '*.mat']);
 
 k = 0;
-warning off
 parfor iS = 1:length(sess_list)
+warning off
 
      data = load([inter_dir filesep sess_list(iS).name]);
 
