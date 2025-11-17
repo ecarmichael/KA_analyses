@@ -51,14 +51,14 @@ t_minus_r = NaN(size(data.pos.tvec));
 
 for ii = length(data.rew.t):-1:1
     if ii == 1
-        this_idx = nearest_idx(data.rew.t(ii), data.pos.tvec);
+        this_idx = nearest_idx2(data.rew.t(ii)+2.5, data.pos.tvec);
         prior_idx = 1;
     else
-        this_idx = nearest_idx(data.rew.t(ii), data.pos.tvec);
-        prior_idx = nearest_idx(data.rew.t(ii-1), data.pos.tvec);
+        this_idx = nearest_idx2(data.rew.t(ii)+2.5, data.pos.tvec);
+        prior_idx = nearest_idx2(data.rew.t(ii-1), data.pos.tvec);
     end
 
-    t_minus_r(prior_idx:this_idx) = data.pos.tvec(prior_idx:this_idx) - data.rew.t(ii); 
+    t_minus_r(prior_idx:this_idx) = data.pos.tvec(prior_idx:this_idx) - data.rew.t(ii)+2.5; 
 end
 
 t_minus_r = -t_minus_r; %make positive

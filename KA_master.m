@@ -145,7 +145,7 @@ for iS =length(sess_list):-1:1
 end
 
 fprintf('<strong>%0.0f total sessions, %0.2f had good cells, %0.0f omitted, %0.0f no spike data, %0.0f too short</strong>\n', length(success), sum(success==1), sum(success==99), sum(success==404), sum(success==-10))
-%% Proess each cell within a session
+%% Process each cell within a session
 cd(inter_dir)
 sess_list = dir([inter_dir filesep '*.mat']);
 

@@ -1,5 +1,5 @@
 %% KA_run_all_ln
-clear all
+clearvars
 close all
 
 
@@ -44,6 +44,8 @@ warning off
      data = load([inter_dir filesep sess_list(iS).name]);
 
      data = data.data; 
+
+     data.pos = KA_refine_pos([], data.pos) 
     % get the mean velocity when the animal is moving.
     % mVelo(iS) = mean(data.velo_smooth.data(data.velo_smooth.data>5));
 

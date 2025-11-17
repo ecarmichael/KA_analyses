@@ -7,7 +7,7 @@
 
 % initialize the number of bins that position, head direction, speed, and
 % theta phase will be divided into
-n_pos_bins = 20;
+n_pos_bins = 20; % works out to 5cm bins. 
 n_dir_bins = 18;
 n_speed_bins = 10;
 % n_theta_bins = 18;

@@ -12,7 +12,7 @@ speed_vector = 2.5:50/n_speed_bins:47.5;
 
 % plot the tuning curves
 % figure(1)
-subplot(2,3,1)
+subplot(3,3,1)
 imagesc(pos_curve); colorbar
 axis off
 title('Position')
@@ -22,13 +22,13 @@ title('Position')
 % axis([0 2*pi -inf inf])
 % xlabel('direction angle')
 % title('Head direction')
-subplot(2,3,2)
+subplot(3,3,2)
 plot(speed_vector,speed_curve,'k','linewidth',3)
 box off
 xlabel('Running speed')
 axis([0 50 -inf inf])
 title('Speed')
-subplot(2,3,3)
+subplot(3,3,3)
 plot(tminusVec,t_minus_curve,'k','linewidth',3)
 xlabel('time to reward')
 axis([0 20 -inf inf])
@@ -38,44 +38,44 @@ title('Time to reward')
 %% compute and plot the model-derived response profiles
 % 
 % % show parameters from the full model
-% param_full_model = param{1};
+param_full_model = param{1};
 % 
 % % pull out the parameter values
-% pos_param = param_full_model(1:n_pos_bins^2);
+pos_param = param_full_model(1:n_pos_bins^2);
 % hd_param = param_full_model(n_pos_bins^2+1:n_pos_bins^2+n_dir_bins);
-% speed_param = param_full_model(n_pos_bins^2+n_dir_bins+1:n_pos_bins^2+n_dir_bins+n_speed_bins);
-% theta_param = param_full_model(numel(param_full_model)-n_theta_bins+1:numel(param_full_model));
+speed_param = param_full_model(n_pos_bins^2+n_dir_bins+1:n_pos_bins^2+n_dir_bins+n_speed_bins);
+tminsu_param = param_full_model(numel(param_full_model)-n_tminus_bins+1:numel(param_full_model));
 % 
 % % compute the scale factors
 % % NOTE: technically, to compute the precise scale factor, the expectation
 % % of each parameter should be calculated, not the mean.
-% scale_factor_pos = mean(exp(speed_param))*mean(exp(hd_param))*mean(exp(theta_param))*50;
+scale_factor_pos = mean(exp(speed_param))*mean(exp(tminsu_param))*50;
 % scale_factor_hd = mean(exp(speed_param))*mean(exp(pos_param))*mean(exp(theta_param))*50;
-% scale_factor_spd = mean(exp(pos_param))*mean(exp(hd_param))*mean(exp(theta_param))*50;
-% scale_factor_theta = mean(exp(speed_param))*mean(exp(hd_param))*mean(exp(pos_param))*50;
+scale_factor_spd = mean(exp(pos_param))*mean(exp(tminsu_param))*50;
+scale_factor_tminus = mean(exp(speed_param))*mean(exp(pos_param))*50;
 % 
 % % compute the model-derived response profiles
-% pos_response = scale_factor_pos*exp(pos_param);
+pos_response = scale_factor_pos*exp(pos_param);
 % hd_response = scale_factor_hd*exp(hd_param);
-% speed_response = scale_factor_spd*exp(speed_param);
-% theta_response = scale_factor_theta*exp(theta_param);
-% 
-% % plot the model-derived response profiles
-% subplot(3,4,5)
-% imagesc(reshape(pos_response,20,20)); axis off; 
-% subplot(3,4,6)
+speed_response = scale_factor_spd*exp(speed_param);
+theta_response = scale_factor_tminus*exp(tminsu_param);
+
+% plot the model-derived response profiles
+subplot(3,3,4)
+imagesc(reshape(pos_response,20,20)); axis off; 
+% subplot(3,3,5)
 % plot(hd_vector,hd_response,'k','linewidth',3)
 % xlabel('direction angle')
 % box off
-% subplot(3,4,7)
-% plot(speed_vector,speed_response,'k','linewidth',3)
-% xlabel('Running speed')
-% box off
-% subplot(3,4,8)
-% plot(theta_vector,theta_response,'k','linewidth',3)
-% xlabel('Theta phase')
+subplot(3,3,5)
+plot(speed_vector,speed_response,'k','linewidth',3)
+xlabel('Running speed')
+box off
+subplot(3,3,6)
+plot(tminusVec,theta_response,'k','linewidth',3)
+xlabel('time to reward')
 % axis([0 2*pi -inf inf])
-% box off
+box off
 % 
 % % make the axes match
 % subplot(3,4,1)
@@ -108,8 +108,8 @@ title('Time to reward')
 LLH_increase_mean = mean(LLH_values);
 LLH_increase_sem = std(LLH_values)/sqrt(numFolds);
 
-figure(1)
-subplot(2,3,4:6)
+% figure(1)
+subplot(3,3,7:9)
 errorbar(LLH_increase_mean,LLH_increase_sem,'ok','linewidth',3)
 hold on
 plot(selected_model,LLH_increase_mean(selected_model),'.r','markersize',25)
