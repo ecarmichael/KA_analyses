@@ -45,7 +45,9 @@ warning off
 
      data = data.data; 
 
-     data.pos = KA_refine_pos([], data.pos) 
+     data.pos = KA_refine_pos([], data.pos) ;
+
+     data.pos = KA_grid_pos([] ,data.pos);
     % get the mean velocity when the animal is moving.
     % mVelo(iS) = mean(data.velo_smooth.data(data.velo_smooth.data>5));
 
