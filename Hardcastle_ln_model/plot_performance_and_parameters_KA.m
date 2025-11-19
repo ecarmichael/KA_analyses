@@ -13,7 +13,7 @@ speed_vector = 2.5:50/n_speed_bins:47.5;
 % plot the tuning curves
 % figure(1)
 subplot(3,3,1)
-imagesc(pos_curve); colorbar
+imagesc(pos_curve_smooth); %colorbar
 axis off
 title('Position')
 % subplot(3,4,2)
@@ -29,9 +29,9 @@ xlabel('Running speed')
 axis([0 50 -inf inf])
 title('Speed')
 subplot(3,3,3)
-plot(tminusVec,t_minus_curve,'k','linewidth',3)
+plot(tminusVec-2.5,t_minus_curve,'k','linewidth',3)
 xlabel('time to reward')
-axis([0 20 -inf inf])
+axis([-2.5 10 -inf inf])
 box off
 title('Time to reward')
 
@@ -69,10 +69,14 @@ imagesc(reshape(pos_response,20,20)); axis off;
 % box off
 subplot(3,3,5)
 plot(speed_vector,speed_response,'k','linewidth',3)
+axis([0 50 -inf inf])
+
 xlabel('Running speed')
 box off
 subplot(3,3,6)
-plot(tminusVec,theta_response,'k','linewidth',3)
+plot(tminusVec-2.5,theta_response,'k','linewidth',3)
+axis([-2.5 10 -inf inf])
+
 xlabel('time to reward')
 % axis([0 2*pi -inf inf])
 box off

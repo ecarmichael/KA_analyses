@@ -5,18 +5,21 @@ close all
 
 usr_name = char(java.lang.System.getProperty('user.name')); 
 
-if ispc
-    addpath(genpath(strrep(['C:\Users\' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared'], '/', filesep)))
-    addpath(genpath(strrep(['C:\Users\' usr_name '/Documents/Github/vandermeerlab/EC_State'], '/', filesep)))
-    addpath(genpath(strrep(['C:\Users\' usr_name '/Documents/Github/vandermeerlab/KA_analyses'], '/', filesep)))
-    inter_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23'];
-    save_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\Ln_model_out'];
-else
-    addpath(genpath(strrep(['/Users/' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared'], '/', filesep)))
-    addpath(genpath(strrep(['/Users/' usr_name '/Documents/Github/EC_State'], '/', filesep)))
-    addpath(genpath(strrep(['/Users/' usr_name '/Documents/Github/KA_analyses'], '/', filesep)))
+
+if ismac
+
+    addpath(genpath(['/Users/' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared']))
+    addpath(genpath(['/Users/' usr_name '/Documents/Github/EC_State']));
+    addpath(genpath(['/Users/' usr_name '/Documents/Github/KA_analyses']));
     inter_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/inter_reward_23'];
-    save_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/Ln_model_out'];
+    save_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/Ln_model_out']; 
+elseif ispc
+
+    addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\vandermeerlab\code-matlab\shared']))
+    addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\EC_State']));
+    addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\KA_analyses']));
+    inter_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23'];
+    save_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\Ln_model_out']; 
 end
 
 
@@ -53,7 +56,9 @@ warning off
 
      data = data.data; 
 
-     data.pos = KA_refine_pos([], data.pos) 
+     data.pos = KA_refine_pos([], data.pos) ;
+
+     data.pos = KA_grid_pos([] ,data.pos);
     % get the mean velocity when the animal is moving.
     % mVelo(iS) = mean(data.velo_smooth.data(data.velo_smooth.data>5));
 
@@ -66,9 +71,10 @@ warning off
 
         % cell_id{k} = [sess_list(iS).name(1:end-4) '_' data.S.label{iC}];
 
-        % run the ln model
-        
-        KA_run_ln(data, iC, sess_list(iS).name(1:end-4), save_dir)
+        % run the ln models
+        % KA_run_ln(data, iC, sess_list(iS).name(1:end-4), save_dir)
+
+            KA_get_spatial_info(data, iC)
 
     end
 

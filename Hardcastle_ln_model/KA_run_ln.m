@@ -69,7 +69,7 @@ post = data.pos.tvec;
 spiketrain = FR_velo_int'; 
 posx_c = data.pos.data(1,:)'; 
 posy_c = data.pos.data(2,:)'; 
-boxSize = 150-20; 
+% boxSize = 150-20; 
 
 spiketrain = fillmissing(spiketrain, "nearest"); 
 
@@ -97,7 +97,7 @@ close(gcf)
 
 % remove periods that were too far removed from a reward. 
 mov_idx = data.velo_smooth.data > 5; % keep data when moving. 
-ITI_idx = t_minus_r >= 10;
+ITI_idx = t_minus_r >= 10+2.5;
 
 rm_idx = ITI_idx | ~mov_idx; % remove periods of immobility too far from next reward. 
 
