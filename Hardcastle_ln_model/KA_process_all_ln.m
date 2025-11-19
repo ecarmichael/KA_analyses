@@ -1,6 +1,19 @@
 %% KA_process_all_ln
 
-ln_dir = 'C:\Users\ecar\Williams Lab Dropbox\Eric Carmichael\KA_Data\Ln_model_out';
+usr_name = char(java.lang.System.getProperty('user.name')); 
+
+if ispc
+    addpath(genpath(strrep(['C:\Users\' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared'], '/', filesep)))
+    addpath(genpath(strrep(['C:\Users\' usr_name '/Documents/Github/vandermeerlab/EC_State'], '/', filesep)))
+    addpath(genpath(strrep(['C:\Users\' usr_name '/Documents/Github/vandermeerlab/KA_analyses'], '/', filesep)))
+    ln_dir = 'C:\Users\ecar\Williams Lab Dropbox\Eric Carmichael\KA_Data\Ln_model_out';
+
+else
+    addpath(genpath(strrep(['/Users/' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared'], '/', filesep)))
+    addpath(genpath(strrep(['/Users/' usr_name '/Documents/Github/EC_State'], '/', filesep)))
+    addpath(genpath(strrep(['/Users/' usr_name '/Documents/Github/KA_analyses'], '/', filesep)))
+    ln_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/Ln_model_out'];
+end
 
 
 cd(ln_dir)

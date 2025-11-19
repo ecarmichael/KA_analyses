@@ -6,12 +6,20 @@ close all
 usr_name = char(java.lang.System.getProperty('user.name')); 
 
 if ispc
-        inter_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23'];
-    save_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\Ln_model_out']; 
+    addpath(genpath(strrep(['C:\Users\' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared'], '/', filesep)))
+    addpath(genpath(strrep(['C:\Users\' usr_name '/Documents/Github/vandermeerlab/EC_State'], '/', filesep)))
+    addpath(genpath(strrep(['C:\Users\' usr_name '/Documents/Github/vandermeerlab/KA_analyses'], '/', filesep)))
+    inter_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23'];
+    save_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\Ln_model_out'];
 else
+    addpath(genpath(strrep(['/Users/' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared'], '/', filesep)))
+    addpath(genpath(strrep(['/Users/' usr_name '/Documents/Github/EC_State'], '/', filesep)))
+    addpath(genpath(strrep(['/Users/' usr_name '/Documents/Github/KA_analyses'], '/', filesep)))
     inter_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/inter_reward_23'];
-    save_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/Ln_model_out']; 
+    save_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/Ln_model_out'];
 end
+
+
 omit_list = {'C4_3_C3_2021-02-25_DONE',...
     'C5_2_O7_2021-04-30_DONE',... % Feeders start way before the recording.
     'C6_3_O1_2021-09-24_DONE',...

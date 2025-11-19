@@ -43,7 +43,7 @@ param_full_model = param{1};
 % % pull out the parameter values
 pos_param = param_full_model(1:n_pos_bins^2);
 % hd_param = param_full_model(n_pos_bins^2+1:n_pos_bins^2+n_dir_bins);
-speed_param = param_full_model(n_pos_bins^2+n_dir_bins+1:n_pos_bins^2+n_dir_bins+n_speed_bins);
+speed_param = param_full_model(n_pos_bins^2+1:n_pos_bins^2+n_speed_bins);
 tminsu_param = param_full_model(numel(param_full_model)-n_tminus_bins+1:numel(param_full_model));
 % 
 % % compute the scale factors
