@@ -1,12 +1,12 @@
-function [tuning_curve] = compute_2d_tuning_curve(variable_x,variable_y,fr,numBin,minVal,maxVal)
+function [tuning_curve, tuning_curve_smooth, tuning_curve_no_smooth] = compute_2d_tuning_curve(variable_x,variable_y,fr,numBin)
 
 % this assumes that the 2d environment is a square box, and that the
 % variable is recorded along the x- and y-axes
 
 %% define the axes and initialize variables
 
-xAxis = linspace(minVal,maxVal,numBin+1);
-yAxis = linspace(minVal,maxVal,numBin+1);
+xAxis = linspace(min(variable_x),max(variable_x),numBin+1);
+yAxis = linspace(min(variable_y),max(variable_y),numBin+1);
 
 % initialize 
 tuning_curve = zeros(numBin,numBin);
@@ -41,6 +41,7 @@ end
 
 
 %% smooth the tuning curve
+tuning_curve_no_smooth = tuning_curve; 
 
 % fill in the NaNs with neigboring values
 nan_ind = find(isnan(tuning_curve));
@@ -69,5 +70,7 @@ end
 H = fspecial('gaussian'); % using default values - size=[3 3] and sigma=0.5
 tuning_curve = imfilter(tuning_curve,H);
 
+tuning_curve_smooth = tuning_curve; 
+tuning_curve_smooth(nan_ind) = 0; 
 
 return

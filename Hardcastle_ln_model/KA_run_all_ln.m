@@ -5,13 +5,25 @@ close all
 
 usr_name = char(java.lang.System.getProperty('user.name')); 
 
-if ispc
-        inter_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23'];
-    save_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\Ln_model_out']; 
-else
+if ismac
+
+    addpath(genpath(['/Users/' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared']))
+    addpath(genpath(['/Users/' usr_name '/Documents/Github/EC_State']));
+    addpath(genpath(['/Users/' usr_name '/Documents/Github/KA_analyses']));
     inter_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/inter_reward_23'];
     save_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/Ln_model_out']; 
+elseif ispc
+
+
+    % load data
+    addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\vandermeerlab\code-matlab\shared']))
+    addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\EC_State']));
+    addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\KA_analyses']));
+    inter_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23'];
+    save_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\Ln_model_out']; 
 end
+
+
 omit_list = {'C4_3_C3_2021-02-25_DONE',...
     'C5_2_O7_2021-04-30_DONE',... % Feeders start way before the recording.
     'C6_3_O1_2021-09-24_DONE',...
@@ -60,9 +72,10 @@ warning off
 
         % cell_id{k} = [sess_list(iS).name(1:end-4) '_' data.S.label{iC}];
 
-        % run the ln model
-        
-        KA_run_ln(data, iC, sess_list(iS).name(1:end-4), save_dir)
+        % run the ln models
+        % KA_run_ln(data, iC, sess_list(iS).name(1:end-4), save_dir)
+
+            KA_get_spatial_info(data, iC)
 
     end
 

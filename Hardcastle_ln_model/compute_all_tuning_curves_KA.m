@@ -11,7 +11,7 @@ velo_smooth(rm_idx) = [];
 t_minus_r(rm_idx) = [];
 
 % compute tuning curves for position, head direction, speed, and theta phase
-[pos_curve] = compute_2d_tuning_curve(posx_c,posy_c,smooth_fr,n_pos_bins,0,boxSize);
+[pos_curve,pos_curve_smooth, pos_curve_no_smooth] = compute_2d_tuning_curve(posx_c,posy_c,smooth_fr,n_pos_bins);
 [hd_curve] = compute_1d_tuning_curve(hd_data,smooth_fr,n_dir_bins,0,2*pi);
 [speed_curve] = compute_1d_tuning_curve(velo_smooth,smooth_fr,n_speed_bins,0,50);
 [t_minus_curve] = compute_1d_tuning_curve(abs(t_minus_r),fr,n_tminus_bins,0,20);

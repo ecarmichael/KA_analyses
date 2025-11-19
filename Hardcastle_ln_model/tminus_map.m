@@ -1,7 +1,7 @@
-function [t_minus_grid,tminusVec] = tminus_map(t_minus_in,nbins)
+function [t_minus_grid,tminusVec] = tminus_map(t_minus_in,nbins, maxT)
 
 
-maxT = 20; t_minus_in(t_minus_in>maxT) = maxT; %send everything over 50 cm/s to 50 cm/s
+t_minus_in(t_minus_in>maxT) = maxT; %send everything over 50 cm/s to 50 cm/s
 
 
 tminusVec = maxT/nbins/2:maxT/nbins:maxT-maxT/nbins/2;

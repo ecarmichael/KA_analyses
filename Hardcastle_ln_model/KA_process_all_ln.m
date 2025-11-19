@@ -27,6 +27,7 @@ for iM = length(ln_list):-1:1
     if ~isnan(selected_model)
         disp([num2str(iM) ': ' models{selected_model}]);
         figure(iM);
+        clf
         plot_performance_and_parameters_KA;
         clearvars -except iM ln_list ln_dir out models;
     end
