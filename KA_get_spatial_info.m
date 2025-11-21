@@ -1,29 +1,20 @@
-function KA_get_spatial_info(data, iC)
+function [spd_metrics, t_metrics, p_metrics] = KA_get_spatial_info(data, iC)
 
+
+spd_metrics = []; 
+t_metrics = []; 
+p_metrics = []; 
 
 this_S = KA_isolate_S(data.S, data.S.label{iC});
 
-% firing rate to match data samples
+
 dt = mode(diff(data.pos.tvec)); 
-tbin_edges = data.pos.tvec;
 
-spk_count = histc(this_S.t{1},tbin_edges);
-FR_velo_int = interp1(tbin_edges(1:end-1), spk_count(1:end-1), data.pos.tvec); 
-FR_velo_int = fillmissing(FR_velo_int, "nearest", 'EndValues','nearest'); 
+trials = [nearest_idx3(data.rew.t-5, data.pos.tvec), nearest_idx3(data.rew.t+2.5, data.pos.tvec)]; 
 
-% % position bins
-% bin_s = 5; 
-
-
-%% 1D vectors:
-
-% speed
-nbins = 20;
-smax = 50; 
-speedVec = 0:smax/nbins:smax;
-% speed_grid = zeros(numel(data.velo_smooth.data),numel(speedVec));
-
-[spd.MI, spd.posterior, spd.occupancy_vector, spd.p_active, spd.likelihood] = MS_get_spatial_information(binary_in, position_in, bin_vec)
+data.velo_smooth.data(data.velo_smooth.data>50) = NaN; 
+figure
+[~, ~, spd_metrics ] =spatial_information_KA(data.velo_smooth.data, data.velo_smooth.tvec, this_S.t, trials, 25, 8, 1000);
 
 
 % time to reward
@@ -36,13 +27,34 @@ for ii = length(data.rew.t):-1:1
         this_idx = nearest_idx2(data.rew.t(ii)+2.5, data.pos.tvec);
         prior_idx = nearest_idx2(data.rew.t(ii-1), data.pos.tvec);
     end
-    t_minus_r(prior_idx:this_idx) = data.pos.tvec(prior_idx:this_idx) - data.rew.t(ii)+2.5; 
+    t_minus_r(prior_idx:this_idx) = data.pos.tvec(prior_idx:this_idx) - data.rew.t(ii); 
 end
 
 t_minus_r = -t_minus_r; %make positive
+t_minus_r(t_minus_r > 5) = NaN; 
+figure
+[~, ~, t_metrics ] =spatial_information_KA(t_minus_r, data.velo_smooth.tvec, this_S.t, trials, 8, 8, 1000);
 
 
-KA_SI(A_vec, B_vec, bin_size)
+figure
+
+[~, ~, p_metrics ] =spatial_information_KA(rand(size(data.velo_smooth.tvec)), data.velo_smooth.tvec, this_S.t, trials, 8, 8, 1000);
+
+%% 1D vectors:
+
+% % speed
+% nbins = 20;
+% smax = 50; 
+% speedVec = 0:smax/nbins:smax;
+% % speed_grid = zeros(numel(data.velo_smooth.data),numel(speedVec));
+% 
+% [spd.MI, spd.posterior, spd.occupancy_vector, spd.p_active, spd.likelihood] = MS_get_spatial_information(binary_in, position_in, bin_vec)
+
+
+
+
+
+% KA_SI(A_vec, B_vec, bin_size)
 
 
 %% 

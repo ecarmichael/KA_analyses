@@ -48,9 +48,11 @@ omit_cells =  {'C1_1 O6_2020-07-12_DONE_maze_data_TT1_01.t64',...
 %%
 cd(inter_dir)
 sess_list = dir([inter_dir filesep '*.mat']);
+spd_metrics = []; 
+t_metrics = []; 
 
 k = 0;
-parfor iS = 1:length(sess_list)
+for iS = 1:length(sess_list)
 warning off
 
      data = load([inter_dir filesep sess_list(iS).name]);
@@ -68,15 +70,120 @@ warning off
         if ismember([sess_list(iS).name(1:end-4) '_' data.S.label{iC}], omit_cells)
             continue
         end
-        % k = k+1;
+        k = k+1;
 
-        % cell_id{k} = [sess_list(iS).name(1:end-4) '_' data.S.label{iC}];
+        cell_id{k} = [sess_list(iS).name(1:end-4) '_' data.S.label{iC}];
 
         % run the ln models
         % KA_run_ln(data, iC, sess_list(iS).name(1:end-4), save_dir)
 
-            KA_get_spatial_info(data, iC)
+            % KA_get_spatial_info(data, iC)
+
+    dt = mode(diff(data.pos.tvec)); 
+    this_S = KA_isolate_S(data.S, data.S.label{iC});
+    [spd_metrics{k}, t_metrics{k}, p_metrics{k}] = KA_get_spatial_info(data, iC);
+
+    % if spd_metrics{k}.zMI < 1.
+
+
+
 
     end
 
 end
+
+
+
+%% get the disrtibution of tuning values
+
+spd.MI = []; spd.Is = []; spd.Ispk = []; 
+spd.zMI = []; spd.zIs = []; spd.zIspk = []; 
+
+t.MI = []; t.Is = []; t.Ispk = []; 
+t.zMI = []; t.zIs = []; t.zIspk = []; 
+
+for ii = length(spd_metrics):-1:1
+
+% raw
+spd.MI(ii) = spd_metrics{ii}.MI; 
+spd.Is(ii) = spd_metrics{ii}.Isec; 
+spd.Ispk(ii) = spd_metrics{ii}.Ispike; 
+
+%norm
+spd.zMI(ii) = spd_metrics{ii}.NormMI; 
+spd.zIs(ii) = spd_metrics{ii}.NormIsec; 
+spd.zIspk(ii) = spd_metrics{ii}.NormIspike; 
+
+% raw
+t.MI(ii) = t_metrics{ii}.MI; 
+t.Is(ii) = t_metrics{ii}.Isec; 
+t.Ispk(ii) = t_metrics{ii}.Ispike; 
+
+%norm
+t.zMI(ii) = t_metrics{ii}.NormMI; 
+t.zIs(ii) = t_metrics{ii}.NormIsec; 
+t.zIspk(ii) = t_metrics{ii}.NormIspike; 
+
+
+
+end
+
+
+figure(1010)
+clf
+subplot(3,3,1)
+histogram(spd.MI,50); 
+xlabel('MI')
+title('Speed')
+
+subplot(3,3,4)
+histogram(spd.zMI, 50); 
+xlabel('zMI')
+
+subplot(3,3,7)
+histogram(spd.zIs, 50); 
+xlabel('zIs')
+
+subplot(3,3,2)
+histogram(t.MI, 50); 
+xlabel('MI')
+title('t-minus')
+
+subplot(3,3,5)
+histogram(t.zMI, 50); 
+xlabel('zMI')
+
+subplot(3,3,8)
+histogram(t.zIs, 50); 
+xlabel('zIs')
+
+
+subplot(3,3, [3 6])
+spd_sig = spd.zMI > 2.5; 
+t_sig = t.zMI > 2.5; 
+st_sig = spd_sig & t_sig; 
+cla
+hold on
+scatter(spd.MI(~t_sig | ~spd_sig), t.MI(~t_sig | ~spd_sig), 50, "black", 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.MI(spd_sig), t.MI(spd_sig), 50, "yellow", 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.MI(t_sig), t.MI(t_sig), 50, "blue", 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.MI(t_sig & spd_sig), t.MI(t_sig & spd_sig), 50, "green", 'filled') %[spd_sig.*(t_sig+1)])
+
+ylabel('t MI')
+xlabel('spd MI')
+legend()
+
+subplot(3,3, 9)
+spd_sig = spd.zMI > 2.5; 
+t_sig = t.zMI > 2.5; 
+st_sig = spd_sig & t_sig; 
+cla
+hold on
+scatter(spd.zMI(~t_sig | ~spd_sig), t.zMI(~t_sig | ~spd_sig), 50, "black", 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.zMI(spd_sig), t.zMI(spd_sig), 50, "yellow", 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.zMI(t_sig), t.zMI(t_sig), 50, "blue", 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.zMI(t_sig & spd_sig), t.zMI(t_sig & spd_sig), 50, "green", 'filled') %[spd_sig.*(t_sig+1)])
+
+ylabel('t zMI')
+xlabel('spd zMI')
+
