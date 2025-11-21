@@ -5,6 +5,7 @@ close all
 
 usr_name = char(java.lang.System.getProperty('user.name')); 
 
+
 if ismac
 
     addpath(genpath(['/Users/' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared']))
@@ -14,8 +15,6 @@ if ismac
     save_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/Ln_model_out']; 
 elseif ispc
 
-
-    % load data
     addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\vandermeerlab\code-matlab\shared']))
     addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\EC_State']));
     addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\KA_analyses']));
