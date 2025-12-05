@@ -126,7 +126,7 @@ for itrial=1:size(trials,1)
 end
 
 
-imagesc(fr(:,:))
+% imagesc(fr(:,:))
 MI=NaN(size(spkcount,1),1);
 Isec=NaN(size(spkcount,1),1);
 Ispike=NaN(size(spkcount,1),1);

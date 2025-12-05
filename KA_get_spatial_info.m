@@ -13,7 +13,7 @@ dt = mode(diff(data.pos.tvec));
 trials = [nearest_idx3(data.rew.t-5, data.pos.tvec), nearest_idx3(data.rew.t+2.5, data.pos.tvec)]; 
 
 data.velo_smooth.data(data.velo_smooth.data>50) = NaN; 
-figure
+% figure
 [~, ~, spd_metrics ] =spatial_information_KA(data.velo_smooth.data, data.velo_smooth.tvec, this_S.t, trials, 25, 8, 1000);
 
 
@@ -32,11 +32,11 @@ end
 
 t_minus_r = -t_minus_r; %make positive
 t_minus_r(t_minus_r > 5) = NaN; 
-figure
+% figure
 [~, ~, t_metrics ] =spatial_information_KA(t_minus_r, data.velo_smooth.tvec, this_S.t, trials, 8, 8, 1000);
 
 
-figure
+% figure
 
 [~, ~, p_metrics ] =spatial_information_KA(rand(size(data.velo_smooth.tvec)), data.velo_smooth.tvec, this_S.t, trials, 8, 8, 1000);
 
