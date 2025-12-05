@@ -36,7 +36,14 @@ for tt = length(t_types):-1:1
     trials = [nearest_idx3(data.rew.t(t_idx)-5, data.pos.tvec), nearest_idx3(data.rew.t(t_idx)+2.5, data.pos.tvec)];
 
     if isempty(trials)
-        spd_metrics{tt} = []; t_metrics{tt} = []; p_metrics{tt} = [];
+        spd_metrics{tt}.MI = NaN; 
+        spd_metrics{tt}.Isec = NaN; 
+        spd_metrics{tt}.Ispike = NaN; 
+        spd_metrics{tt}.NormMI = NaN; 
+        spd_metrics{tt}.NormIsec = NaN; 
+        spd_metrics{tt}.NormIspike = NaN; 
+        t_metrics{tt} = spd_metrics{tt}; 
+        p_metrics{tt} = spd_metrics{tt};
     else
 
         [~, ~, spd_metrics{tt}] =spatial_information_KA(data.velo_smooth.data, data.velo_smooth.tvec, this_S.t, trials, 25, 8, 1000);
