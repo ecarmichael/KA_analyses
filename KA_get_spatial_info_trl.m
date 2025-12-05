@@ -28,7 +28,7 @@ t_minus_r = -t_minus_r; %make positive
 t_minus_r(t_minus_r > 5) = NaN; 
 
 %% loop over trial types.
-t_types = unique(data.rew.in);
+t_types = 1:4;
 for tt = length(t_types):-1:1
 
     t_idx = data.rew.in == t_types(tt);

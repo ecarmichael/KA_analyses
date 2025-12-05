@@ -124,6 +124,7 @@ spd.zMI(ii) = spd_metrics{ii}.NormMI;
 spd.zIs(ii) = spd_metrics{ii}.NormIsec; 
 spd.zIspk(ii) = spd_metrics{ii}.NormIspike; 
 
+
 % raw
 t.MI(ii) = t_metrics{ii}.MI; 
 t.Is(ii) = t_metrics{ii}.Isec; 
@@ -146,6 +147,231 @@ p.zIspk(ii) = p_metrics{ii}.NormIspike;
 
 
 end
+
+
+c_ord = MS_linspecer(5);
+bin_c = 50; 
+m = 6; n= 4; 
+
+figure(1010)
+clf
+subplot(m, n ,1)
+histogram(spd.MI,bin_c, FaceColor= c_ord(1,:), BinLimits=[0 .5]); 
+xlabel('MI')
+title('Speed')
+xlim([0 .5])
+ylabel('count')
+
+subplot(m, n ,5)
+histogram(spd.zMI, bin_c, FaceColor= c_ord(1,:), BinLimits=[-5 60]);
+xlabel('zMI')
+xlim([-5 60])
+ylabel('count')
+xline([-3.29 3.29])
+
+subplot(m, n,9)
+histogram(spd.Is, bin_c, FaceColor= c_ord(1,:), BinLimits=[0 0.015]);
+xlabel('Is')
+ylabel('count')
+xlim([0 0.015])
+
+subplot(m, n,13)
+histogram(spd.zIs, bin_c, FaceColor= c_ord(1,:), BinLimits=[-5 60]);
+xlabel('zIs')
+xlim([-5 60])
+ylabel('count')
+xline([-3.29 3.29])
+
+subplot(m, n,17)
+histogram(spd.Ispk, bin_c, FaceColor= c_ord(1,:), BinLimits=[0 1.25]); 
+xlabel('Ispk')
+xlim([0 1.25])
+ylabel('count')
+
+subplot(m, n,21)
+histogram(spd.zIspk, bin_c, FaceColor= c_ord(1,:), BinLimits=[-5 60]); 
+xlabel('zIspk')
+xlim([-5 60])
+ylabel('count')
+xline([-3.29 3.29])
+
+subplot(m, n,2)
+histogram(t.MI, bin_c, FaceColor= c_ord(2,:), BinLimits=[0 .5]); 
+xlabel('MI')
+title('t-minus')
+xlim([0 .5])
+
+subplot(m, n,6)
+histogram(t.zMI, bin_c, FaceColor= c_ord(2,:), BinLimits=[-5 60]);
+xlabel('zMI')
+xlim([-5 60])
+xline([-3.29 3.29])
+
+subplot(m, n,10)
+histogram(t.Is, bin_c, FaceColor= c_ord(2,:), BinLimits=[0 0.015]); 
+xlabel('zIs')
+xlim([0 0.015])
+
+subplot(m, n,14)
+histogram(t.zIs, bin_c, FaceColor= c_ord(2,:), BinLimits=[-5 60]); 
+xlabel('zIs')
+xlim([-5 60])
+xline([-3.29 3.29])
+
+subplot(m, n,18)
+histogram(t.Ispk, bin_c, FaceColor= c_ord(2,:), BinLimits=[0 1.25]); 
+xlabel('Ispk')
+xlim([0 1.25])
+
+subplot(m, n,22)
+histogram(t.zIspk, bin_c, FaceColor= c_ord(2,:), BinLimits=[-5 60]);
+xlabel('zIspk')
+xlim([-5 60])
+xline([-3.29 3.29])
+
+subplot(m, n,3)
+histogram(p.MI, bin_c,FaceColor='k', BinLimits=[0 .5]); 
+xlabel('MI')
+title('Shuff')
+xlim([0 .5])
+
+subplot(m, n,7)
+histogram(p.zMI, bin_c,FaceColor='k', BinLimits=[-5 60]);
+xlabel('zMI')
+xlim([-5 60])
+xline([-3.29 3.29])
+
+subplot(m, n,11)
+histogram(p.Is, bin_c,FaceColor='k', BinLimits=[0 0.015]);
+xlabel('Is')
+xlim([0 0.015])
+
+subplot(m, n,15)
+histogram(p.zIs, bin_c,FaceColor='k', BinLimits=[-5 60]);
+xlabel('zIs')
+xlim([-5 60])
+xline([-3.29 3.29])
+
+
+subplot(m, n,19)
+histogram(p.Ispk, bin_c,FaceColor='k', BinLimits=[0 1.25]); 
+xlabel('Is')
+xlim([0 1.25])
+
+subplot(m, n,23)
+histogram(p.zIspk, bin_c,FaceColor='k', BinLimits=[-5 60]);
+xlabel('zIspk')
+xlim([-5 60])
+xline([-3.29 3.29])
+
+subplot(m, n, [4 8])
+spd_sig = spd.zMI > 3.29; 
+t_sig = t.zMI > 3.29; 
+st_sig = spd_sig & t_sig; 
+
+cla
+hold on
+scatter(spd.zMI(~t_sig | ~spd_sig), t.zMI(~t_sig | ~spd_sig), 50, "black", 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.zMI(spd_sig), t.zMI(spd_sig), 50, c_ord(1,:), 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.zMI(t_sig), t.zMI(t_sig), 50, c_ord(2,:), 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.zMI(t_sig & spd_sig), t.zMI(t_sig & spd_sig), 50, c_ord(5,:), 'filled') %[spd_sig.*(t_sig+1)])
+
+ylabel('t zMI')
+xlabel('spd MI')
+xlim([min(spd.zMI) max(spd.zMI)])
+ylim([min(t.zMI) max(t.zMI)])
+set(gca, 'XScale', 'log', 'YScale', 'log')
+xline(3.29,'HandleVisibility','off'); yline(3.29,'HandleVisibility','off')
+legend({"none", 'Spd mod', 'T2R mod', 'Spd + T2R mod'}, 'box', 'off', 'location', 'northwest')
+% subtitle('MI')
+
+subplot(m, n, [12 16])
+cla
+hold on
+scatter(spd.zIs(~t_sig | ~spd_sig), t.zIs(~t_sig | ~spd_sig), 50, "black", 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.zIs(spd_sig), t.zIs(spd_sig), 50, c_ord(1,:), 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.zIs(t_sig), t.zIs(t_sig), 50, c_ord(2,:), 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.zIs(t_sig & spd_sig), t.zIs(t_sig & spd_sig), 50,c_ord(5,:), 'filled') %[spd_sig.*(t_sig+1)])
+
+ylabel('t zIs')
+xlabel('spd zIs')
+xlim([min(spd.zIs) max(spd.zIs)])
+ylim([min(t.zIs) max(t.zIs)])
+set(gca, 'XScale', 'log', 'YScale', 'log')
+xline(3.29,'HandleVisibility','off'); yline(3.29,'HandleVisibility','off')
+legend({"none", 'Spd mod', 'T2R mod', 'Spd + T2R mod'}, 'box', 'off', 'location', 'northwest')
+
+
+subplot(m, n, [20 24])
+spd_sig = spd.zIs > 3.29; 
+t_sig = t.zIs > 3.29; 
+st_sig = spd_sig & t_sig; 
+cla
+hold on
+scatter(spd.zIspk(~t_sig | ~spd_sig), t.zIspk(~t_sig | ~spd_sig), 50, "black", 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.zIspk(spd_sig), t.zIspk(spd_sig), 50, c_ord(1,:), 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.zIspk(t_sig), t.zIspk(t_sig), 50, c_ord(2,:), 'filled') %[spd_sig.*(t_sig+1)])
+scatter(spd.zIspk(t_sig & spd_sig), t.zIspk(t_sig & spd_sig), 50,c_ord(5,:), 'filled') %[spd_sig.*(t_sig+1)])
+
+ylabel('t zIspk (log)')
+xlabel('spd zIspk (log)')
+xline(3.29,'HandleVisibility','off'); yline(3.29,'HandleVisibility','off')
+legend({"none", 'Spd mod', 'T2R mod', 'Spd + T2R mod'}, 'box', 'off', 'location', 'northwest')
+xlim([min(spd.zIspk) max(spd.zIspk)])
+ylim([min(t.zIspk) max(t.zIspk)])
+set(gca, 'XScale', 'log', 'YScale', 'log')
+
+
+%% trial type
+
+
+spd_trL.MI = []; spd_trL.Is = []; spd_trL.Ispk = []; 
+spd_trL.zMI = []; spd_trL.zIs = []; spd_trL.zIspk = []; 
+
+t_trl.MI = []; t_trl.Is = []; t_trl.Ispk = []; 
+t_trl.zMI = []; t_trl.zIs = []; t_trl.zIspk = []; 
+
+% p = random shuffles to see what the false discovery rate was. 
+p_trl.MI = []; p_trl.Is = []; p_trl.Ispk = []; 
+p_trl.zMI = []; p_trl.zIs = []; p_trl.zIspk = []; 
+
+for ii = length(spd_metrics):-1:1
+ 
+    for tt = 1:4
+% raw
+spd_trL.MI(ii, tt) = spd_metrics_trl{ii}{tt}.MI; 
+spd_trL.Is(ii, tt) = spd_metrics_trl{ii}{tt}.Isec; 
+spd_trL.Ispk(ii, tt) = spd_metrics_trl{ii}{tt}.Ispike; 
+
+%norm
+spd_trL.zMI(ii, tt) = spd_metrics_trl{ii}{tt}.NormMI; 
+spd_trL.zIs(ii, tt) = spd_metrics_trl{ii}{tt}.NormIsec; 
+spd_trL.zIspk(ii, tt) = spd_metrics_trl{ii}{tt}.NormIspike; 
+
+
+% raw
+t_trl.MI(ii, tt) = t_metrics_trl{ii}{tt}.MI; 
+t_trl.Is(ii, tt) = t_metrics_trl{ii}{tt}.Isec; 
+t_trl.Ispk(ii, tt) = t_metrics_trl{ii}{tt}.Ispike; 
+
+%norm
+t_trl.zMI(ii, tt) = t_metrics_trl{ii}{tt}.NormMI; 
+t_trl.zIs(ii, tt) = t_metrics_trl{ii}{tt}.NormIsec; 
+t_trl.zIspk(ii, tt) = t_metrics_trl{ii}{tt}.NormIspike; 
+
+% raw
+p_trl.MI(ii, tt) = p_metrics_trl{ii}{tt}.MI; 
+p_trl.Is(ii, tt) = p_metrics_trl{ii}{tt}.Isec; 
+p_trl.Ispk(ii, tt) = p_metrics_trl{ii}{tt}.Ispike; 
+
+%norm
+p_trl.zMI(ii, tt) = p_metrics_trl{ii}{tt}.NormMI; 
+p_trl.zIs(ii, tt) = p_metrics_trl{ii}{tt}.NormIsec; 
+p_trl.zIspk(ii, tt) = p_metrics_trl{ii}{tt}.NormIspike;
+
+    end
+end
+
 
 c_ord = MS_linspecer(5);
 bin_c = 50; 
