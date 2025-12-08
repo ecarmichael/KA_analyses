@@ -9,6 +9,7 @@ this_S = KA_isolate_S(data.S, data.S.label{iC});
 
 dt = mode(diff(data.pos.tvec)); 
 data.velo_smooth.data(data.velo_smooth.data>50) = NaN; 
+data.velo_smooth.data(data.velo_smooth.data<2) = NaN; 
 
 
 % time to reward
@@ -34,8 +35,11 @@ for tt = length(t_types):-1:1
     t_idx = data.rew.in == t_types(tt);
 
     trials = [nearest_idx3(data.rew.t(t_idx)-5, data.pos.tvec), nearest_idx3(data.rew.t(t_idx)+2.5, data.pos.tvec)];
+    trials_iv = iv(data.rew.t(t_idx)-5, data.rew.t(t_idx)+2.5); 
+    S_trl = restrict(this_S, trials_iv); 
 
-    if isempty(trials)
+
+    if isempty(trials) || isempty (S_trl.t{1})
         spd_metrics{tt}.MI = NaN; 
         spd_metrics{tt}.Isec = NaN; 
         spd_metrics{tt}.Ispike = NaN; 
