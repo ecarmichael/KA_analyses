@@ -2,16 +2,16 @@
 %% KA screener master script.
 
 % load data
-usr_name = char(java.lang.System.getProperty('user.name')); 
+usr_name = char(java.lang.System.getProperty('user.name'));
 
 if ismac
 
     addpath(genpath(['/Users/' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared']))
     addpath(genpath(['/Users/' usr_name '/Documents/Github/EC_State']));
     addpath(genpath(['/Users/' usr_name '/Documents/Github/KA_analyses']));
-        % addpath(genpath(['/Users/' usr_name '/Documents/Github/NeuroLearning/M1_compiled_loaders_functions/releaseDec2015/binaries'])); % Apple silicon compiled Nlx Loaders
+    % addpath(genpath(['/Users/' usr_name '/Documents/Github/NeuroLearning/M1_compiled_loaders_functions/releaseDec2015/binaries'])); % Apple silicon compiled Nlx Loaders
 
-        data_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/for_eric_only']; % where all the NLX data is.
+    data_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/for_eric_only']; % where all the NLX data is.
     % inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs.
     inter_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/inter_reward_23'];
     plot_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/Behav_plots'];
@@ -68,6 +68,7 @@ omit_list = {'C4_3_C3_2021-02-25_DONE',...
     'C6_4_O6_2021-09-27_DONE',... % HS likly fell out.
     'C6_4_E1_2021-10-07_DONE',... % 3 recordings.
     'C3_2_O7_2020-09-03_DONE',... % spike is all noise.
+    'C6_3_E1_2021-10-13_DONE',... % short and split up. likly HS issue. No cells; 
     };
 
 omit_cells =  {'C1_1 O6_2020-07-12_DONE_maze_data_TT1_01.t64',...
@@ -133,7 +134,7 @@ for iS =length(sess_list):-1:1
 
     data = KA_trialfun(min_fr, plot_dir);
 
-    if isstruct(data)
+    if isstruct(data) && ~isempty(data.S)
         save([inter_dir filesep sess_list{iS} '_maze_data.mat'], 'data', '-v7.3')
         success(iS) = 1;
     else
@@ -157,7 +158,7 @@ spd_mod = [];
 spd_p = [];
 spd_corr = [];
 stats = [];
-spd_data= []; 
+spd_data= [];
 k = 0;
 for iS = 1:length(sess_list)
 
@@ -186,11 +187,11 @@ for iS = 1:length(sess_list)
         spd_mod(k) = data.spd_mod.spd_mod;
         spd_p(k) = data.spd_mod.p_val;
         spd_corr(k) = data.spd_mod.spd_corr;
-        spd_z(k) = data.spd_mod.z_mod; 
+        spd_z(k) = data.spd_mod.z_mod;
 
         spd_data{k}.FR = data.spd_mod.FR_velo_int;
-        spd_data{k}.tvec =  data.velo_smooth.tvec; 
-        spd_data{k}.spd = data.velo_smooth.data; 
+        spd_data{k}.tvec =  data.velo_smooth.tvec;
+        spd_data{k}.spd = data.velo_smooth.data;
 
 
         % summary for plotting
@@ -208,7 +209,7 @@ for iS = 1:length(sess_list)
         [~,tvec,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t );
         all_peth(:,5, k) = nanmean(this_peth,2);
 
-        app_t{iS}= data.app; 
+        app_t{iS}= data.app;
 
 
         % PETH for plotting
@@ -252,7 +253,7 @@ app_no_mod = sum(sum(app_out.h(:,1:5),2) == 0);
 
 save([parent_path filesep 'Spd_data.mat'], 'spd_data')
 %% classify cells based on waveform properties
-fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = []; 
+fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = [];
 for ii = length(stats):-1:1
     fr(ii) = stats{ii}.firing_rate;
     bur_idx(ii) = stats{ii}.burst_idx;
@@ -705,15 +706,15 @@ title('Approach')
 
 
 %% collect the percentage response
-k = 0; 
-rew_prct = NaN(size(rew_out.h,1), size(rew_out.rew_fr, 2)); 
-app_prct = rew_prct; 
-sub_id = cell(1,size(rew_out.h,1)); 
-rew_all = NaN(size(rew_out.h,1)*(size(rew_out.rew_fr, 2)-1),1); 
-rew_id = cell(size(rew_out.h,1)*(size(rew_out.rew_fr, 2)-1),1); 
-rew_feeder = rew_id; 
-rew_phase = rew_id; 
-R_idx = rew_all; 
+k = 0;
+rew_prct = NaN(size(rew_out.h,1), size(rew_out.rew_fr, 2));
+app_prct = rew_prct;
+sub_id = cell(1,size(rew_out.h,1));
+rew_all = NaN(size(rew_out.h,1)*(size(rew_out.rew_fr, 2)-1),1);
+rew_id = cell(size(rew_out.h,1)*(size(rew_out.rew_fr, 2)-1),1);
+rew_feeder = rew_id;
+rew_phase = rew_id;
+R_idx = rew_all;
 for ii = 1:size(rew_out.h,1)
 
     for jj = 1:size(rew_out.rew_fr, 2)
@@ -724,22 +725,22 @@ for ii = 1:size(rew_out.h,1)
         sub_id{ii} = cell_id{ii}(1:4);
 
         if jj~=5
-                    k = k+1;
+            k = k+1;
 
             rew_all(k) = rew_out.rew_fr(ii,jj)./ rew_out.base_fr(ii,jj);
-            rew_id{k} = cell_id{ii}(1:4); 
-            rew_feeder{k} = f_id{jj}; 
-            rew_phase{k} = cell_id{ii}(6:7); 
+            rew_id{k} = cell_id{ii}(1:4);
+            rew_feeder{k} = f_id{jj};
+            rew_phase{k} = cell_id{ii}(6:7);
         end
         if contains(cell_id{ii}, '_R')
-            R_idx(k) = 1; 
+            R_idx(k) = 1;
         else
-            R_idx(k) = 0; 
+            R_idx(k) = 0;
         end
     end
 end
 
-R_idx = logical(R_idx); 
+R_idx = logical(R_idx);
 
 C = rew_prct(P.C_idx,5);
 O_e = rew_prct(P.OE_idx,5);
@@ -760,7 +761,7 @@ mat_out= mat_out';
 
 csvwrite([parent_path filesep 'all_Rew_perc.csv'], mat_out)
 
-R_tab = table(rew_id(R_idx),rew_phase(R_idx), rew_feeder(R_idx), rew_all(R_idx), 'VariableNames', {'ID','Phase' 'Arm', 'Response'}); 
+R_tab = table(rew_id(R_idx),rew_phase(R_idx), rew_feeder(R_idx), rew_all(R_idx), 'VariableNames', {'ID','Phase' 'Arm', 'Response'});
 
 writetable(R_tab,[parent_path filesep 'R_only_table.csv'] )
 
@@ -788,23 +789,23 @@ csvwrite([parent_path filesep 'all_App_perc.csv'], mat_out)
 
 for ii = 1:4
 
-C = rew_prct(P.C_idx,ii);
-O_e = rew_prct(P.OE_idx,ii);
-O_l = rew_prct(P.OL_idx,ii);
-R = rew_prct(P.R_idx,ii);
+    C = rew_prct(P.C_idx,ii);
+    O_e = rew_prct(P.OE_idx,ii);
+    O_l = rew_prct(P.OL_idx,ii);
+    R = rew_prct(P.R_idx,ii);
 
-% export as csv
-mat_out = NaN(4, max([length(C),length(O_e),length(O_l),length(R)]));
+    % export as csv
+    mat_out = NaN(4, max([length(C),length(O_e),length(O_l),length(R)]));
 
 
-mat_out(1,1:length(C)) = C';
-mat_out(2,1:length(O_e)) = O_e';
-mat_out(3,1:length(O_l)) = O_l';
-mat_out(4,1:length(R)) = R';
+    mat_out(1,1:length(C)) = C';
+    mat_out(2,1:length(O_e)) = O_e';
+    mat_out(3,1:length(O_l)) = O_l';
+    mat_out(4,1:length(R)) = R';
 
-mat_out= mat_out';
+    mat_out= mat_out';
 
-csvwrite([parent_path filesep 'all_Rew_perc_' f_id{ii} '.csv'], mat_out)
+    csvwrite([parent_path filesep 'all_Rew_perc_' f_id{ii} '.csv'], mat_out)
 
 end
 
@@ -1078,7 +1079,7 @@ print(gcf,[parent_path filesep 'Good_figure.pdf'],'-dpdf','-r300')
 
 
 %% save the mean velocity per condition
-s_phase= []; mVelo = []; all_velo_mean = []; all_velo_max = []; 
+s_phase= []; mVelo = []; all_velo_mean = []; all_velo_max = [];
 
 thresh = 2.5;
 
@@ -1159,28 +1160,28 @@ for iS = length(sess_list):-1:1
     % get the mean velocity when the animal is moving.
     mVelo(iS) = mean(data.velo_smooth.data(data.velo_smooth.data>thresh));
 
-%     % get the mean/max velocity per trial type. 
-%     trial_mean_velo = NaN(length(data.app.t), 4); % fill with NaNs. 
-%     trial_max_velo = NaN(length(data.app.t), 4); 
-% 
-%     for iT = length(data.app.t):-1:1
-%         if (data.app.t(iT) < data.velo_smooth.tvec(1)) || (data.rew.t(iT) > data.velo_smooth.tvec(end))
-%             continue
-%         end
-%         A_velo = restrict(data.velo_smooth, data.app.t(iT), data.rew.t(iT)); 
-%         fprintf('Approach dur: %0.2f  velo: %0.2f \n', A_velo.tvec(end) - A_velo.tvec(1), mean(A_velo.data))
-% 
-%         if A_velo.tvec(end) - A_velo.tvec(1) <= 10 % skip indirect trials that took more than 10s. 
-% 
-% 
-%             trial_mean_velo(iT,data.app.in(iT)) = mean(A_velo.data); 
-%             trial_max_velo(iT,data.app.in(iT)) = max(A_velo.data);
-%         end
-% 
-%     end
-% 
-% all_velo_mean(iS,:) = nanmean(trial_mean_velo); 
-% all_velo_max(iS,:) = nanmean(trial_mean_velo); 
+    %     % get the mean/max velocity per trial type.
+    %     trial_mean_velo = NaN(length(data.app.t), 4); % fill with NaNs.
+    %     trial_max_velo = NaN(length(data.app.t), 4);
+    %
+    %     for iT = length(data.app.t):-1:1
+    %         if (data.app.t(iT) < data.velo_smooth.tvec(1)) || (data.rew.t(iT) > data.velo_smooth.tvec(end))
+    %             continue
+    %         end
+    %         A_velo = restrict(data.velo_smooth, data.app.t(iT), data.rew.t(iT));
+    %         fprintf('Approach dur: %0.2f  velo: %0.2f \n', A_velo.tvec(end) - A_velo.tvec(1), mean(A_velo.data))
+    %
+    %         if A_velo.tvec(end) - A_velo.tvec(1) <= 10 % skip indirect trials that took more than 10s.
+    %
+    %
+    %             trial_mean_velo(iT,data.app.in(iT)) = mean(A_velo.data);
+    %             trial_max_velo(iT,data.app.in(iT)) = max(A_velo.data);
+    %         end
+    %
+    %     end
+    %
+    % all_velo_mean(iS,:) = nanmean(trial_mean_velo);
+    % all_velo_max(iS,:) = nanmean(trial_mean_velo);
 
 
 end
@@ -1265,12 +1266,12 @@ end
 % 27 36 111 144 72 44 23inter
 % 27 36 111 144 72
 ex_cells ={s_cell_id{[23 27 36 44 111 144 72]}};%{'C5_2_C1_2021-04-20_DONE_maze_data_TT2_02.t64'};
-c_ord = linspecer(5); 
-  
-for iC = 1:length(ex_cells)
-close all
+c_ord = linspecer(5);
 
-    c_idx = find(contains(s_cell_id, ex_cells{iC})); 
+for iC = 1:length(ex_cells)
+    close all
+
+    c_idx = find(contains(s_cell_id, ex_cells{iC}));
 
     parts = strsplit(ex_cells{iC}, '_TT');
     load([parts{1} '.mat'])
@@ -1289,9 +1290,9 @@ close all
     cfg_peth.dt = 0.05;
     cfg_peth.gauss_sd = .2;
     cfg_peth.waves = this_S.waves{1};
-    cfg_peth.evt_color_mat = Zone_cord; 
+    cfg_peth.evt_color_mat = Zone_cord;
 
-    example_peth = [];  
+    example_peth = [];
 
     for jj = unique(data.rew.in)
         this_idx = data.rew.in == jj;
@@ -1299,16 +1300,16 @@ close all
         example_peth(:,jj) = nanmean(this_peth,2);
     end
 
-         cfg_peth.evt_color_mat = Zone_cord;
-         cfg_peth.markersize = 15; 
-        [~,outputIT{5},this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t);
-        example_peth(:,5) = nanmean(this_peth,2);
+    cfg_peth.evt_color_mat = Zone_cord;
+    cfg_peth.markersize = 15;
+    [~,outputIT{5},this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t);
+    example_peth(:,5) = nanmean(this_peth,2);
 
     % collect data from PETHs
 
     subplot(211)
     title([strrep(parts{1}(1:18),'_', '-') ' TT' strrep(parts{2}(1:end-4), '_', '-')])
-        xlim([-5 5])
+    xlim([-5 5])
 
     subplot(212)
     cla
@@ -1323,7 +1324,7 @@ close all
 
     y_lim = [min(example_peth, [], 'all') max(example_peth, [], 'all')];
     ylim(y_lim);
-        leg = legend([ fliplr(f_id(1:4)), 'All', ], 'Orientation', 'horizontal', 'Location', 'northwest','FontSize',14);
+    leg = legend([ fliplr(f_id(1:4)), 'All', ], 'Orientation', 'horizontal', 'Location', 'northwest','FontSize',14);
     set(leg, 'box', 'off')
 
     % move the pre post means up
@@ -1335,7 +1336,7 @@ close all
     end
     % text_idx = find(contains(type, 'text'));
     % rec_idx = find(contains(type, 'rectangle'));
-    % 
+    %
     % chil(text_idx(1)).Position = [chil(text_idx(1)).Position(1) max(example_peth, [], 'all')*.3 chil(text_idx(1)).Position(3)];
     % chil(text_idx(2)).Position = [chil(text_idx(2)).Position(1) max(example_peth, [], 'all')*.5 chil(text_idx(2)).Position(3)];
     % % adjust the vertical line at 0 which is a rectanlge.
@@ -1344,7 +1345,7 @@ close all
     % add velocity
     velo_window = [cfg_peth.window(1)*floor(1/mode(diff(data.velo_smooth.tvec))), cfg_peth.window(2)*floor(1/mode(diff(data.velo_smooth.tvec)))];
     all_velo = NaN(length(data.rew.t), (abs(velo_window(1)) + abs(velo_window(2)) +1));
-    for ii = length(data.rew.t):-1:1 
+    for ii = length(data.rew.t):-1:1
         this_idx = nearest_idx3(data.rew.t(ii), data.velo_smooth.tvec);
 
         if this_idx < abs(velo_window(1)) || velo_window(2)+this_idx > length(data.velo_smooth.data)
@@ -1383,20 +1384,20 @@ close all
 
     SetFigure([], gcf);
     xlim([-5 5])
-% maximize
-set(gcf,'Units','Inches');
-pos = get(gcf,'Position');
-set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-pause(2)
+    % maximize
+    set(gcf,'Units','Inches');
+    pos = get(gcf,'Position');
+    set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+    pause(2)
 
-print(gcf,[parent_path filesep strrep(parts{1}(1:18), '-', '_') ' TT' strrep(parts{2}(1:end-4), '-', '_') '_PETH.pdf'],'-dpdf','-r300')
+    % print(gcf,[parent_path filesep strrep(parts{1}(1:18), '-', '_') ' TT' strrep(parts{2}(1:end-4), '-', '_') '_PETH.pdf'],'-dpdf','-r300')
 
 
 end
-%% collect the position data for E and R sessions. 
-E.map = []; R1.map = []; R2.map = []; R3.map = []; 
-E.dur = []; R1.dur = []; R2.dur = []; R3.dur = []; 
-EG.map = []; R1G.map = []; R2G.map = []; R3G.map = []; 
+%% collect the position data for E and R sessions.
+E.map = []; R1.map = []; R2.map = []; R3.map = [];
+E.dur = []; R1.dur = []; R2.dur = []; R3.dur = [];
+EG.map = []; R1G.map = []; R2G.map = []; R3G.map = [];
 
 cd(data_dir)
 % get all the sessions
@@ -1411,7 +1412,7 @@ for ii = 1:length(this_dir)
 end
 sess_list =   sess_list(~cellfun('isempty',sess_list));
 
-keep_idx = (contains(sess_list, 'E1') | contains(sess_list, 'R')); 
+keep_idx = (contains(sess_list, 'E1') | contains(sess_list, 'R'));
 
 sess_list(~keep_idx) = [];
 
@@ -1430,7 +1431,7 @@ for iS = length(sess_list):-1:1
     s_rec_idx = find(contains(evt.label, 'Starting Record'));
     e_rec_idx = find(contains(evt.label, 'Stopping Record'));
     if length(evt.t{s_rec_idx}) > length(evt.t{e_rec_idx})
-        evt.t{s_rec_idx}  = evt.t{s_rec_idx}(1:length(evt.t{e_rec_idx})); 
+        evt.t{s_rec_idx}  = evt.t{s_rec_idx}(1:length(evt.t{e_rec_idx}));
 
     end
     nRec = length(evt.t{s_rec_idx});
@@ -1463,7 +1464,7 @@ for iS = length(sess_list):-1:1
     data.pos = LoadPos(cfg_pos);
     data.pos = restrict(data.pos, evt.t{s_rec_idx}(task_rec_idx_s), evt.t{e_rec_idx}(task_rec_idx_e)); % restrict position to time on track.
 
-% occupancy histogram. 
+    % occupancy histogram.
     SET_xmin = 0; SET_ymin = 0; % set up bins
     SET_xmax = 180; SET_ymax = 180;
     SET_xBinSz = (SET_xmax - SET_xmin)/30; SET_yBinSz = (SET_xmax - SET_xmin)/30;
@@ -1558,12 +1559,12 @@ subplot(2,4,8)
 imagesc(nanmean(R3G.map, 3))
 title('R3')
 
-cmap = [1 1 1; parula(256)]; 
+cmap = [1 1 1; parula(256)];
 
 colormap(cmap)
 
 
-%% count the feeder fires 
+%% count the feeder fires
 
 for iS = length(sess_list):-1:1
     cd([data_dir filesep sess_list{iS}])
@@ -1571,12 +1572,12 @@ for iS = length(sess_list):-1:1
 
 
 
-        this_data = KA_trialfun_noS(plot_dir);
+    this_data = KA_trialfun_noS(plot_dir);
 
-        for ii = unique(this_data.rew.in)
-            this_idx = this_data.rew.in == ii; 
-            this_ratio(ii) = sum(this_idx) / sum(this_data.PM.FeedersFired == ii); 
-        end
+    for ii = unique(this_data.rew.in)
+        this_idx = this_data.rew.in == ii;
+        this_ratio(ii) = sum(this_idx) / sum(this_data.PM.FeedersFired == ii);
+    end
 
 
 
@@ -1602,60 +1603,60 @@ scatter(spd_corr(logical(spd_mod)), fr(logical(spd_mod)),  35, 'markerfacecolor'
 scatter(spd_corr(~logical(spd_mod)), fr(~logical(spd_mod)),  35, 'markerfacecolor', [.7 .7 .7], 'markeredgecolor', [.7 .7 .7])
 xlabel('speed corr')
 
-% bins = -10:0.25:10; 
-% hold on; 
+% bins = -10:0.25:10;
+% hold on;
 % histogram(spd_z(abs(spd_z) <2.58) , bins, 'FaceColor',[.7 .7 .7])
 % histogram(spd_z(abs(spd_z) >=2.58) , bins, 'FaceColor',c_ord(2,:))
 % ylabel('count')
 % xlabel('z score corr')
 
 
-% rank the spd corr; 
-[~, spd_mod_max_idx] = sort(spd_corr, 'descend'); 
-[~, spd_mod_min_idx] = sort(abs(spd_corr), 'descend'); 
+% rank the spd corr;
+[~, spd_mod_max_idx] = sort(spd_corr, 'descend');
+[~, spd_mod_min_idx] = sort(abs(spd_corr), 'descend');
 
-ex_idx = [spd_mod_max_idx(1) spd_mod_max_idx(3) spd_mod_max_idx(end-3) spd_mod_max_idx(end) spd_mod_min_idx(end-3) spd_mod_min_idx(end) ]; 
+ex_idx = [spd_mod_max_idx(1) spd_mod_max_idx(3) spd_mod_max_idx(end-3) spd_mod_max_idx(end) spd_mod_min_idx(end-3) spd_mod_min_idx(end) ];
 % spd_c_ord  = [0.2238    0.4408    0.7226;0.2069    0.5754    0.7336; ...
 %     0.7598    0.1518    0.3010; 0.9745    0.5140    0.2853;...
 %      .6769    0.4447    0.7114 ; .6769    0.4447    0.7114];
 
 spd_c_ord = [67, 127, 151; 132 147 35; 255 179 13; 253 22 26; 80 80 80; 80 80 80]/255;
-splt_idx = 2:3:17; 
+splt_idx = 2:3:17;
 
 for ii =1:length(ex_idx)
 
-subplot(6,3,[1 4 7])
-scatter(spd_corr(ex_idx(ii)), 5, 35, 'markerfacecolor', spd_c_ord(ii,:), 'markeredgecolor', spd_c_ord(ii,:))
+    subplot(6,3,[1 4 7])
+    scatter(spd_corr(ex_idx(ii)), 5, 35, 'markerfacecolor', spd_c_ord(ii,:), 'markeredgecolor', spd_c_ord(ii,:))
 
-subplot(6,3,[10 13 16])
-scatter(spd_corr(ex_idx(ii)), fr(ex_idx(ii)), 55, 'd',  'markerfacecolor', spd_c_ord(ii,:), 'markeredgecolor', spd_c_ord(ii,:))
+    subplot(6,3,[10 13 16])
+    scatter(spd_corr(ex_idx(ii)), fr(ex_idx(ii)), 55, 'd',  'markerfacecolor', spd_c_ord(ii,:), 'markeredgecolor', spd_c_ord(ii,:))
 
 
 
-subplot(6, 3, [splt_idx(ii) splt_idx(ii)+1])
-yyaxis right
-plot(spd_data{ex_idx(ii)}.tvec - spd_data{ex_idx(ii)}.tvec(1), spd_data{ex_idx(ii)}.spd, 'LineWidth',1,'color',  [.5 .5 .5])
-ylabel('speed (cm/s)')
+    subplot(6, 3, [splt_idx(ii) splt_idx(ii)+1])
+    yyaxis right
+    plot(spd_data{ex_idx(ii)}.tvec - spd_data{ex_idx(ii)}.tvec(1), spd_data{ex_idx(ii)}.spd, 'LineWidth',1,'color',  [.5 .5 .5])
+    ylabel('speed (cm/s)')
 
-yyaxis left
+    yyaxis left
 
-plot(spd_data{ex_idx(ii)}.tvec - spd_data{ex_idx(ii)}.tvec(1), spd_data{ex_idx(ii)}.FR, 'LineWidth',2, 'color', spd_c_ord(ii,:))
-ylabel('firing rate (Hz)')
+    plot(spd_data{ex_idx(ii)}.tvec - spd_data{ex_idx(ii)}.tvec(1), spd_data{ex_idx(ii)}.FR, 'LineWidth',2, 'color', spd_c_ord(ii,:))
+    ylabel('firing rate (Hz)')
 
-xlim([60 180])
+    xlim([60 180])
 
-ax = gca; 
-ax.YAxis(1).Color = spd_c_ord(ii,:); 
-ax.YAxis(2).Color = [.5 .5 .5];
+    ax = gca;
+    ax.YAxis(1).Color = spd_c_ord(ii,:);
+    ax.YAxis(2).Color = [.5 .5 .5];
 
-if ii ~= length(ex_idx)
-    set(gca, 'xtick', [])
-else
-    set(gca, 'xtick', [0:60:180])
-    xlabel('times (sec)')
-end
+    if ii ~= length(ex_idx)
+        set(gca, 'xtick', [])
+    else
+        set(gca, 'xtick', [0:60:180])
+        xlabel('times (sec)')
+    end
 
-title([ 'Speed Corr: ' num2str(spd_corr(ex_idx(ii)),'%4.2f') ' | ' strrep([cell_id{ex_idx(ii)}(1:7) ' | ' cell_id{ex_idx(ii)}(end-9:end-4)], '_', ' ') ])
+    title([ 'Speed Corr: ' num2str(spd_corr(ex_idx(ii)),'%4.2f') ' | ' strrep([cell_id{ex_idx(ii)}(1:7) ' | ' cell_id{ex_idx(ii)}(end-9:end-4)], '_', ' ') ])
 end
 
 
@@ -1663,39 +1664,39 @@ subplot(6,3,[10 13 16])
 set(gca, 'YScale', 'log')
 ylabel('log firing rate (Hz)')
 
-%% try some linear decoding using the Lopes et al. 2025 PlosOne method with a 3rd order polynomial fit. 
-%load([parent_dir filesep 'Spd_data.mat']); 
+%% try some linear decoding using the Lopes et al. 2025 PlosOne method with a 3rd order polynomial fit.
+%load([parent_dir filesep 'Spd_data.mat']);
 
 z_err = NaN(length(spd_data),1);
-R2 = z_err; 
-S_R2 = cell(size(R2)); 
+R2 = z_err;
+S_R2 = cell(size(R2));
 
 parfor kk = 1:length(spd_data)
-   disp(kk)
+    disp(kk)
 
-    [z_err(kk), R2(kk), S_R2{kk}] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd); 
+    [z_err(kk), R2(kk), S_R2{kk}] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd);
 
 end
 
-    [~, ~, ~, plt_mat, plt_s_mat] = KA_lin_decode([], spd_data{27}.FR, spd_data{27}.spd); 
+[~, ~, ~, plt_mat, plt_s_mat] = KA_lin_decode([], spd_data{27}.FR, spd_data{27}.spd);
 
-    nan_idx = isnan(spd_data{27}.FR) | isnan(spd_data{27}.spd); % remove nans to match plt_mat
+nan_idx = isnan(spd_data{27}.FR) | isnan(spd_data{27}.spd); % remove nans to match plt_mat
 
-% get the mean shuffle R2 per cell. 
-S_R2_means = []; 
+% get the mean shuffle R2 per cell.
+S_R2_means = [];
 for ii = length(S_R2):-1:1
-    S_R2_means(ii,1) = mean(S_R2{ii}); 
+    S_R2_means(ii,1) = mean(S_R2{ii});
 end
 
 
-%% reproduce the Lopes et al. Fig 7. 
+%% reproduce the Lopes et al. Fig 7.
 figure(1011)
 clf
 subplot(2,3,1:2); cla
 hold on
-plot(spd_data{27}.tvec(~nan_idx) - spd_data{27}.tvec(1), spd_data{27}.spd(~nan_idx), 'k', 'linewidth', 3); 
-plot(spd_data{27}.tvec(~nan_idx)- spd_data{27}.tvec(1), mean(plt_mat, 2, 'omitnan'),'-', 'color', c_ord(2,:), 'linewidth', 3); 
-plot(spd_data{27}.tvec(~nan_idx)- spd_data{27}.tvec(1), mean(plt_s_mat, 2, 'omitnan'), 'color', [.7 .7 .7], 'linewidth', 3); 
+plot(spd_data{27}.tvec(~nan_idx) - spd_data{27}.tvec(1), spd_data{27}.spd(~nan_idx), 'k', 'linewidth', 3);
+plot(spd_data{27}.tvec(~nan_idx)- spd_data{27}.tvec(1), mean(plt_mat, 2, 'omitnan'),'-', 'color', c_ord(2,:), 'linewidth', 3);
+plot(spd_data{27}.tvec(~nan_idx)- spd_data{27}.tvec(1), mean(plt_s_mat, 2, 'omitnan'), 'color', [.7 .7 .7], 'linewidth', 3);
 xlim([260 360])
 ylim([0 80])
 legend('Actual', 'Decoded', 'Shuffle', 'box',  'off')
@@ -1737,7 +1738,7 @@ set(gca, 'YScale', 'log')
 % axis square
 fprintf('<strong>Decoding accuracy: Speed Cells (%0.3f +/- %0.3f) vs Non-Speed (%0.3f +/- %0.3f) vs shuffles (%0.3f +/- %0.3f); F(%d,%d) = %0.3f, p = %0.3f</strong>\n', ...
     mean(R2(logical(spd_mod),1)'),MS_SEM(R2(logical(spd_mod),1)'), mean(R2(~logical(spd_mod),1)'), MS_SEM(R2(~logical(spd_mod),1)'), mean(S_R2_means'), MS_SEM(S_R2_means'), ...
-   R2_stats.a_tbl{2,3}, R2_stats.a_tbl{end,3}, R2_stats.stats.F, R2_stats.a_tbl{2, end})
+    R2_stats.a_tbl{2,3}, R2_stats.a_tbl{end,3}, R2_stats.stats.F, R2_stats.a_tbl{2, end})
 xlim([-0.2 4.2])
 set(gca, 'YTick', [0.0001 0.001 0.01 0.1 1])
 ylim([ 0.0001 1])
@@ -1787,9 +1788,9 @@ saveas(gcf,[parent_path filesep 'R2.fig']);
 
 % export as csv
 mat_out = [];
-mat_out = array2table([logical(spd_mod); round(spd_z,4); spd_p]', 'VariableNames',{'spd_mod' 'spd_zscore' 'spd_pval' }); 
+mat_out = array2table([logical(spd_mod); round(spd_z,4); spd_p]', 'VariableNames',{'spd_mod' 'spd_zscore' 'spd_pval' });
 
-c_type = []; 
+c_type = [];
 for ii  = length(g_idx):-1:1
     if g_idx(ii) ==1
         c_type{ii} = 'RS';
@@ -1798,27 +1799,27 @@ for ii  = length(g_idx):-1:1
     end
 end
 
-mat_out.R2 = round(R2, 3); 
-mat_out.S_R2 = round(S_R2, 3); 
+mat_out.R2 = round(R2, 3);
+mat_out.S_R2 = round(S_R2, 3);
 
-mat_out.cell_type = c_type'; 
-mat_out.phase = phase'; 
+mat_out.cell_type = c_type';
+mat_out.phase = phase';
 
 
 
 
 % add in the reward modulation per cell
-mat_out.rew_N_p = rew_out.p(:,1); 
-mat_out.rew_E_p = rew_out.p(:,2); 
-mat_out.rew_S_p = rew_out.p(:,3); 
-mat_out.rew_W_p = rew_out.p(:,4); 
-mat_out.rew_A_p = rew_out.p(:,5); 
+mat_out.rew_N_p = rew_out.p(:,1);
+mat_out.rew_E_p = rew_out.p(:,2);
+mat_out.rew_S_p = rew_out.p(:,3);
+mat_out.rew_W_p = rew_out.p(:,4);
+mat_out.rew_A_p = rew_out.p(:,5);
 
-mat_out.app_N_p = app_out.p(:,1); 
-mat_out.app_E_p = app_out.p(:,2); 
-mat_out.app_S_p = app_out.p(:,3); 
-mat_out.app_W_p = app_out.p(:,4); 
-mat_out.app_A_p = app_out.p(:,5); 
+mat_out.app_N_p = app_out.p(:,1);
+mat_out.app_E_p = app_out.p(:,2);
+mat_out.app_S_p = app_out.p(:,3);
+mat_out.app_W_p = app_out.p(:,4);
+mat_out.app_A_p = app_out.p(:,5);
 
 
 writetable(mat_out, [parent_path filesep 'Spd_mod.csv'])
@@ -1828,7 +1829,7 @@ writetable(mat_out, [parent_path filesep 'Spd_mod.csv'])
 cd(inter_dir)
 sess_list = dir([inter_dir filesep '*.mat']);
 
-s_phase= []; mVelo = []; all_velo_mean = NaN(length(sess_list), 5); all_velo_max = NaN(length(sess_list), 5); 
+s_phase= []; mVelo = []; all_velo_mean = NaN(length(sess_list), 5); all_velo_max = NaN(length(sess_list), 5);
 
 
 for iS = length(sess_list):-1:1
@@ -1857,40 +1858,378 @@ for iS = length(sess_list):-1:1
     end
 
     all_velo_mean(iS,1:4) = nanmean(trial_mean_velo);
-    all_velo_mean(iS,5)  = nanmean(trial_mean_velo, 'all'); 
+    all_velo_mean(iS,5)  = nanmean(trial_mean_velo, 'all');
 
-    all_velo_max(iS,1:4) = nanmean(trial_max_velo); 
+    all_velo_max(iS,1:4) = nanmean(trial_max_velo);
     all_velo_max(iS,5)  = nanmean(trial_max_velo, 'all');
 
-    all_velo(iS) = mean(data.velo_smooth.data); 
-    all_mvelo(iS) = mean(data.velo_smooth.data(data.velo_smooth.data>2.5)); 
+    all_velo(iS) = mean(data.velo_smooth.data);
+    all_mvelo(iS) = mean(data.velo_smooth.data(data.velo_smooth.data>2.5));
 
-    s_ID{iS} = sess_list(iS).name(6:7); 
-    c_ID{iS} = sess_list(iS).name(1:4); 
-    F_id{iS} = data.PM.Feeder_type; 
-    F_val(iS,1:4) = data.PM.Feeder_mag; 
+    s_ID{iS} = sess_list(iS).name(6:7);
+    c_ID{iS} = sess_list(iS).name(1:4);
+    F_id{iS} = data.PM.Feeder_type;
+    F_val(iS,1:4) = data.PM.Feeder_mag;
 
 end
 
 % export as csv
 mat_out = [];
 mat_out = array2table([all_velo_mean';  all_velo_max'; all_velo; all_mvelo]', 'VariableNames',{'Mean_B3', 'Mean_G3', 'Mean_B1', 'Mean_G1', 'Mean_all',...
-    'Max_B3', 'Max_G3', 'Max_B1', 'Max_G1', 'Max_all', 'overall_mean', 'overall_mean_mov_only'}); 
+    'Max_B3', 'Max_G3', 'Max_B1', 'Max_G1', 'Max_all', 'overall_mean', 'overall_mean_mov_only'});
 
-c_type = []; 
+c_type = [];
 
-mat_out.sess_id = s_ID'; 
-mat_out.sub_id = c_ID'; 
+mat_out.sess_id = s_ID';
+mat_out.sub_id = c_ID';
 
-% 
+%
 writetable(mat_out, [parent_path filesep 'Sess_spd_2p5.csv'])
+
+%% collect the speed profiles across sessions
+behav_dir = ['/Users/ecar/Williams Lab Dropbox/Eric Carmichael/KA_Data/behav_only_dir'];
+
+cd(data_dir)
+% get all the sessions
+this_dir = dir('*DONE');
+sess_list = [];
+for ii = 1:length(this_dir)
+    if strcmp(this_dir(ii).name(1), '.') % check for hidden dirs
+        continue
+    else
+        sess_list{ii} = this_dir(ii).name;
+    end
+end
+sess_list =   sess_list(~cellfun('isempty',sess_list));
+
+success = []; FR = [];
+% loop over sessions in the data dir.
+for iS =length(sess_list):-1:1
+
+    if ismember(sess_list{iS}, omit_list)
+        success(iS) = 99;
+        continue
+    end
+
+    cd([data_dir filesep sess_list{iS}])
+
+    % example
+  
+    if ~isempty(dir('*VT*.zip')) && isempty(dir('*.nvt'))
+        unzip('VT1.zip')
+    end
+
+    % grab the position and extract the velocity. 
+
+    
+    data = KA_trialfun_noS();
+
+    if isstruct(data)
+        save([behav_dir filesep sess_list{iS} '_maze_data.mat'], 'data', '-v7.3')
+        success(iS) = 1;
+    else
+        success(iS) = -10;
+    end
+end
+
+%% loop over the behaviour only data
+
+cd(behav_dir)
+sess_list = dir([behav_dir filesep '*.mat']);
+
+cfg_peth = [];
+cfg_peth.window = [-2.5 2.5];
+% cfg_peth.var_window = []
+all_velo_profiles = []; all_velo_mean = []; all_velo_var = []; all_velo_var_mean = []; 
+velo_phase = []; velo_sub = []; 
+
+% loop over sessions.
+for iS = length(sess_list):-1:1
+
+    load([behav_dir filesep sess_list(iS).name])
+
+    % extract velocity profile per trial.
+
+    velo_window = [cfg_peth.window(1)*floor(1/mode(diff(data.velo_smooth.tvec))), cfg_peth.window(2)*floor(1/mode(diff(data.velo_smooth.tvec)))];
+    all_velo = NaN(length(data.app.t), (abs(velo_window(1)) + abs(velo_window(2)) +1));
+    for ii = length(data.app.t):-1:1
+        this_idx = nearest_idx3(data.app.t(ii), data.velo_smooth.tvec);
+
+        if this_idx <= abs(velo_window(1)) || velo_window(2)+this_idx > length(data.velo_smooth.data)
+            continue
+        end
+        all_velo(ii,:) = data.velo_smooth.data((velo_window(1)+this_idx):(velo_window(2)+this_idx));
+    end
+
+    velo_mean = median(all_velo, 1, 'omitnan');
+    velo_SEM = std(all_velo, 'omitnan')./sqrt(length(all_velo));
+    velo_tvec = cfg_peth.window(1) : 1/floor(1/mode(diff(data.velo_smooth.tvec))):cfg_peth.window(2);
+
+    all_velo_mean(iS,:) = velo_mean;
+    all_velo_profiles{iS}  = all_velo; 
+
+    % compute the varience across the speeds (trial by trial
+    % spd_win = [nearest_idx3(-, velo_tvec)]
+    % var_window = [cfg_peth.window(1)*floor(1/mode(diff(data.velo_smooth.tvec))), cfg_peth.window(2)*floor(1/mode(diff(data.velo_smooth.tvec)))];
+
+
+    all_velo_var(iS,:) = var(all_velo,0, 1, "omitnan"); 
+    all_velo_var_mean(iS) = mean(all_velo_var(iS,:)); %var(velo_mean); 
+
+        velo_phase{iS} = sess_list(iS).name(6:7);
+        velo_sub{iS} = str2double(sess_list(iS).name([2 4]));
+end
+
+[velo_phase_s, s_idx] = sort(velo_phase); 
+
+
+%% plot the profiles (sorted by session type)
+m = 5; n = 5; % for subplots
+figure(601)
+clf
+subplot(m,n,[1 6 11 16])
+imagesc(velo_tvec, 1:size(all_velo_mean,1), zscore(all_velo_mean(s_idx,:),0,2))
+
+set(gca, "YTick", 1:size(all_velo_mean,1), 'YTickLabel', velo_sub(s_idx), 'fontsize', 6)
+title('session sorted')
+cb=colorbar;
+cb.Position(1) = cb.Position(1) + .075;
+cb.Label.String = 'Mean speed (zscore)';
+cb.Label.FontSize = 10;
+cb.FontSize = 10;
+
+hold on
+% add phase names 
+phase_vals = unique(velo_phase_s); 
+% phase_c_ord = [; 
+
+for ii = 1:length(phase_vals)
+    this_idx = contains(velo_phase_s, phase_vals{ii}); 
+    this_loc = find(this_idx); 
+    
+    t = text(velo_tvec(end)+.2, length(this_loc)/2 + this_loc(1), phase_vals{ii}); 
+    if contains(phase_vals{ii}, 'C')
+    t.Color = c_ord(1,:); 
+    elseif contains(phase_vals{ii}, 'O')
+    t.Color = c_ord(2,:); 
+    elseif contains(phase_vals{ii}, 'R')
+    t.Color = c_ord(3,:); 
+    end
+end
+
+% add lines for phases
+phase_vals = {'C', 'O', 'R'}; 
+x_lim = xlim; 
+for ii = 1:length(phase_vals)
+    this_idx = contains(velo_phase_s, phase_vals{ii}); 
+    this_loc = find(this_idx); 
+    
+    % text(velo_tvec(end)+5, length(this_loc)/2 + this_loc(1), phase_vals{ii})
+    yline(this_loc(end)+.5, 'color', c_ord(ii,:), 'linewidth', 4)
+    line([x_lim(end) x_lim(end)], [this_loc(1)-.5 this_loc(end)+.5], 'color', c_ord(ii,:), 'linewidth', 4)
+end
+
+%  Find a subject with all three of the session from the other figure. 
+for ii = unique(cell2mat(velo_sub))
+    this_sub = ii;
+    this_C3 = find(contains(velo_phase, 'C3') & [velo_sub{:}] == this_sub);
+    this_O7 = find(contains(velo_phase, 'O7') & [velo_sub{:}] == this_sub);
+    this_R1 = find(contains(velo_phase, 'R1') & [velo_sub{:}] == this_sub);
+
+    if sum([~isempty(this_C3), ~isempty(this_O7), ~isempty(this_R1)]) == 3
+        disp(['Found one! ' num2str(this_sub)])
+    end
+end
+
+
+ this_sub = 53; 
+    this_C3 = find(contains(velo_phase, 'C3') & [velo_sub{:}] == this_sub);
+    this_O7 = find(contains(velo_phase, 'O7') & [velo_sub{:}] == this_sub);
+    this_R1 = find(contains(velo_phase, 'R1') & [velo_sub{:}] == this_sub);
+
+   
+
+subplot(m,n,3)
+imagesc(velo_tvec, 1:size(all_velo_profiles{this_C3},1), zscore(all_velo_profiles{this_C3},0,2))
+clim([-2 3]); 
+cb=colorbar;
+cb.Position(1) = cb.Position(1) + .075;
+cb.Label.String = 'speed (zscore)';
+cb.Label.FontSize = 10;
+cb.FontSize = 10;
+
+% set(gca, "YTick", 1:size(all_velo_profiles{this_C3},1))
+ylabel('trial #')
+title(['Subject: ' num2str(this_sub) ' | Session:  C3'], 'color', c_ord(1,:))
+
+subplot(m,n,8)
+imagesc(velo_tvec, 1:size(all_velo_profiles{this_O7},1), zscore(all_velo_profiles{this_O7},0,2))
+clim([-2 3]); 
+cb=colorbar;
+cb.Position(1) = cb.Position(1) + .075;
+cb.Label.String = 'speed (zscore)';
+cb.Label.FontSize = 10;
+cb.FontSize = 10;
+% set(gca, "YTick", 1:size(all_velo_profiles{this_C3},1))
+ylabel('trial #')
+title(['Subject: ' num2str(this_sub) ' | Session:  O7'], 'color', c_ord(2,:))
+
+subplot(m,n,13)
+imagesc(velo_tvec, 1:size(all_velo_profiles{this_R1},1), zscore(all_velo_profiles{this_R1},0,2))
+clim([-2 3]); 
+cb=colorbar;
+cb.Position(1) = cb.Position(1) + .075;
+cb.Label.String = 'speed (zscore)';
+cb.Label.FontSize = 10;
+cb.FontSize = 10;
+
+% set(gca, "YTick", 1:size(all_velo_profiles{this_C3},1))
+xlabel('time from feeder fire (s)')
+ylabel('trial #')
+title(['Subject: ' num2str(this_sub) ' | Session: R1'], 'color', c_ord(3,:))
+
+
+% update all sessions with markers for the breakout sessions
+subplot(m,n,[1 6 11 16])
+
+this_s_C3 = find(contains(velo_phase_s, 'C3') & [velo_sub{s_idx}] == this_sub);
+this_s_O7 = find(contains(velo_phase_s, 'O7') & [velo_sub{s_idx}] == this_sub);
+this_s_R1 = find(contains(velo_phase_s, 'R1') & [velo_sub{s_idx}] == this_sub);
+
+
+text(velo_tvec(end), this_s_C3+.5, '*', 'color', c_ord(1,:), 'fontsize', 16);
+text(velo_tvec(end), this_s_O7+.5, '*', 'color', c_ord(2,:), 'fontsize', 16);
+text(velo_tvec(end), this_s_R1+.5, '*', 'color', c_ord(3,:), 'fontsize', 16);
+
+
+% plot the mean profiles across session types
+subplot(m,n,21)
+cla
+hold on
+
+all_velo_mean_s = all_velo_mean(s_idx,:); 
+
+% all C
+p_idx = contains(velo_phase_s, 'C'); 
+
+this_sem = std(zscore(all_velo_mean_s(p_idx,:), 0, 2), [], 1) / sqrt(size(zscore(all_velo_mean_s(p_idx,:), 0, 2), 1)); 
+
+s = shadedErrorBar(velo_tvec, mean(zscore(all_velo_mean_s(p_idx,:), 0, 2)), this_sem); 
+s.mainLine.Color = c_ord(1,:); 
+s.patch.FaceColor = c_ord(1,:); 
+s.patch.FaceAlpha = .2; 
+s.edge(1).Color = c_ord(1,:); 
+s.edge(2).Color = c_ord(1,:); 
+s.edge(1).HandleVisibility = 'off'; 
+s.edge(2).HandleVisibility = 'off'; 
+s.patch.HandleVisibility = 'off'; 
+
+% all O
+
+p_idx = contains(velo_phase_s, 'O'); 
+
+this_sem = std(zscore(all_velo_mean_s(p_idx,:), 0, 2), [], 1) / sqrt(size(zscore(all_velo_mean_s(p_idx,:), 0, 2), 1)); 
+
+s = shadedErrorBar(velo_tvec, mean(zscore(all_velo_mean_s(p_idx,:), 0, 2)), this_sem); 
+s.mainLine.Color = c_ord(2,:); 
+s.patch.FaceColor = c_ord(2,:); 
+s.patch.FaceAlpha = .2; 
+s.edge(1).Color = c_ord(2,:); 
+s.edge(2).Color = c_ord(2,:);
+s.edge(1).HandleVisibility = 'off'; 
+s.edge(2).HandleVisibility = 'off'; 
+s.patch.HandleVisibility = 'off'; 
+
+p_idx = contains(velo_phase_s, 'R'); 
+
+this_sem = std(zscore(all_velo_mean_s(p_idx,:), 0, 2), [], 1) / sqrt(size(zscore(all_velo_mean_s(p_idx,:), 0, 2), 1)); 
+
+s = shadedErrorBar(velo_tvec, mean(zscore(all_velo_mean_s(p_idx,:), 0, 2)), this_sem); 
+s.mainLine.Color = c_ord(3,:); 
+s.patch.FaceColor = c_ord(3,:); 
+s.patch.FaceAlpha = .2; 
+s.edge(1).Color = c_ord(3,:); 
+s.edge(2).Color = c_ord(3,:); 
+s.edge(1).HandleVisibility = 'off'; 
+s.edge(2).HandleVisibility = 'off'; 
+s.patch.HandleVisibility = 'off'; 
+
+xlim(x_lim); 
+ylabel('speed (zscore)')
+legend({'C' 'O' 'R'}, 'box', 'off')
+xlabel('time from feeder fire (s)')
+
+% velocity varience scores
+
+subplot(m,n,25)
+cla; hold on
+plot(velo_tvec, mean(all_velo_var(contains(velo_phase, 'C'),:),"omitnan"),'color',  c_ord(1,:), 'linewidth', 2)
+plot(velo_tvec, mean(all_velo_var(contains(velo_phase, 'O'),:),"omitnan"),'color',  c_ord(2,:), 'linewidth', 2)
+plot(velo_tvec, mean(all_velo_var(contains(velo_phase, 'R'),:),"omitnan"), 'color', c_ord(3,:), 'linewidth', 2)
+
+ylim([0 1.1*max([mean(all_velo_var(contains(velo_phase, 'C'),:),"omitnan"), mean(all_velo_var(contains(velo_phase, 'O'),:),"omitnan"), mean(all_velo_var(contains(velo_phase, 'R'),:),"omitnan")])])
+ylabel({'mean varience of' ' zscored speeds'}); 
+xlabel('time from feeder fire (s)')
+
+
+subplot(m,n,[5 10 15 20])
+cla; hold on
+MS_bar_w_err3(all_velo_var_mean(contains(velo_phase, 'C')), all_velo_var_mean(contains(velo_phase, 'O')), all_velo_var_mean(contains(velo_phase, 'R')), [c_ord(1,:); c_ord(2,:); c_ord(3,:)], 1, 'anova1', 1:3)
+
+ylabel('mean varience')
+set(gca, 'xtick', 1:3, 'XTickLabel', {'C', 'O', 'R'})
+% 
+% subplot(m,n,[16,20])
+% cla; hold on
+% scatter(all_velo_var_mean, all_velo_var_mean(), [c_ord(1,:); c_ord(2,:); c_ord(3,:)], 1, 'anova1', 1:3)
+
+
+% sorted by subject
+% subplot(2,3,[2])
+% imagesc(velo_tvec, 1:size(all_velo_mean,1), zscore(all_velo_profiles{,0,2))
+
+% set(gca, "YTick", 1:size(all_velo_mean,1), 'YTickLabel', velo_sub)
+% xlabel('time from reward (s)')
+% title('subject sorted')
+
+% hold on
+% % add phase names 
+% phase_vals = unique(velo_phase); 
+% % phase_c_ord = [; 
+% 
+% for ii = 1:length(phase_vals)
+%     this_idx = contains(velo_phase, phase_vals{ii}); 
+%     this_loc = find(this_idx); 
+% 
+%     t = text(velo_tvec(end)+.1, length(this_loc)/2 + this_loc(1), phase_vals{ii}); 
+%     if contains(phase_vals{ii}, 'C')
+%     t.Color = c_ord(1,:); 
+%     elseif contains(phase_vals{ii}, 'O')
+%     t.Color = c_ord(2,:); 
+%     elseif contains(phase_vals{ii}, 'R')
+%     t.Color = c_ord(3,:); 
+%     end
+% end
+% 
+% % add lines for phases
+% phase_vals = {'C', 'O', 'R'}; 
+% 
+% for ii = 1:length(phase_vals)
+%     this_idx = contains(velo_phase_s, phase_vals{ii}); 
+%     this_loc = find(this_idx); 
+% 
+%     % text(velo_tvec(end)+5, length(this_loc)/2 + this_loc(1), phase_vals{ii})
+%     yline(this_loc(end)+.5, 'color', c_ord(ii,:), 'linewidth', 4)
+%     line([0 0], [this_loc(1)-.5 this_loc(end)+.5], 'color', c_ord(ii,:), 'linewidth', 4)
+% 
+% end
 
 
 %% try some information theory modeling
 % data
-% x = spd_data{27}.FR; 
-% y = spd_data{27}.spd; 
-% 
+% x = spd_data{27}.FR;
+% y = spd_data{27}.spd;
+%
 % k = glmfit(x, y, 'Poisson')
 %%
 %     for iT = 1:length(cells_to_process)

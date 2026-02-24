@@ -236,7 +236,6 @@ for iF = 1:length(FeedersFired)
 end
 
 fprintf('Trial hit rate: %0.2f%%\n', (1 -  sum(error_trial)/length(error_trial))*100)
-legend({'path','Center',  'N trial','N enter', 'N poke', 'N exit', 'E trial',' E enter', 'E poke', 'E exit', 'S trial', 'S enter', 'S poke', 'S exit', 'W trial', 'W enter','W poke', 'W exit'})
 
 
 
@@ -270,12 +269,14 @@ rew_cord = Zone_cord(~logical(error_trial),:);
 rew_err_cord = Zone_cord(logical(error_trial),:);
 
 if plot_flag
-if ~exist(plot_dir, 'dir')
-    mkdir(plot_dir)
-end
-title([data.pos.cfg.SessionID ' | ' num2str(sum(rew_in==1)) 'N' ' | ' num2str(sum(rew_in==2)) 'W' ' | ' num2str(sum(rew_in==3)) 'S' ' | ' num2str(sum(rew_in==4)) 'E']) 
-saveas(gcf, [plot_dir filesep data.pos.cfg.SessionID '_Behav_trace.png'])
-close(109)
+    if ~exist(plot_dir, 'dir')
+        mkdir(plot_dir)
+    end
+    legend({'path','Center',  'N trial','N enter', 'N poke', 'N exit', 'E trial',' E enter', 'E poke', 'E exit', 'S trial', 'S enter', 'S poke', 'S exit', 'W trial', 'W enter','W poke', 'W exit'})
+
+    title([data.pos.cfg.SessionID ' | ' num2str(sum(rew_in==1)) 'N' ' | ' num2str(sum(rew_in==2)) 'W' ' | ' num2str(sum(rew_in==3)) 'S' ' | ' num2str(sum(rew_in==4)) 'E'])
+    saveas(gcf, [plot_dir filesep data.pos.cfg.SessionID '_Behav_trace.png'])
+    close(109)
 end
 %% Summary of spiking in time and space.
 % 

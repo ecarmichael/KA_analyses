@@ -90,8 +90,14 @@ warning off
     this_S = KA_isolate_S(data.S, data.S.label{iC});
     [spd_metrics{k}, t_metrics{k}, p_metrics{k}] = KA_get_spatial_info(data, iC);
 
+    try
     [spd_metrics_trl{k}, t_metrics_trl{k}, p_metrics_trl{k}] = KA_get_spatial_info_trl(data, iC);
+    catch
+        spd_metrics_trl{k}.M = NaN; spd_metrics_trl{k}.Isec = NaN; spd_metrics_trl{k}.Ispike = NaN;
+        t_metrics_trl{k}.M = NaN; t_metrics_trl{k}.Isec = NaN; t_metrics_trl{k}.Ispike = NaN;
+        p_metrics_trl{k}.M = NaN; p_metrics_trl{k}.Isec = NaN; p_metrics_trl{k}.Ispike = NaN;
 
+    end
     FR{k} = length(this_S.t{1})./ (data.pos.tvec(end) - data.pos.tvec(1));
 
     phase{k} = sess_list(iS).name(6:7);
