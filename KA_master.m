@@ -193,6 +193,8 @@ for iS = 1:length(sess_list)
         spd_data{k}.tvec =  data.velo_smooth.tvec;
         spd_data{k}.spd = data.velo_smooth.data;
 
+       
+
 
         % summary for plotting
         cfg_peth = [];
@@ -200,14 +202,30 @@ for iS = 1:length(sess_list)
         cfg_peth. plot_type = 'raw';
         cfg_peth.dt = 0.05;
         cfg_peth.gauss_sd = .2;
+
+         % get the rate
+        S_vec = MS_spike2rate(this_S, spd_data{k}.tvec, cfg_peth.dt, cfg_peth.gauss_sd); 
+        % use the same firing rate parameters to get the mean and std for
+        % zscoring the responses. 
+        cfg_def.z_mean = mean(S_vec.data,'omitmissing');
+        cfg_def.z_std = std(S_vec.data,'omitmissing');
+        % loop over reward types
         for jj = unique(data.rew.in)
             this_idx = data.rew.in == jj;
             [~,~,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t(this_idx) );
-            all_peth(:,jj, k) = nanmean(this_peth,2);
+            all_peth(:,jj, k) = mean(this_peth,2, 'omitmissing');
         end
-
         [~,tvec,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t );
-        all_peth(:,5, k) = nanmean(this_peth,2);
+        all_peth(:,5, k) = mean(this_peth,2, "omitmissing");
+        
+        % 
+        for jj = unique(data.rew.in)
+            this_idx = data.rew.in == jj;
+            [~,~,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t(this_idx) );
+            all_peth(:,jj, k) = mean(this_peth,2, 'omitmissing');
+        end
+        [~,tvec,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t );
+        all_peth(:,5, k) = mean(this_peth,2, "omitmissing");
 
         app_t{iS}= data.app;
 
@@ -234,6 +252,13 @@ for iS = 1:length(sess_list)
 
         % get the response using the Wilcoxon from Frazer 2023
         [app_out.p(k,:), app_out.h(k,:), app_out.base_fr(k,:), app_out.rew_fr(k,:)] = KA_react_WCX(cfg_wcx_a, this_S, data.app.t, data.app.in);
+
+
+        % check the response profiles around the reward
+        % cfg_pro = []; 
+        % cfg_pro.win = [-1 1]; 
+        % 
+        % rew_out.profile = KA_peth_profile(cfg_wcx_r, tvec, all_peth(:,:,k))
 
 
         phase{k} = sess_list(iS).name(6:7);
@@ -272,6 +297,7 @@ xlabel('Firing rate (Hz)');
 ylabel('burst index')
 zlabel('spike width')
 
+set(gca, 'XScale', 'log')
 % fprintf('Clustering returned %0.0f groups based on firing rate, burst index, and spike width <strong>G1: %0.0f%% G2: %0.0f%% G3: %0.0f%%</strong>\n',...
 %     length(unique(g_idx)), (n_val(1)/length(g_idx))*100, (n_val(2)/length(g_idx))*100, (n_val(3)/length(g_idx))*100)
 
@@ -1569,17 +1595,12 @@ colormap(cmap)
 for iS = length(sess_list):-1:1
     cd([data_dir filesep sess_list{iS}])
 
-
-
-
     this_data = KA_trialfun_noS(plot_dir);
 
     for ii = unique(this_data.rew.in)
         this_idx = this_data.rew.in == ii;
         this_ratio(ii) = sum(this_idx) / sum(this_data.PM.FeedersFired == ii);
     end
-
-
 
 end
 
@@ -1631,8 +1652,6 @@ for ii =1:length(ex_idx)
     subplot(6,3,[10 13 16])
     scatter(spd_corr(ex_idx(ii)), fr(ex_idx(ii)), 55, 'd',  'markerfacecolor', spd_c_ord(ii,:), 'markeredgecolor', spd_c_ord(ii,:))
 
-
-
     subplot(6, 3, [splt_idx(ii) splt_idx(ii)+1])
     yyaxis right
     plot(spd_data{ex_idx(ii)}.tvec - spd_data{ex_idx(ii)}.tvec(1), spd_data{ex_idx(ii)}.spd, 'LineWidth',1,'color',  [.5 .5 .5])
@@ -1659,7 +1678,6 @@ for ii =1:length(ex_idx)
     title([ 'Speed Corr: ' num2str(spd_corr(ex_idx(ii)),'%4.2f') ' | ' strrep([cell_id{ex_idx(ii)}(1:7) ' | ' cell_id{ex_idx(ii)}(end-9:end-4)], '_', ' ') ])
 end
 
-
 subplot(6,3,[10 13 16])
 set(gca, 'YScale', 'log')
 ylabel('log firing rate (Hz)')
@@ -1673,9 +1691,7 @@ S_R2 = cell(size(R2));
 
 parfor kk = 1:length(spd_data)
     disp(kk)
-
     [z_err(kk), R2(kk), S_R2{kk}] = KA_lin_decode([], spd_data{kk}.FR, spd_data{kk}.spd);
-
 end
 
 [~, ~, ~, plt_mat, plt_s_mat] = KA_lin_decode([], spd_data{27}.FR, spd_data{27}.spd);
@@ -1687,8 +1703,6 @@ S_R2_means = [];
 for ii = length(S_R2):-1:1
     S_R2_means(ii,1) = mean(S_R2{ii});
 end
-
-
 %% reproduce the Lopes et al. Fig 7.
 figure(1011)
 clf
@@ -2178,6 +2192,167 @@ MS_bar_w_err3(all_velo_var_mean(contains(velo_phase, 'C')), all_velo_var_mean(co
 
 ylabel('mean varience')
 set(gca, 'xtick', 1:3, 'XTickLabel', {'C', 'O', 'R'})
+
+
+%% response profiles around events
+S = [];
+S.C_idx = contains(phase, 'C1') | contains(phase, 'C2') | contains(phase, 'C3');
+S.OE_idx = contains(phase, 'O1') | contains(phase, 'O2') | contains(phase, 'O3');
+S.OL_idx = contains(phase, 'O4') | contains(phase, 'O5') | contains(phase, 'O6') | contains(phase, 'O7');
+S.R_idx = contains(phase, 'R');
+
+
+% get the responses
+for ii = size(rew_out.h,2):-1:1
+
+    sig_rew = rew_out.h(:,ii);
+    rew_pos_mod(:,ii) = (rew_out.base_fr(:, ii) < rew_out.rew_fr(:,ii))   & sig_rew;
+    rew_neg_mod(:,ii) = (rew_out.base_fr(:, ii) > rew_out.rew_fr(:,ii))   & sig_rew;
+
+    sig_rew = app_out.h(:,ii);
+    app_pos_mod(:,ii) = (app_out.base_fr(:, ii) < app_out.rew_fr(:,ii))   & sig_rew;
+    app_neg_mod(:,ii) = (app_out.base_fr(:, ii) > app_out.rew_fr(:,ii))   & sig_rew;
+
+end
+
+
+% 
+%%
+figure(810)
+clf
+
+subplot(2,4,1)
+cla; 
+hold on
+for ii = 1:3
+    if ii == 1
+       k_idx = rew_pos_mod(:,5); c = c_ord(ii,:); 
+    elseif ii == 2
+        k_idx = rew_neg_mod(:,5); c = c_ord(ii,:); 
+    else
+        k_idx = ~rew_pos_mod(:,5) & ~rew_neg_mod(:,5);
+        c = [.5 .5 .5];
+    end
+
+this_peth = squeeze(z_peth(:,5,k_idx)); 
+
+this_sem = std(this_peth, [],2) / sqrt(size(this_peth,2)); 
+s = shadedErrorBar(tvec, mean(this_peth,2, 'omitmissing'), this_sem); 
+s.mainLine.Color = c; 
+s.patch.FaceColor = c; 
+s.patch.FaceAlpha = .2; 
+s.edge(1).Color = c; 
+s.edge(2).Color = c;
+s.edge(1).HandleVisibility = 'off'; 
+s.edge(2).HandleVisibility = 'off'; 
+s.patch.HandleVisibility = 'off'; 
+end
+xlim([-5 5]); ylim([-1.5 1.5]);
+legend({'Pos', 'Neg', 'non-resp'}, 'box', 'off')
+title('Reward overall')
+ylabel('zscore activity')
+% only High/low
+subplot(2,4,2)
+cla; 
+hold on
+for ii = 1:4
+    if ii == 1
+        k_idx = rew_pos_mod(:,1) | rew_pos_mod(:,2); idx = [1 2]; 
+    elseif ii == 2
+        k_idx = rew_neg_mod(:,1) | rew_neg_mod(:,2);idx = [1 2]; 
+    elseif ii == 3
+        k_idx = rew_pos_mod(:,3) | rew_pos_mod(:,4);idx = [3 4]; 
+    elseif ii == 4
+        k_idx = rew_neg_mod(:,3) | rew_neg_mod(:,4);idx = [3 4]; 
+    end
+
+this_peth = [squeeze(z_peth(:,idx(1),k_idx)), squeeze(z_peth(:,idx(2),k_idx))]; 
+
+this_sem = std(this_peth, [],2) / sqrt(size(this_peth,2)); 
+s = shadedErrorBar(tvec, mean(this_peth,2, 'omitmissing'), this_sem); 
+s.mainLine.Color = c_ord(ii,:); 
+s.patch.FaceColor = c_ord(ii,:); 
+s.patch.FaceAlpha = .2; 
+s.edge(1).Color = c_ord(ii,:); 
+s.edge(2).Color = c_ord(ii,:);
+s.edge(1).HandleVisibility = 'off'; 
+s.edge(2).HandleVisibility = 'off'; 
+s.patch.HandleVisibility = 'off'; 
+end
+xlim([-5 5]); ylim([-1.5 1.5]);
+legend({'high-pos', 'high-neg', 'low-pos', 'low-neg'}, 'box', 'off')
+title('Reward Magnitude')
+
+
+% only flavour
+subplot(2,4,3)
+cla; 
+hold on
+for ii = 1:4
+    if ii == 1
+        k_idx = rew_pos_mod(:,1) | rew_pos_mod(:,3); c = c_purple;
+        idx = [1, 3];
+    elseif ii == 2
+        k_idx = rew_neg_mod(:,1) | rew_neg_mod(:,3); c = c_purple*.5;
+        idx = [1, 3];
+    elseif ii == 3
+        k_idx = rew_pos_mod(:,2) | rew_pos_mod(:,4);c = c_orange;
+        idx = [2, 4];
+    elseif ii == 4
+        k_idx = rew_neg_mod(:,2) | rew_neg_mod(:,4); c= c_orange*.5;
+        idx = [2, 4];
+    end
+
+this_peth = [squeeze(z_peth(:,idx(1),k_idx)), squeeze(z_peth(:,idx(2),k_idx))]; 
+
+this_sem = std(this_peth, [],2) / sqrt(size(this_peth,2)); 
+s = shadedErrorBar(tvec, mean(this_peth,2, 'omitmissing'), this_sem); 
+s.mainLine.Color = c; 
+s.patch.FaceColor = c; 
+s.patch.FaceAlpha = .2; 
+s.edge(1).Color = c; 
+s.edge(2).Color = c;
+s.edge(1).HandleVisibility = 'off'; 
+s.edge(2).HandleVisibility = 'off'; 
+s.patch.HandleVisibility = 'off'; 
+end
+xlim([-5 5]); ylim([-1.5 1.5]);
+legend({'grape-pos', 'grape-neg'; 'orange-pos', 'orange-neg'}, 'box', 'off')
+title('Reward Type')
+
+
+% only flavour
+subplot(2,4,4)
+cla; 
+hold on
+for ii = 1:4
+    if ii == 1
+        k_idx = rew_pos_mod(:,5) & S.C_idx' ; c = c_ord(ii,:); 
+    elseif ii == 2
+        k_idx = rew_pos_mod(:,5) & S.OE_idx' ; c = c_ord(ii,:); 
+    elseif ii == 3
+        k_idx = rew_pos_mod(:,5) & S.OL_idx' ;c = c_ord(ii,:);  
+    elseif ii == 4
+        k_idx = rew_pos_mod(:,5) & S.R_idx' ; c = c_ord(ii,:);  
+    end
+
+this_peth = squeeze(z_peth(:,5,k_idx)); 
+
+this_sem = std(this_peth, [],2) / sqrt(size(this_peth,2)); 
+s = shadedErrorBar(tvec, mean(this_peth,2, 'omitmissing'), this_sem); 
+s.mainLine.Color = c; 
+s.patch.FaceColor = c; 
+s.patch.FaceAlpha = .2; 
+s.edge(1).Color = c; 
+s.edge(2).Color = c;
+s.edge(1).HandleVisibility = 'off'; 
+s.edge(2).HandleVisibility = 'off'; 
+s.patch.HandleVisibility = 'off'; 
+end
+xlim([-5 5]); ylim([-1.5 1.5]);
+legend({'crit', 'early'; 'late', 'post'}, 'box', 'off')
+title('Phase')
+
 % 
 % subplot(m,n,[16,20])
 % cla; hold on

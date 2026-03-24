@@ -48,7 +48,7 @@ end
 % relabel the events file for arm/feeders
 evt.label{3} = 'NorthPellets';
 evt.label{4} = 'EastPellets';
-evt.label{5} = 'SdatahPellets';
+evt.label{5} = 'SouthPellets';
 evt.label{6} = 'WestPellets';
 evt.label{7} = 'TotalPellets';
 
