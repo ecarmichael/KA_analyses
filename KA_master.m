@@ -150,6 +150,8 @@ fprintf('<strong>%0.0f total sessions, %0.2f had good cells, %0.0f omitted, %0.0
 cd(inter_dir)
 sess_list = dir([inter_dir filesep '*.mat']);
 
+load([inter_dir filesep 'ephys_dwell_times_all_sessions.mat'])
+
 phase =[]; sub = []; cell_id = [];
 app_out= [];
 rew_out = [];
@@ -193,15 +195,18 @@ for iS = 1:length(sess_list)
         spd_data{k}.tvec =  data.velo_smooth.tvec;
         spd_data{k}.spd = data.velo_smooth.data;
 
-       
-
+       % get the dwell times and correct for NLX offset. 
+        dwell_iv = KA_get_dwell(dwellExport.masterTable, cell_id{k}); 
+        dwell_iv.tstart = dwell_iv.tstart - spd_data{k}.tvec(1); 
+        dwell_iv.tend= dwell_iv.tend - spd_data{k}.tvec(1); 
+        
 
         % summary for plotting
         cfg_peth = [];
         cfg_peth.window = [-6 6];
         cfg_peth. plot_type = 'raw';
-        cfg_peth.dt = 0.05;
-        cfg_peth.gauss_sd = .2;
+        cfg_peth.dt = 0.01;
+        cfg_peth.gauss_sd = .05;
 
          % get the rate
         S_vec = MS_spike2rate(this_S, spd_data{k}.tvec, cfg_peth.dt, cfg_peth.gauss_sd); 
@@ -219,23 +224,22 @@ for iS = 1:length(sess_list)
         all_peth(:,5, k) = mean(this_peth,2, "omitmissing");
         
         % 
-        for jj = unique(data.rew.in)
-            this_idx = data.rew.in == jj;
-            [~,~,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t(this_idx) );
-            all_peth(:,jj, k) = mean(this_peth,2, 'omitmissing');
-        end
-        [~,tvec,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t );
-        all_peth(:,5, k) = mean(this_peth,2, "omitmissing");
-
         app_t{iS}= data.app;
 
 
-        % PETH for plotting
-        % cfg_peth = [];
-        % cfg_peth.window = [-5 5];
-        % cfg_peth. plot_type = 'raw';
-        % cfg_peth.dt = 0.05;
-        % [peth{k}] = KA_spike_hist(cfg_peth, this_S,data.rew.t, data.rew.in);
+        % PETA method
+        S_vec.tvec = S_vec.tvec - S_vec.tvec(1); 
+        S_vec.data = zscore(S_vec.data); 
+        for jj = unique(data.rew.in)
+            this_idx = data.rew.in == jj;
+            this_peta = KA_PETA(S_vec, data.rew.t(this_idx) - spd_data{k}.tvec(1), cfg_peth.window);
+            all_peta(:,jj, k) = mean(this_peta,1, 'omitmissing');
+        end
+        % [~,tvec,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t );
+        [this_peta, tvec_peta] = KA_PETA(S_vec, data.rew.t - spd_data{k}.tvec(1), cfg_peth.window);
+        all_peta(:,5, k) = mean(this_peta,1, "omitmissing");
+
+
 
         % reward centered.
         cfg_wcx_r = [];
