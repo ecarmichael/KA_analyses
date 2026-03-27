@@ -148,7 +148,7 @@ end
 fprintf('<strong>%0.0f total sessions, %0.2f had good cells, %0.0f omitted, %0.0f no spike data, %0.0f too short</strong>\n', length(success), sum(success==1), sum(success==99), sum(success==404), sum(success==-10))
 %% Process each cell within a session
 cd(inter_dir)
-sess_list = dir([inter_dir filesep '*.mat']);
+sess_list = dir([inter_dir filesep 'C*.mat']);
 
 load([inter_dir filesep 'ephys_dwell_times_all_sessions.mat'])
 
@@ -165,9 +165,6 @@ k = 0;
 for iS = 1:length(sess_list)
 
     load([inter_dir filesep sess_list(iS).name])
-
-    % get the mean velocity when the animal is moving.
-    % mVelo(iS) = mean(data.velo_smooth.data(data.velo_smooth.data>5));
 
     for iC = 1:length(data.S.t)
 
@@ -195,18 +192,18 @@ for iS = 1:length(sess_list)
         spd_data{k}.tvec =  data.velo_smooth.tvec;
         spd_data{k}.spd = data.velo_smooth.data;
 
-       % get the dwell times and correct for NLX offset. 
-        dwell_iv = KA_get_dwell(dwellExport.masterTable, cell_id{k}); 
+        % get the dwell times and correct for NLX offset. 
+        dwell_iv = KA_get_dwell(dwellExport.masterTable, cell_id{k}, 5); 
         dwell_iv.tstart = dwell_iv.tstart - spd_data{k}.tvec(1); 
         dwell_iv.tend= dwell_iv.tend - spd_data{k}.tvec(1); 
-        
+
 
         % summary for plotting
         cfg_peth = [];
         cfg_peth.window = [-6 6];
         cfg_peth. plot_type = 'raw';
-        cfg_peth.dt = 0.01;
-        cfg_peth.gauss_sd = .05;
+        cfg_peth.dt = 0.05;
+        cfg_peth.gauss_sd = .1;
 
          % get the rate
         S_vec = MS_spike2rate(this_S, spd_data{k}.tvec, cfg_peth.dt, cfg_peth.gauss_sd); 
@@ -229,7 +226,11 @@ for iS = 1:length(sess_list)
 
         % PETA method
         S_vec.tvec = S_vec.tvec - S_vec.tvec(1); 
-        S_vec.data = zscore(S_vec.data); 
+        % zscore the data relative to the pseudobaseline. Add 2.5 to keep
+        % the reward consumption separate. 
+        dwell_S_vec = restrict(S_vec, dwell_iv.tstart+5, dwell_iv.tend); 
+        
+        S_vec.data = (S_vec.data - mean(dwell_S_vec.data, 'omitmissing'))./ std(dwell_S_vec.data, 'omitmissing'); 
         for jj = unique(data.rew.in)
             this_idx = data.rew.in == jj;
             this_peta = KA_PETA(S_vec, data.rew.t(this_idx) - spd_data{k}.tvec(1), cfg_peth.window);
@@ -240,20 +241,31 @@ for iS = 1:length(sess_list)
         all_peta(:,5, k) = mean(this_peta,1, "omitmissing");
 
 
+        % approach peta
+        for jj = unique(data.app.in)
+            this_idx = data.app.in == jj;
+            this_peta = KA_PETA(S_vec, data.app.t(this_idx) - spd_data{k}.tvec(1), cfg_peth.window);
+            all_peta_app(:,jj, k) = mean(this_peta,1, 'omitmissing');
+        end
+        % [~,tvec,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t );
+        [this_peta, tvec_peta] = KA_PETA(S_vec, data.rew.t - spd_data{k}.tvec(1), cfg_peth.window);
+        all_peta_app(:,5, k) = mean(this_peta,1, "omitmissing");
+
+
 
         % reward centered.
         cfg_wcx_r = [];
-        cfg_wcx_r.win = [0 2]; % window
-        cfg_wcx_r.baseline = [-3 -1];
-
+        cfg_wcx_r.win = [0 3]; % window
+        cfg_wcx_r.baseline = [-3 0];
         % get the response using the Wilcoxon from Frazer 2023
+        [rew_out.p(k,:), rew_out.h(k,:), rew_out.base_fr(k,:), rew_out.rew_fr(k,:)] = KA_react_WCX(cfg_wcx_r, this_S, data.rew.t, data.rew.in);
+        % same but using the PETA instead of the binned firing rates. 
         [rew_out.p(k,:), rew_out.h(k,:), rew_out.base_fr(k,:), rew_out.rew_fr(k,:)] = KA_react_WCX(cfg_wcx_r, this_S, data.rew.t, data.rew.in);
 
 
         cfg_wcx_a = [];
         cfg_wcx_a.win = cfg_wcx_r.win ; % window
         cfg_wcx_a.baseline = cfg_wcx_r.baseline;
-
         % get the response using the Wilcoxon from Frazer 2023
         [app_out.p(k,:), app_out.h(k,:), app_out.base_fr(k,:), app_out.rew_fr(k,:)] = KA_react_WCX(cfg_wcx_a, this_S, data.app.t, data.app.in);
 
@@ -280,7 +292,36 @@ end
 rew_no_mod = sum(sum(rew_out.h(:,1:5),2) == 0);
 app_no_mod = sum(sum(app_out.h(:,1:5),2) == 0);
 
-save([parent_path filesep 'Spd_data.mat'], 'spd_data')
+% save([parent_path filesep 'Spd_data.mat'], 'spd_data')
+
+%% generate histograms of the maximal and miniaml firing rates that exceed +/- 1.96sd (using PETH and PETA)
+kk = 5; 
+[~, pos_max_idx] = max(squeeze(all_peth(:,kk, :)),[], 1, 'omitmissing');
+
+% test it
+figure(10)
+subplot(2,2,1); cla
+hold on
+ imagesc(tvec, 1:size(all_peth,3), zscore(squeeze(all_peth(:,kk,:)))')
+plot(tvec(pos_max_idx), 1:size(all_peth,3), 'x')
+xlim([-5 5])
+caxis([-5 5])
+
+subplot(2,2,3); cla
+histogram(tvec(pos_max_idx), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484])
+
+% PETA
+[~, pos_max_idx] = max(squeeze(all_peta(:,kk, :)),[], 1, 'omitmissing');
+subplot(2,2,2); cla
+hold on
+ imagesc(tvec_peta, 1:size(all_peth,3), zscore(squeeze(all_peta(:,kk,:)))')
+plot(tvec_peta(pos_max_idx), 1:size(all_peth,3), 'x')
+xlim([-5 5])
+caxis([-5 5])
+
+subplot(2,2,4); cla
+histogram(tvec_peta(pos_max_idx), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484])
+
 %% classify cells based on waveform properties
 fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = [];
 for ii = length(stats):-1:1
@@ -665,11 +706,9 @@ this_rew_mod = [];
 this_app_mod = [];
 this_rew_mod_pos = [];
 this_rew_mod_neg = [];
-this_rew_no_mod = [];
 
 for ii = size(rew_out.h,2):-1:1
     sig_rew = rew_out.h(:,ii);
-
 
     pos_mod = (rew_out.base_fr(:, ii) < rew_out.rew_fr(:,ii))   & sig_rew;
     neg_mod = (rew_out.base_fr(:, ii) > rew_out.rew_fr(:,ii))   & sig_rew;
@@ -697,6 +736,22 @@ text(xtips1,ytips1,labels1,'HorizontalAlignment','center','VerticalAlignment','t
 set(gca, 'xticklabel',{'North (3G)', 'West (3O)', 'South (1G)', 'East (1O)','all rew', 'no mod'});
 ylabel('% Reward mod');
 title(['All cells (n = ' num2str(length(rew_out.h(:,5))) ')'])
+
+
+subplot(length(p_list)+1,2,((length(p_list)+1)*2))
+b = bar(1:6, [this_app_mod, this_app_no_mod]*100, 'FaceColor', 'flat');
+b.CData(1:5,:) = c_ord(:,:);
+b.CData(6,:) = [.6 .6 .6];
+ylim([0 100])
+
+xtips1 = b(1).XEndPoints;
+ytips1 = b(1).YEndPoints;
+labels1 = string(round(b(1).YData));
+text(xtips1,ytips1,labels1,'HorizontalAlignment','center','VerticalAlignment','top')
+
+set(gca, 'xticklabel',{'North (3G)', 'West (3O)', 'South (1G)', 'East (1O)','all rew', 'no mod'});
+ylabel('% Approach mod');
+title(['All cells (n = ' num2str(length(app_out.h(:,5))) ')'])
 
 fprintf('Overall modulation: Rew positive %0.2f%%  Rew negative %0.2f%%  No mod %0.2f%%\n', this_rew_mod_pos(5)*100, this_rew_mod_neg(5)*100, this_rew_no_mod*100)
 

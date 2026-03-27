@@ -6,6 +6,11 @@ function [mat_out, tvec] = KA_PETA(S_vec, evt, win)
 
 
 %% loop over events and take a snippet. 
+% remove events that fall outside of the data with the window
+s_keep = evt+win(1) > S_vec.tvec(1); 
+e_keep = evt+win(2) < S_vec.tvec(end); 
+
+evt(~s_keep | ~e_keep) = []; 
 
 s_idx = nearest_idx(evt+win(1),S_vec.tvec); 
 e_idx = nearest_idx(evt+win(2),S_vec.tvec); 
