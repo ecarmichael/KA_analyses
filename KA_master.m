@@ -161,6 +161,9 @@ spd_p = [];
 spd_corr = [];
 stats = [];
 spd_data= [];
+all_dwell= []; 
+z_peta = []; 
+pre_mean = []; post_mean = []; 
 k = 0;
 for iS = 1:length(sess_list)
 
@@ -193,18 +196,18 @@ for iS = 1:length(sess_list)
         spd_data{k}.spd = data.velo_smooth.data;
 
         % get the dwell times and correct for NLX offset. 
-        dwell_iv = KA_get_dwell(dwellExport.masterTable, cell_id{k}, 5); 
+        dwell_iv = KA_get_dwell(dwellExport.masterTable, cell_id{k}, 2.5); 
         dwell_iv.tstart = dwell_iv.tstart - spd_data{k}.tvec(1); 
         dwell_iv.tend= dwell_iv.tend - spd_data{k}.tvec(1); 
 
 
         % summary for plotting
         cfg_peth = [];
-        cfg_peth.window = [-6 6];
+        cfg_peth.window = [-3 3];
         cfg_peth. plot_type = 'raw';
         cfg_peth.dt = 0.05;
         cfg_peth.gauss_sd = .1;
-
+        cfg_peth.plot = 'off'; 
          % get the rate
         S_vec = MS_spike2rate(this_S, spd_data{k}.tvec, cfg_peth.dt, cfg_peth.gauss_sd); 
         % use the same firing rate parameters to get the mean and std for
@@ -212,45 +215,68 @@ for iS = 1:length(sess_list)
         cfg_def.z_mean = mean(S_vec.data,'omitmissing');
         cfg_def.z_std = std(S_vec.data,'omitmissing');
         % loop over reward types
-        for jj = unique(data.rew.in)
+        for jj = 1:4
             this_idx = data.rew.in == jj;
-            [~,~,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t(this_idx) );
-            all_peth(:,jj, k) = mean(this_peth,2, 'omitmissing');
+            if sum(this_idx) == 0
+                this_peth = nan(size(all_peth,1));
+                pre_mean(jj,k) = NaN; post_mean(jj,k) = NaN;
+            else
+                [~,~,this_peth, ~, pre_mean(jj,k), post_mean(jj,k)] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t(this_idx) );
+                all_peth(:,jj, k) = mean(this_peth,2, 'omitmissing');
+            end
         end
-        [~,tvec,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t );
+        [~,tvec,this_peth, ~, pre_mean(5,k), post_mean(5,k)] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t );
         all_peth(:,5, k) = mean(this_peth,2, "omitmissing");
         
         % 
         app_t{iS}= data.app;
 
 
+
         % PETA method
         S_vec.tvec = S_vec.tvec - S_vec.tvec(1); 
         % zscore the data relative to the pseudobaseline. Add 2.5 to keep
-        % the reward consumption separate. 
-        dwell_S_vec = restrict(S_vec, dwell_iv.tstart+5, dwell_iv.tend); 
-        
-        S_vec.data = (S_vec.data - mean(dwell_S_vec.data, 'omitmissing'))./ std(dwell_S_vec.data, 'omitmissing'); 
-        for jj = unique(data.rew.in)
+        % the reward consumption separate.
+        dwell_S_vec = restrict(S_vec, dwell_iv.tstart+2.5, dwell_iv.tend);
+        all_dwell.mean(k) =  mean(dwell_S_vec.data, 'omitmissing');
+        all_dwell.std(k) =  std(dwell_S_vec.data, 'omitmissing');
+
+        % S_vec.data = (S_vec.data - mean(dwell_S_vec.data, 'omitmissing'))./std(dwell_S_vec.data, 'omitmissing'); 
+        for jj = 1:4
             this_idx = data.rew.in == jj;
-            this_peta = KA_PETA(S_vec, data.rew.t(this_idx) - spd_data{k}.tvec(1), cfg_peth.window);
+            if sum(data.rew.t(this_idx)) <1
+                this_peta = nan(size(all_peta,1));
+            else
+                this_peta = KA_PETA(S_vec, data.rew.t(this_idx) - spd_data{k}.tvec(1), cfg_peth.window);
+                for iShuff = 500:-1:1
+                    this_peta_s(:,iShuff) = mean(KA_PETA(S_vec, MS_randn_range(1,100,cfg_peth.window(1), S_vec.tvec(end)-cfg_peth.window(end)), cfg_peth.window),1, 'omitmissing');
+                end
+            end
             all_peta(:,jj, k) = mean(this_peta,1, 'omitmissing');
+            z_peta(:,jj,k) = mean((this_peta' - mean(this_peta_s, 2, 'omitmissing'))./std(this_peta_s, [], 2, 'omitmissing'),2); 
         end
-        % [~,tvec,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t );
         [this_peta, tvec_peta] = KA_PETA(S_vec, data.rew.t - spd_data{k}.tvec(1), cfg_peth.window);
         all_peta(:,5, k) = mean(this_peta,1, "omitmissing");
+        z_peta(:,5,k) = mean((this_peta' - mean(this_peta_s, 2, 'omitmissing'))./std(this_peta_s, [], 2, 'omitmissing'),2); 
 
 
-        % approach peta
-        for jj = unique(data.app.in)
+        % same but for the approach
+        for jj = 1:4
             this_idx = data.app.in == jj;
-            this_peta = KA_PETA(S_vec, data.app.t(this_idx) - spd_data{k}.tvec(1), cfg_peth.window);
+            if sum(data.app.t(this_idx)) <1
+                this_peta = nan(size(all_peta,1));
+            else
+                this_peta = KA_PETA(S_vec, data.app.t(this_idx) - spd_data{k}.tvec(1), cfg_peth.window);
+                for iShuff = 500:-1:1
+                    this_peta_s(:,iShuff) = mean(KA_PETA(S_vec, MS_randn_range(1,100,cfg_peth.window(1), S_vec.tvec(end)-cfg_peth.window(end)), cfg_peth.window),1, 'omitmissing');
+                end
+            end
             all_peta_app(:,jj, k) = mean(this_peta,1, 'omitmissing');
+            z_peta_app(:,jj,k) = mean((this_peta' - mean(this_peta_s, 2, 'omitmissing'))./std(this_peta_s, [], 2, 'omitmissing'),2);
         end
-        % [~,tvec,this_peth] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t );
-        [this_peta, tvec_peta] = KA_PETA(S_vec, data.rew.t - spd_data{k}.tvec(1), cfg_peth.window);
+        [this_peta, tvec_peta] = KA_PETA(S_vec, data.app.t - spd_data{k}.tvec(1), cfg_peth.window);
         all_peta_app(:,5, k) = mean(this_peta,1, "omitmissing");
-
+        z_peta_app(:,5,k) = mean((this_peta' - mean(this_peta_s, 2, 'omitmissing'))./std(this_peta_s, [], 2, 'omitmissing'),2);
 
 
         % reward centered.
@@ -268,13 +294,6 @@ for iS = 1:length(sess_list)
         cfg_wcx_a.baseline = cfg_wcx_r.baseline;
         % get the response using the Wilcoxon from Frazer 2023
         [app_out.p(k,:), app_out.h(k,:), app_out.base_fr(k,:), app_out.rew_fr(k,:)] = KA_react_WCX(cfg_wcx_a, this_S, data.app.t, data.app.in);
-
-
-        % check the response profiles around the reward
-        % cfg_pro = []; 
-        % cfg_pro.win = [-1 1]; 
-        % 
-        % rew_out.profile = KA_peth_profile(cfg_wcx_r, tvec, all_peth(:,:,k))
 
 
         phase{k} = sess_list(iS).name(6:7);
@@ -296,31 +315,70 @@ app_no_mod = sum(sum(app_out.h(:,1:5),2) == 0);
 
 %% generate histograms of the maximal and miniaml firing rates that exceed +/- 1.96sd (using PETH and PETA)
 kk = 5; 
-[~, pos_max_idx] = max(squeeze(all_peth(:,kk, :)),[], 1, 'omitmissing');
+
 
 % test it
 figure(10)
+
+this_all_peta = squeeze(z_peta_app(:,5,:));
+[~, pos_max_idx] = max(this_all_peta,[], 1, 'omitmissing');
+[~, pos_min_idx] = min(this_all_peta,[], 1, 'omitmissing');
+sig_p_idx = sum(this_all_peta> 1.96,1) > 0; 
+sig_n_idx = sum(this_all_peta < -1.96,1) > 0; 
+
+
 subplot(2,2,1); cla
 hold on
- imagesc(tvec, 1:size(all_peth,3), zscore(squeeze(all_peth(:,kk,:)))')
-plot(tvec(pos_max_idx), 1:size(all_peth,3), 'x')
+ imagesc(tvec_peta, 1:size(all_peth,3), this_all_peta')
+% plot(tvec_peta(pos_max_idx), 1:size(all_peth,3), 'x')
+plot(tvec_peta(pos_max_idx(sig_p_idx)), find(sig_p_idx), 'x', 'MarkerSize',8, 'LineWidth',2)
+plot(tvec_peta(pos_min_idx(sig_n_idx)), find(sig_n_idx), 'xr', 'MarkerSize',8, 'LineWidth',2)
 xlim([-5 5])
-caxis([-5 5])
+clim([-5 5])
+ylim([.5 size(all_peta,3)+.5])
+title('Shuffle Normalized PETA: approach')
 
-subplot(2,2,3); cla
-histogram(tvec(pos_max_idx), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484])
+subplot(2,2,3); cla; hold on;
+histogram(tvec_peta(pos_max_idx((sig_p_idx))), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484],'facealpha',.7,'edgecolor','none');
+histogram(tvec_peta(pos_max_idx((sig_p_idx))), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484],'facealpha',.7,'edgecolor','none');
 
-% PETA
-[~, pos_max_idx] = max(squeeze(all_peta(:,kk, :)),[], 1, 'omitmissing');
+histogram(tvec_peta(pos_min_idx((sig_n_idx))), -6:.25:6, 'FaceColor',[0.9153    0.2816    0.2878],'facealpha',.3,'edgecolor','none');
+legend({['Sig Pos ' num2str(sum(sig_p_idx)/length(sig_p_idx)) '%'], ['Sig Neg ' num2str(sum(sig_n_idx)/length(sig_n_idx)) '%']}, 'Box', 'off')
+ylim([0 15])
+xlim([-5 5])
+xlabel('Time from reward (s)')
+
+
+% Reward PETA
+
+this_all_peta = squeeze(z_peta(:,5,:));
+
+[~, pos_max_idx] = max(this_all_peta,[], 1, 'omitmissing');
+[~, pos_min_idx] = min(this_all_peta,[], 1, 'omitmissing');
+sig_p_idx = sum(this_all_peta> 1.96,1) > 0; 
+sig_n_idx = sum(this_all_peta < -1.96,1) > 0; 
+
+
 subplot(2,2,2); cla
 hold on
- imagesc(tvec_peta, 1:size(all_peth,3), zscore(squeeze(all_peta(:,kk,:)))')
-plot(tvec_peta(pos_max_idx), 1:size(all_peth,3), 'x')
+ imagesc(tvec_peta, 1:size(all_peth,3), this_all_peta')
+% plot(tvec_peta(pos_max_idx), 1:size(all_peth,3), 'x')
+plot(tvec_peta(pos_max_idx(sig_p_idx)), find(sig_p_idx), 'x', 'MarkerSize',8, 'LineWidth',2)
+plot(tvec_peta(pos_min_idx(sig_n_idx)), find(sig_n_idx), 'xr', 'MarkerSize',8, 'LineWidth',2)
 xlim([-5 5])
-caxis([-5 5])
+clim([-5 5])
+ylim([.5 size(all_peta,3)+.5])
+title('Shuffle Normalized PETA: Reward')
 
-subplot(2,2,4); cla
-histogram(tvec_peta(pos_max_idx), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484])
+subplot(2,2,4); cla; hold on;
+histogram(tvec_peta(pos_max_idx((sig_p_idx))), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484],'facealpha',.7,'edgecolor','none');
+histogram(tvec_peta(pos_max_idx((sig_p_idx))), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484],'facealpha',.7,'edgecolor','none');
+
+histogram(tvec_peta(pos_min_idx((sig_n_idx))), -6:.25:6, 'FaceColor',[0.9153    0.2816    0.2878],'facealpha',.3,'edgecolor','none');
+legend({['Sig Pos ' num2str(sum(sig_p_idx)/length(sig_p_idx)) '%'], ['Sig Neg ' num2str(sum(sig_n_idx)/length(sig_n_idx)) '%']}, 'Box', 'off')
+ylim([0 15])
+xlim([-5 5])
+xlabel('Time from reward (s)')
 
 %% classify cells based on waveform properties
 fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = [];
