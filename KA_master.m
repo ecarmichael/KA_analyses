@@ -303,24 +303,30 @@ figure(10)
 subplot(2,2,1); cla
 hold on
  imagesc(tvec, 1:size(all_peth,3), zscore(squeeze(all_peth(:,kk,:)))')
-plot(tvec(pos_max_idx), 1:size(all_peth,3), 'x')
+plot(tvec(pos_max_idx), 1:size(all_peth,3), 'rx')
 xlim([-5 5])
-caxis([-5 5])
+clim([-5 5])
+ylim([0 size(all_peth,3)]+.5)
+title('PETH peaks (zscore)')
 
 subplot(2,2,3); cla
 histogram(tvec(pos_max_idx), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484])
+xlim([-5 5])
 
 % PETA
 [~, pos_max_idx] = max(squeeze(all_peta(:,kk, :)),[], 1, 'omitmissing');
 subplot(2,2,2); cla
 hold on
  imagesc(tvec_peta, 1:size(all_peth,3), zscore(squeeze(all_peta(:,kk,:)))')
-plot(tvec_peta(pos_max_idx), 1:size(all_peth,3), 'x')
+plot(tvec_peta(pos_max_idx), 1:size(all_peth,3), 'rx')
 xlim([-5 5])
-caxis([-5 5])
+clim([-5 5])
+title('PETA peaks (zscore)')
+ylim([0 size(all_peth,3)]+.5)
 
 subplot(2,2,4); cla
 histogram(tvec_peta(pos_max_idx), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484])
+xlim([-5 5])
 
 %% classify cells based on waveform properties
 fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = [];
