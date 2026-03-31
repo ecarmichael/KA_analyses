@@ -12,8 +12,8 @@ e_keep = evt+win(2) < S_vec.tvec(end);
 
 evt(~s_keep | ~e_keep) = []; 
 
-s_idx = nearest_idx(evt+win(1),S_vec.tvec); 
-e_idx = nearest_idx(evt+win(2),S_vec.tvec); 
+s_idx = nearest_idx3(evt+win(1),S_vec.tvec); 
+e_idx = nearest_idx3(evt+win(2),S_vec.tvec); 
 
 mat_out = nan(length(evt), mode(e_idx - s_idx + 1)); % Prep output
 
