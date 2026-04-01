@@ -1,11 +1,8 @@
-
 %% KA screener master script.
-
 % load data
 usr_name = char(java.lang.System.getProperty('user.name'));
 
 if ismac
-
     addpath(genpath(['/Users/' usr_name '/Documents/Github/vandermeerlab/code-matlab/shared']))
     addpath(genpath(['/Users/' usr_name '/Documents/Github/EC_State']));
     addpath(genpath(['/Users/' usr_name '/Documents/Github/KA_analyses']));
@@ -15,9 +12,8 @@ if ismac
     % inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs.
     inter_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/inter_reward_23'];
     plot_dir = ['/Users/' usr_name '/Williams Lab Dropbox/Eric Carmichael/KA_Data/Behav_plots'];
+
 elseif ispc
-
-
     % load data
     addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\vandermeerlab\code-matlab\shared']))
     addpath(genpath(['C:\Users\' usr_name '\Documents\GitHub\EC_State']));
@@ -27,7 +23,6 @@ elseif ispc
     inter_dir_app = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\inter_reward_23_approach'];
     plot_dir = ['C:\Users\' usr_name '\Williams Lab Dropbox\Eric Carmichael\KA_Data\Behav_plots'];
 
-
 else
     addpath(genpath('/home/ecar/Github/vandermeerlab/code-matlab/shared'))
     addpath(genpath('/home/ecar/Github/EC_State'));
@@ -35,14 +30,6 @@ else
     data_dir = '/lustre06/project/6064766/ecar/for_eric_only'; % where all the NLX data is.
     % inter_dir = '/Users/jericcarmichael/Dropbox/KA_Data/inter_';  % where to save the outputs.
     inter_dir = '/lustre06/project/6064766/ecar/KA_Data/inter_approach_2p5_new_sig';
-
-    %     % load data
-    %     addpath(genpath('/home/williamslab/Documents/Github/vandermeerlab/code-matlab/shared'))
-    %     addpath(genpath('/home/williamslab/Documents/Github/EC_State'));
-    %     addpath(genpath('/home/williamslab/Documents/Github/KA_analyses'));
-    %     data_dir = '/home/williamslab/Desktop/for_eric_only'; % where all the NLX data is.
-    %     inter_dir = '/media/williamslab/Fenrir/KA_Data/inter_reward_simple';
-    %     inter_dir_app = '/media/williamslab/Fenrir/KA_Data/inter_reward_simple';
 
 end
 
@@ -52,10 +39,6 @@ cd(data_dir); % move to the data dir.
 if ~exist(inter_dir,'dir')
     mkdir(inter_dir)
 end
-
-% if ~exist(inter_dir_app,'dir')
-%     mkdir(inter_dir_app)
-% end
 
 % flagged sessions which contain some oddity like events outside of the
 % recording
@@ -87,12 +70,13 @@ min_fr = 0.1;
 c_ord = linspecer(5);
 c_map = [.05 .05 0.05 ; c_ord(2,:)]; %[6, 25, 34; 249, 160, 27]/255; % SUNS colour b/c KA.
 
-
 [parent_path] = fileparts(inter_dir);
 [~, parent_dir] = fileparts(parent_path);
 
 f_id = {'North', 'West', 'South',  'East', 'Overall'};
 flav_id = {'Grape x3','Orange x3', 'Grape x1', 'Orange x1', '   '};
+
+rng(1234, 'twister') % set the rng seed
 
 %% loop over sessions / cells
 cd(data_dir)
@@ -147,6 +131,8 @@ end
 
 fprintf('<strong>%0.0f total sessions, %0.2f had good cells, %0.0f omitted, %0.0f no spike data, %0.0f too short</strong>\n', length(success), sum(success==1), sum(success==99), sum(success==404), sum(success==-10))
 %% Process each cell within a session
+
+rng(1234, 'twister')
 cd(inter_dir)
 sess_list = dir([inter_dir filesep 'C*.mat']);
 
@@ -207,26 +193,26 @@ for iS = 1:length(sess_list)
         cfg_peth. plot_type = 'raw';
         cfg_peth.dt = 0.05;
         cfg_peth.gauss_sd = .1;
-        cfg_peth.plot = 'off'; 
+        cfg_peth.plot = 'on'; 
          % get the rate
         S_vec = MS_spike2rate(this_S, spd_data{k}.tvec, cfg_peth.dt, cfg_peth.gauss_sd); 
-        % use the same firing rate parameters to get the mean and std for
-        % zscoring the responses. 
-        cfg_def.z_mean = mean(S_vec.data,'omitmissing');
-        cfg_def.z_std = std(S_vec.data,'omitmissing');
-        % loop over reward types
-        for jj = 1:4
-            this_idx = data.rew.in == jj;
-            if sum(this_idx) == 0
-                this_peth = nan(size(all_peth,1));
-                pre_mean(jj,k) = NaN; post_mean(jj,k) = NaN;
-            else
-                [~,~,this_peth, ~, pre_mean(jj,k), post_mean(jj,k)] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t(this_idx) );
-                all_peth(:,jj, k) = mean(this_peth,2, 'omitmissing');
-            end
-        end
-        [~,tvec,this_peth, ~, pre_mean(5,k), post_mean(5,k)] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t );
-        all_peth(:,5, k) = mean(this_peth,2, "omitmissing");
+        % % use the same firing rate parameters to get the mean and std for
+        % % zscoring the responses. 
+        % cfg_def.z_mean = mean(S_vec.data,'omitmissing');
+        % cfg_def.z_std = std(S_vec.data,'omitmissing');
+        % % loop over reward types
+        % for jj = 1:4
+        %     this_idx = data.rew.in == jj;
+        %     if sum(this_idx) == 0
+        %         this_peth = nan(size(all_peth,1));
+        %         pre_mean(jj,k) = NaN; post_mean(jj,k) = NaN;
+        %     else
+        %         [~,~,this_peth, ~, pre_mean(jj,k), post_mean(jj,k)] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t(this_idx) );
+        %         all_peth(:,jj, k) = mean(this_peth,2, 'omitmissing');
+        %     end
+        % end
+        % [~,tvec,this_peth, ~, pre_mean(5,k), post_mean(5,k)] = SpikePETH_Shuff(cfg_peth, this_S, data.rew.t );
+        % all_peth(:,5, k) = mean(this_peth,2, "omitmissing");
         
         % 
         app_t{iS}= data.app;
@@ -237,9 +223,9 @@ for iS = 1:length(sess_list)
         S_vec.tvec = S_vec.tvec - S_vec.tvec(1); 
         % zscore the data relative to the pseudobaseline. Add 2.5 to keep
         % the reward consumption separate.
-        dwell_S_vec = restrict(S_vec, dwell_iv.tstart+2.5, dwell_iv.tend);
-        all_dwell.mean(k) =  mean(dwell_S_vec.data, 'omitmissing');
-        all_dwell.std(k) =  std(dwell_S_vec.data, 'omitmissing');
+        % dwell_S_vec = restrict(S_vec, dwell_iv.tstart+2.5, dwell_iv.tend);
+        % all_dwell.mean(k) =  mean(dwell_S_vec.data, 'omitmissing');
+        % all_dwell.std(k) =  std(dwell_S_vec.data, 'omitmissing');
 
         % S_vec.data = (S_vec.data - mean(dwell_S_vec.data, 'omitmissing'))./std(dwell_S_vec.data, 'omitmissing'); 
         for jj = 1:4
@@ -258,6 +244,16 @@ for iS = 1:length(sess_list)
         [this_peta, tvec_peta] = KA_PETA(S_vec, data.rew.t - spd_data{k}.tvec(1), cfg_peth.window);
         all_peta(:,5, k) = mean(this_peta,1, "omitmissing");
         z_peta(:,5,k) = mean((this_peta' - mean(this_peta_s, 2, 'omitmissing'))./std(this_peta_s, [], 2, 'omitmissing'),2); 
+
+        % test for increased/decreased activity realtive to shuffle
+        r_idx = nearest_idx3([0 2], tvec_peta); % get the mean response z score in the reward window
+        rew_out.z_mean_fr(k,:) = mean(z_peta(r_idx(1):r_idx(2),:,k)); 
+        rew_mean_fr = mean(all_peta(r_idx(1):r_idx(2),:, k),"omitmissing");
+        rew_s_mu = mean(this_peta_s(r_idx(1):r_idx(2),:), 1,"omitmissing");
+        rew_out.z_mean_fr_z(k,:) = mean((rew_mean_fr' - mean(rew_s_mu, 2, 'omitmissing'))...
+            ./std(rew_s_mu, [], 2, 'omitmissing'),2, 'omitmissing');
+        rew_out.z_mean_h(k,:) =  abs(rew_out.z_mean_fr(k,:)) > 1.96; 
+        rew_out.z_h(k,:) =  sum(abs(z_peta(r_idx(1):r_idx(2),:,k)) > 1.96) > 0; 
 
 
         % same but for the approach
@@ -278,6 +274,16 @@ for iS = 1:length(sess_list)
         all_peta_app(:,5, k) = mean(this_peta,1, "omitmissing");
         z_peta_app(:,5,k) = mean((this_peta' - mean(this_peta_s, 2, 'omitmissing'))./std(this_peta_s, [], 2, 'omitmissing'),2);
 
+       % test for increased/decreased activity realtive to shuffle
+        r_idx = nearest_idx3([-1 1], tvec_peta); % get the mean response z score in the reward window
+        app_out.z_mean_fr(k,:) = mean(z_peta_app(r_idx(1):r_idx(2),:,k)); 
+        app_mean_fr = mean(all_peta_app(r_idx(1):r_idx(2),:, k),"omitmissing"); 
+        app_s_mu = mean(this_peta_s(r_idx(1):r_idx(2),:), 1,"omitmissing"); 
+        app_out.z_mean_fr_z(k,:) = mean((app_mean_fr' - mean(app_s_mu, 2, 'omitmissing'))...
+            ./std(app_s_mu, [], 2, 'omitmissing'),2, 'omitmissing');
+        app_out.z_mean_h(k,:) =  abs(app_out.z_mean_fr(k,:)) > 1.96; 
+        app_out.z_h(k,:) =  sum(abs(z_peta_app(r_idx(1):r_idx(2),:,k)) > 1.96) > 0; 
+
 
         % reward centered.
         cfg_wcx_r = [];
@@ -288,7 +294,7 @@ for iS = 1:length(sess_list)
         % same but using the PETA instead of the binned firing rates. 
         [rew_out.p(k,:), rew_out.h(k,:), rew_out.base_fr(k,:), rew_out.rew_fr(k,:)] = KA_react_WCX(cfg_wcx_r, this_S, data.rew.t, data.rew.in);
 
-
+        % approach centered. 
         cfg_wcx_a = [];
         cfg_wcx_a.win = cfg_wcx_r.win ; % window
         cfg_wcx_a.baseline = cfg_wcx_r.baseline;
@@ -315,7 +321,8 @@ app_no_mod = sum(sum(app_out.h(:,1:5),2) == 0);
 
 %% generate histograms of the maximal and miniaml firing rates that exceed +/- 1.96sd (using PETH and PETA)
 kk = 5; 
-
+c_blue = [ 0.3639    0.5755    0.7484]; 
+c_red = [0.9153    0.2816    0.2878]; 
 
 % test it
 figure(10)
@@ -323,64 +330,78 @@ figure(10)
 this_all_peta = squeeze(z_peta_app(:,5,:));
 [~, pos_max_idx] = max(this_all_peta,[], 1, 'omitmissing');
 [~, pos_min_idx] = min(this_all_peta,[], 1, 'omitmissing');
-sig_p_idx = sum(this_all_peta> 1.96,1) > 0; 
-sig_n_idx = sum(this_all_peta < -1.96,1) > 0; 
-
+% sig_p_idx = sum(this_all_peta> 1.96,1) > 0; 
+% sig_n_idx = sum(this_all_peta < -1.96,1) > 0; 
+sig_p_idx = app_out.z_mean_fr(:,5) > 1.96;
+sig_n_idx = app_out.z_mean_fr(:,5) < -1.96; 
 
 subplot(2,2,1); cla
 hold on
- imagesc(tvec_peta, 1:size(all_peth,3), this_all_peta')
+ imagesc(tvec_peta, 1:size(all_peta,3), this_all_peta')
 % plot(tvec_peta(pos_max_idx), 1:size(all_peth,3), 'x')
 plot(tvec_peta(pos_max_idx(sig_p_idx)), find(sig_p_idx), 'x', 'MarkerSize',8, 'LineWidth',2)
 plot(tvec_peta(pos_min_idx(sig_n_idx)), find(sig_n_idx), 'xr', 'MarkerSize',8, 'LineWidth',2)
-xlim([-5 5])
+xlim([cfg_peth.window])
 clim([-5 5])
 ylim([.5 size(all_peta,3)+.5])
+xline(0, '--k', 'LineWidth',2); 
 title('Shuffle Normalized PETA: approach')
 
 subplot(2,2,3); cla; hold on;
-histogram(tvec_peta(pos_max_idx((sig_p_idx))), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484],'facealpha',.7,'edgecolor','none');
-histogram(tvec_peta(pos_max_idx((sig_p_idx))), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484],'facealpha',.7,'edgecolor','none');
 
-histogram(tvec_peta(pos_min_idx((sig_n_idx))), -6:.25:6, 'FaceColor',[0.9153    0.2816    0.2878],'facealpha',.3,'edgecolor','none');
-legend({['Sig Pos ' num2str(sum(sig_p_idx)/length(sig_p_idx)) '%'], ['Sig Neg ' num2str(sum(sig_n_idx)/length(sig_n_idx)) '%']}, 'Box', 'off')
-ylim([0 15])
-xlim([-5 5])
+histogram(tvec_peta(pos_max_idx((sig_p_idx))), cfg_peth.window(1):.25:cfg_peth.window(2), 'FaceColor',c_blue,'facealpha',.7,'edgecolor','none', 'Normalization', 'percentage');
+histogram(tvec_peta(pos_min_idx((sig_n_idx))), cfg_peth.window(1):.25:cfg_peth.window(2), 'FaceColor',c_red,'facealpha',.3,'edgecolor','none', 'Normalization','percentage');
+[hy, hx] = hist(tvec_peta(pos_max_idx),  cfg_peth.window(1):.1:cfg_peth.window(2)); 
+plot(hx, (hy./sum(hy))*100, 'Color', [c_blue .4], 'LineWidth',2); 
+[hy, hx] = hist(tvec_peta(pos_min_idx),  cfg_peth.window(1):.1:cfg_peth.window(2)); 
+plot(hx, (hy./sum(hy))*100, 'Color', [c_red, .4], 'LineWidth',2); 
+ylim([0 20])
+xlim([cfg_peth.window])
 xlabel('Time from reward (s)')
+xline(0, '--k', 'LineWidth',2); 
+legend({ ['Sig Pos ' num2str((sum(sig_p_idx)/length(sig_p_idx))*100,3) '%'], ['Sig Neg ' num2str((sum(sig_n_idx)/length(sig_n_idx))*100,3) '%'],'Pop maxima', 'Pop minimum', ''}, 'Box', 'off')
 
 
 % Reward PETA
-
 this_all_peta = squeeze(z_peta(:,5,:));
 
 [~, pos_max_idx] = max(this_all_peta,[], 1, 'omitmissing');
 [~, pos_min_idx] = min(this_all_peta,[], 1, 'omitmissing');
-sig_p_idx = sum(this_all_peta> 1.96,1) > 0; 
-sig_n_idx = sum(this_all_peta < -1.96,1) > 0; 
+sig_p_idx = rew_out.z_mean_fr(:,5) > 1.96;
+sig_n_idx = rew_out.z_mean_fr(:,5) < -1.96; 
 
 
 subplot(2,2,2); cla
 hold on
- imagesc(tvec_peta, 1:size(all_peth,3), this_all_peta')
+ imagesc(tvec_peta, 1:size(all_peta,3), this_all_peta')
 % plot(tvec_peta(pos_max_idx), 1:size(all_peth,3), 'x')
 plot(tvec_peta(pos_max_idx(sig_p_idx)), find(sig_p_idx), 'x', 'MarkerSize',8, 'LineWidth',2)
 plot(tvec_peta(pos_min_idx(sig_n_idx)), find(sig_n_idx), 'xr', 'MarkerSize',8, 'LineWidth',2)
-xlim([-5 5])
+xlim([cfg_peth.window])
 clim([-5 5])
 ylim([.5 size(all_peta,3)+.5])
+xline(0, '--k', 'LineWidth',2); 
 title('Shuffle Normalized PETA: Reward')
 
 subplot(2,2,4); cla; hold on;
-histogram(tvec_peta(pos_max_idx((sig_p_idx))), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484],'facealpha',.7,'edgecolor','none');
-histogram(tvec_peta(pos_max_idx((sig_p_idx))), -6:.25:6, 'FaceColor',[ 0.3639    0.5755    0.7484],'facealpha',.7,'edgecolor','none');
+histogram(tvec_peta(pos_max_idx((sig_p_idx))), cfg_peth.window(1):.25:cfg_peth.window(2), 'FaceColor',c_blue,'facealpha',.7,'edgecolor','none', 'Normalization', 'percentage');
+histogram(tvec_peta(pos_min_idx((sig_n_idx))), cfg_peth.window(1):.25:cfg_peth.window(2), 'FaceColor',c_red,'facealpha',.3,'edgecolor','none', 'Normalization','percentage');
+[hy, hx] = hist(tvec_peta(pos_max_idx),  cfg_peth.window(1):.1:cfg_peth.window(2)); 
+plot(hx, (hy./sum(hy))*100, 'Color', [c_blue .4], 'LineWidth',2); 
+[hy, hx] = hist(tvec_peta(pos_min_idx),  cfg_peth.window(1):.1:cfg_peth.window(2)); 
+plot(hx, (hy./sum(hy))*100, 'Color', [c_red, .4], 'LineWidth',2); 
 
-histogram(tvec_peta(pos_min_idx((sig_n_idx))), -6:.25:6, 'FaceColor',[0.9153    0.2816    0.2878],'facealpha',.3,'edgecolor','none');
-legend({['Sig Pos ' num2str(sum(sig_p_idx)/length(sig_p_idx)) '%'], ['Sig Neg ' num2str(sum(sig_n_idx)/length(sig_n_idx)) '%']}, 'Box', 'off')
-ylim([0 15])
-xlim([-5 5])
+ylim([0 20])
+xlim([cfg_peth.window])
 xlabel('Time from reward (s)')
+xline(0, '--k', 'LineWidth',2); 
+legend({ ['Sig Pos ' num2str((sum(sig_p_idx)/length(sig_p_idx))*100,3) '%'], ['Sig Neg ' num2str((sum(sig_n_idx)/length(sig_n_idx))*100,3) '%'],'Pop maxima', 'Pop minimum', ''}, 'Box', 'off')
 
 %% classify cells based on waveform properties
+
+rng(1234, 'twister') % set the rng seed again in case something else got run. 
+
+
 fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = [];
 for ii = length(stats):-1:1
     fr(ii) = stats{ii}.firing_rate;
