@@ -76,7 +76,7 @@ c_map = [.05 .05 0.05 ; c_ord(2,:)]; %[6, 25, 34; 249, 160, 27]/255; % SUNS colo
 f_id = {'North', 'West', 'South',  'East', 'Overall'};
 flav_id = {'Grape x3','Orange x3', 'Grape x1', 'Orange x1', '   '};
 
-rng(1234, 'twister') % set the rng seed
+rng(123, 'twister') % set the rng seed
 
 %% loop over sessions / cells
 cd(data_dir)
@@ -132,7 +132,7 @@ end
 fprintf('<strong>%0.0f total sessions, %0.2f had good cells, %0.0f omitted, %0.0f no spike data, %0.0f too short</strong>\n', length(success), sum(success==1), sum(success==99), sum(success==404), sum(success==-10))
 %% Process each cell within a session
 
-rng(1234, 'twister')
+rng(123, 'twister')
 cd(inter_dir)
 sess_list = dir([inter_dir filesep 'C*.mat']);
 
@@ -287,8 +287,8 @@ for iS = 1:length(sess_list)
 
         % reward centered.
         cfg_wcx_r = [];
-        cfg_wcx_r.win = [0 3]; % window
-        cfg_wcx_r.baseline = [-3 0];
+        cfg_wcx_r.win = [0 2]; % window
+        cfg_wcx_r.baseline = [3 5];
         % get the response using the Wilcoxon from Frazer 2023
         [rew_out.p(k,:), rew_out.h(k,:), rew_out.base_fr(k,:), rew_out.rew_fr(k,:)] = KA_react_WCX(cfg_wcx_r, this_S, data.rew.t, data.rew.in);
         % same but using the PETA instead of the binned firing rates. 
@@ -296,8 +296,8 @@ for iS = 1:length(sess_list)
 
         % approach centered. 
         cfg_wcx_a = [];
-        cfg_wcx_a.win = cfg_wcx_r.win ; % window
-        cfg_wcx_a.baseline = cfg_wcx_r.baseline;
+        cfg_wcx_a.win = [-1 1] ; % window
+        cfg_wcx_a.baseline = [-4 -2];
         % get the response using the Wilcoxon from Frazer 2023
         [app_out.p(k,:), app_out.h(k,:), app_out.base_fr(k,:), app_out.rew_fr(k,:)] = KA_react_WCX(cfg_wcx_a, this_S, data.app.t, data.app.in);
 
@@ -399,24 +399,25 @@ legend({ ['Sig Pos ' num2str((sum(sig_p_idx)/length(sig_p_idx))*100,3) '%'], ['S
 
 %% classify cells based on waveform properties
 
-rng(1234, 'twister') % set the rng seed again in case something else got run. 
+rng(4321, 'twister') % set the rng seed again in case something else got run. 
 
 
-fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = [];
+fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = []; isi = []; 
 for ii = length(stats):-1:1
     fr(ii) = stats{ii}.firing_rate;
     bur_idx(ii) = stats{ii}.burst_idx;
     s_w(ii) = stats{ii}.spike_width*1000;
-    pt_r(ii) = abs(stats{ii}.pt_ratio);
+    s_r(ii) = stats{ii}.slopes_ratio; 
+    isi(ii) = stats{ii}.ISI_cv;
+    pt_r(ii) = (stats{ii}.pt_ratio);
     rfint(ii) = stats{ii}.rise_fall_inter;
     wave_dur(ii) = stats{ii}.wave_dur*1000;
-    wave_forms(:,:,ii) = stats{ii}.wave;
-
+    wave_forms(:,ii) = stats{ii}.wave(stats{ii}.best_wave_idx,:);
 end
-figure(808)
+figure(808); clf
 subplot(2, 2, 1)
 
-[g_idx, n_val] = MS_kmean_scatter([fr', bur_idx', s_w'], 2, [1,2,3], 50);
+[g_idx, n_val] = MS_kmean_scatter([fr', bur_idx', pt_r'], 2, [1,2,3], 50);
 xlabel('Firing rate (Hz)');
 ylabel('burst index')
 zlabel('spike width')
@@ -449,10 +450,13 @@ for ii = 1:length(unique(g_idx))
     subplot(2,2,ii+1)
     cla
     hold on
-    for jj = 1:4
-        shadedErrorBar(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(jj+1,:, g_idx == ii),3),std(wave_forms(jj+1,:, g_idx == ii),[],3) )
-        plot(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(jj+1,:, g_idx == ii),3))
+    for jj = 1
+        shadedErrorBar(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(:, g_idx == ii),2),std(wave_forms(:,g_idx == ii),[],2) )
+        plot(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(:, g_idx == ii),2))
         % errorbar(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(jj+1,:, g_idx == ii),3) +std(wave_forms(jj+1,:, g_idx == ii),[],3))
+        plot(this_S.waves{1}.xrange(:,jj), wave_forms(:, g_idx == ii))
+
+
     end
     title(['Group ' num2str(ii) ' | n=' num2str(sum(g_idx == ii))  ' | FR:' num2str(round(mean(fr(g_idx == ii)),2)) '\pm' num2str(round(std(fr(g_idx == ii)),2))])
 
@@ -1159,16 +1163,11 @@ sess_cord = [flipud(blues(3:2:7,:));(reds(end-7:end-1,:)); c_ord(3,:); flipud(or
 
 
 %% z score the peth gaussian outputs
-for k = size(all_peth,3):-1:1
-    for ii  = 1:5
-        z_peth(:,ii,k) = (all_peth(:,ii, k) - mean(stats{k}.firing_rate))./ stats{k}.std;
-    end
-end
 
-z_peth_s = z_peth(:,:, sort_idx);
+z_peta_s = z_peta(:,:, sort_idx);
 
-Z_sig_min = -5;
-Z_sig_max = 5;
+Z_sig_min = -7.5;
+Z_sig_max = 7.5;
 
 f_id = {'North', 'West', 'South',  'East', 'Overall'};
 flav_id = {'Grape x3','Orange x3', 'Grape x1', 'Orange x1', '   '};
@@ -1181,26 +1180,26 @@ for ii = 1:5
 
     subplot(1,5,ii)
 
-    imagesc(tvec, 1:size(all_peth,3), squeeze(z_peth_s(:,ii,:))')
+    imagesc(tvec_peta, 1:size(all_peta,3), squeeze(z_peta_s(:,ii,:))')
 
     title({f_id{ii}; flav_id{ii}}, 'fontsize', 20)
     set(gca, 'ytick', [])
-    set(gca, 'xtick', -5:2.5:5)
+    set(gca, 'xtick', -tvec_peta(1):2.5:tvec_peta(end))
     % set(gca,'xticklabel', [get(gca, 'XTicklabel') ; num2str(tvec(end),0)]   )
     vl = xline(0, '-k');
     vl.LineWidth = 2;
 
-    vl = xline(cfg_wcx_r.win(1), '--r');
-    vl.LineWidth = 2;
-    vl = xline(cfg_wcx_r.win(2), '--r');
-    vl.LineWidth = 2;
+    % vl = xline(cfg_peth.window(1), '--r');
+    % vl.LineWidth = 2;
+    % vl = xline(cfg_wcx_r.win(2), '--r');
+    % vl.LineWidth = 2;
+    % 
+    % vl = xline(cfg_wcx_r.baseline(1), '--r');
+    % vl.LineWidth = 2;
+    % vl = xline(cfg_wcx_r.baseline(2), '--r');
+    % vl.LineWidth = 2;
 
-    vl = xline(cfg_wcx_r.baseline(1), '--r');
-    vl.LineWidth = 2;
-    vl = xline(cfg_wcx_r.baseline(2), '--r');
-    vl.LineWidth = 2;
-
-    caxis([Z_sig_min Z_sig_max]);
+    clim([Z_sig_min Z_sig_max]);
 
 
     hl = hline(find(diff(s_lump_p_id))+.5, {'k', 'k', 'k'});
@@ -1210,21 +1209,21 @@ for ii = 1:5
     end
 
     % add in sig markers
-    for jj = 1:length(s_H)
-        if s_d_idx(jj) && ii == 1
-            text(tvec(1)-mode(diff(tvec))*1, jj, s_P_id{jj}, 'fontweight', 'bold','fontsize', 20, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'right', 'VerticalAlignment','cap');
-
-        end
-
-        if s_H(jj, ii) && (s_bFR(jj,ii) > s_rFR(jj,ii))
-            text(tvec(end)+mode(diff(tvec))*5, jj, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'left','Interpreter','tex');
-        elseif s_H(jj, ii) && (s_bFR(jj,ii) < s_rFR(jj,ii))
-            text(tvec(end)+mode(diff(tvec))*10, jj, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'left','Interpreter','tex');
-        end
-        if s_g_idx(jj) == 2
-            text(tvec(end)+mode(diff(tvec))*15, jj, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'left','Interpreter','tex');
-        end
-    end
+    % for jj = 1:length(s_H)
+    %     if s_d_idx(jj) && ii == 1
+    %         text(tvec(1)-mode(diff(tvec))*1, jj, s_P_id{jj}, 'fontweight', 'bold','fontsize', 20, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'right', 'VerticalAlignment','cap');
+    % 
+    %     end
+    % 
+    %     if s_H(jj, ii) && (s_bFR(jj,ii) > s_rFR(jj,ii))
+    %         text(tvec(end)+mode(diff(tvec))*5, jj, '\downarrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+    %     elseif s_H(jj, ii) && (s_bFR(jj,ii) < s_rFR(jj,ii))
+    %         text(tvec(end)+mode(diff(tvec))*10, jj, '\uparrow', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+    %     end
+    %     if s_g_idx(jj) == 2
+    %         text(tvec(end)+mode(diff(tvec))*15, jj, '\diamondsuit', 'fontweight', 'bold','fontsize', 10, 'color', c_ord(s_lump_p_id(jj),:), 'HorizontalAlignment', 'left','Interpreter','tex');
+    %     end
+    % end
     xlim([-5 5])
 end
 cb=colorbar;
