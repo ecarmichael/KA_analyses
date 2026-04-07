@@ -113,8 +113,10 @@ t_idx = find(best_wave == t_max);
 %     [t_max, t_idx] = min(best_wave);
 % end
 
+pt_sym_r = corrcoef(best_wave(p_idx-floor(p_idx/2):p_idx), best_wave(p_idx:p_idx+floor(p_idx/2))); 
 
-pt_ratio = abs(p_max/t_max);
+
+% pt_ratio = abs(p_max/t_max);
 width = (wave_tvec(t_idx) - wave_tvec(p_idx));
 
 % properties from:
@@ -213,6 +215,7 @@ wave_prop.spike_width = width;
 wave_prop.peak_val = p_max;
 wave_prop.trough_val = t_max;
 wave_prop.pt_ratio = pt_ratio;
+wave_prop.pt_sym_r = pt_sym_r; % the symetry between the 1-peak and peak - end; 
 % Viskontas et al. 2006
 wave_prop.wave_dur = wave_dur;
 wave_prop.slopes_ratio = slopes_ratio;
