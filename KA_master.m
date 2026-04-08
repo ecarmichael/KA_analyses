@@ -452,8 +452,9 @@ for ii = 1:length(unique(g_idx))
     cla
     hold on
     for jj = 1
+        norm_wave = (wave_forms(:, g_idx == ii))./max(wave_forms(:, g_idx == ii))
         shadedErrorBar(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(:, g_idx == ii),2),std(wave_forms(:,g_idx == ii),[],2) )
-        plot(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(:, g_idx == ii),2))
+        plot(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(:, g_idx == ii),2)./max())
         % errorbar(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(jj+1,:, g_idx == ii),3) +std(wave_forms(jj+1,:, g_idx == ii),[],3))
         plot(this_S.waves{1}.xrange(:,jj), wave_forms(:, g_idx == ii))
 
