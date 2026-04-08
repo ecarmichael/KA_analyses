@@ -402,13 +402,14 @@ legend({ ['Sig Pos ' num2str((sum(sig_p_idx)/length(sig_p_idx))*100,3) '%'], ['S
 rng(4321, 'twister') % set the rng seed again in case something else got run. 
 
 
-fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = []; isi = []; 
+fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = []; isi = []; pt_sym = []; 
 for ii = length(stats):-1:1
     fr(ii) = stats{ii}.firing_rate;
     bur_idx(ii) = stats{ii}.burst_idx;
     s_w(ii) = stats{ii}.spike_width*1000;
     s_r(ii) = stats{ii}.slopes_ratio; 
     isi(ii) = stats{ii}.ISI_cv;
+        pt_sym(ii) = abs(stats{ii}.pt_sym_r(1,2));
     pt_r(ii) = (stats{ii}.pt_ratio);
     rfint(ii) = stats{ii}.rise_fall_inter;
     wave_dur(ii) = stats{ii}.wave_dur*1000;
@@ -417,7 +418,7 @@ end
 figure(808); clf
 subplot(2, 2, 1)
 
-[g_idx, n_val] = MS_kmean_scatter([fr', bur_idx', pt_r'], 2, [1,2,3], 50);
+[g_idx, n_val] = MS_kmean_scatter([fr', bur_idx',pt_sym'], 3, [1,2,3], 50);
 xlabel('Firing rate (Hz)');
 ylabel('burst index')
 zlabel('spike width')
@@ -451,10 +452,12 @@ for ii = 1:length(unique(g_idx))
     cla
     hold on
     for jj = 1
-        shadedErrorBar(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(:, g_idx == ii),2),std(wave_forms(:,g_idx == ii),[],2) )
-        plot(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(:, g_idx == ii),2))
+        this_wave = wave_forms(:, g_idx == ii)./max(wave_forms(:, g_idx == ii)); 
+
+        shadedErrorBar(this_S.waves{1}.xrange(:,jj), nanmean(this_wave,2),std(this_wave,[],2) )
+        plot(this_S.waves{1}.xrange(:,jj), nanmean(this_wave,2))
         % errorbar(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(jj+1,:, g_idx == ii),3) +std(wave_forms(jj+1,:, g_idx == ii),[],3))
-        plot(this_S.waves{1}.xrange(:,jj), wave_forms(:, g_idx == ii))
+        plot(this_S.waves{1}.xrange(:,jj), this_wave)
 
 
     end

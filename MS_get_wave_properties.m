@@ -67,6 +67,7 @@ if plot_flag % time consuming for fast spiking cells. so only compute with plots
 end
 
 ISI = diff(S.t{1});
+ISI(ISI < 0.002) = []; % remove spikes within the refractory period
 
 
 % ac = ac./max(ac); % normalize
@@ -208,7 +209,7 @@ end
 %hold off
 wave_prop.wave = wave;
 wave_prop.firing_rate = spike_rate;
-wave_prop.ISI = diff(S.t{1}); 
+wave_prop.ISI = ISI; 
 wave_prop.ISI_cv = std(wave_prop.ISI)./ mean(wave_prop.ISI); 
 % wave_prop.burstingidx = [];
 wave_prop.spike_width = width;
