@@ -337,6 +337,7 @@ sig_n_idx = app_out.z_mean_fr(:,5) < -1.96;
 
 subplot(2,2,1); cla
 hold on
+
  imagesc(tvec_peta, 1:size(all_peta,3), this_all_peta')
 % plot(tvec_peta(pos_max_idx), 1:size(all_peth,3), 'x')
 plot(tvec_peta(pos_max_idx(sig_p_idx)), find(sig_p_idx), 'x', 'MarkerSize',8, 'LineWidth',2)
@@ -458,8 +459,6 @@ for ii = 1:length(unique(g_idx))
         plot(this_S.waves{1}.xrange(:,jj), nanmean(this_wave,2))
         % errorbar(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(jj+1,:, g_idx == ii),3) +std(wave_forms(jj+1,:, g_idx == ii),[],3))
         plot(this_S.waves{1}.xrange(:,jj), this_wave)
-
-
     end
     title(['Group ' num2str(ii) ' | n=' num2str(sum(g_idx == ii))  ' | FR:' num2str(round(mean(fr(g_idx == ii)),2)) '\pm' num2str(round(std(fr(g_idx == ii)),2))])
 
