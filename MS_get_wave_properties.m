@@ -106,6 +106,10 @@ best_wave = wave(best_wave_idx+1, :);
 [t_max, ~] = min(best_wave(p_idx:end));
 t_idx = find(best_wave == t_max); 
 
+[t_pre_max, ~] = min(best_wave(1:p_idx)); 
+pre_val_idx = find(best_wave == t_pre_max); 
+
+
 % % check that valley flows
 
 % if wave_tvec(t_idx)< wave_tvec(p_idx)
@@ -158,9 +162,10 @@ rise_fall_inter =abs( ((wave_tvec(p_idx) - wave_tvec(rise_idx))*.25 +wave_tvec(r
 
 % get the peak to valley ratio
 pt_ratio = best_wave(p_idx) / best_wave(val_idx);
+pt_ratio = best_wave(p_idx) / best_wave(val_idx);
 
 % bursting propensity
-burst_idx = sum(ISI < .010) / sum(ISI > .010);
+burst_idx = (sum(ISI < .010)./lengthsum(ISI < .010)) / (sum(ISI > .010)./length(ISI > .010));
       
 %%
       

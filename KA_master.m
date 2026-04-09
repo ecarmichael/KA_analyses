@@ -844,36 +844,117 @@ fprintf('Overall modulation: Rew positive %0.2f%%  Rew negative %0.2f%%  No mod 
 p_types = unique(phase);
 Phase = [];rew_mat = []; app_mat = [];
 
+this_rew_h = abs(rew_out.z_mean_fr) > 1.96; 
+this_app_h = abs(app_out.z_mean_fr) > 1.96; 
+
+
 for iP = length(p_types):-1:1
     this_idx = strcmpi(p_types{iP}, phase);
     for ii = size(rew_out.h,2):-1:1
-        Phase.rew_mod{iP}(:,ii) = sum(sum(rew_out.h(this_idx,ii),2)>0)/sum(this_idx);
-        Phase.app_mod{iP}(:,ii) = sum(sum(app_out.h(this_idx,ii),2)>0)/sum(this_idx);
+        Phase.rew_mod{iP}(:,ii) = sum(sum(this_rew_h(this_idx,ii),2)>0)/sum(this_idx);
+        Phase.app_mod{iP}(:,ii) = sum(sum(this_app_h(this_idx,ii),2)>0)/sum(this_idx);
+
+        % Phase.rew_mod{iP}(:,ii) = sum(sum(rew_out.h(this_idx,ii),2)>0)/sum(this_idx);
+        % Phase.app_mod{iP}(:,ii) = sum(sum(app_out.h(this_idx,ii),2)>0)/sum(this_idx);
     end
     rew_mat(iP,:) = Phase.rew_mod{iP};
     app_mat(iP,:) = Phase.app_mod{iP};
     %     labels{iP} = [p_types{iP}(1) str2double(p_types{iP}(end))]);
 end
 
+% get the 'any modulation'
+for iP = length(p_types):-1:1
+    this_idx = strcmpi(p_types{iP}, phase);
+
+    % any mod
+        Phase.rew_mod{iP}(:,6) = sum(sum(this_rew_h(this_idx,1:4),2)>0)/sum(this_idx);
+        Phase.app_mod{iP}(:,6) = sum(sum(this_app_h(this_idx,1:4),2)>0)/sum(this_idx);
+
+    rew_mat(iP,6) = Phase.rew_mod{iP}(:,6);
+    app_mat(iP,6) = Phase.app_mod{iP}(:,6);
+    
+    % Large reward only
+    Phase.rew_mod{iP}(:,7) = sum(sum(this_rew_h(this_idx,1:2),2)>0)/sum(this_idx);
+    Phase.app_mod{iP}(:,7) = sum(sum(this_app_h(this_idx,1:2),2)>0)/sum(this_idx);
+
+    rew_mat(iP,7) = Phase.rew_mod{iP}(:,7);
+    app_mat(iP,7) = Phase.app_mod{iP}(:,7);
+
+        % small reward only
+    Phase.rew_mod{iP}(:,8) = sum(sum(this_rew_h(this_idx,3:4),2)>0)/sum(this_idx);
+    Phase.app_mod{iP}(:,8) = sum(sum(this_app_h(this_idx,3:4),2)>0)/sum(this_idx);
+
+    rew_mat(iP,8) = Phase.rew_mod{iP}(:,8);
+    app_mat(iP,8) = Phase.app_mod{iP}(:,8);
+end
+
+
 figure(1099)
 clf
 
-subplot(1,2,1)
-imagesc(1:5, 1:length(p_types), rew_mat*100);
-set(gca, 'xtick', [1:5], 'XTickLabel', {'North', 'West', 'South', 'East', 'overall'});
+subplot(3,2,[1 3])
+imagesc(1:8, 1:length(p_types), rew_mat*100);
+set(gca, 'xtick', [1:8], 'XTickLabel', {'North', 'West', 'South', 'East', 'overall', 'any', 'large', 'small'});
 set(gca,'YTick', 1:length(p_types),  'YTickLabel', p_types)
-caxis([0 75]); c = colorbar('Location', 'eastoutside');
-c.Ticks = [0 25 50 75]; c.Label.String = '% modulated cells';
+caxis([0 100]); c = colorbar('Location', 'eastoutside');
+c.Ticks = [0 25 50 75 100]; c.Label.String = '% modulated cells';
 title('Reward')
 
-subplot(1,2,2); cla;
-imagesc(1:5, 1:length(p_types), app_mat*100);
-set(gca, 'xtick', [1:5], 'XTickLabel', {'North', 'West', 'South', 'East', 'overall'});
+subplot(3,2,[2 4]); cla;
+imagesc(1:8, 1:length(p_types), app_mat*100);
+set(gca, 'xtick', [1:8], 'XTickLabel', {'North', 'West', 'South', 'East', 'overall', 'any', 'large', 'small'});
 set(gca,'YTick', 1:length(p_types),  'YTickLabel', p_types)
-caxis([0 75]); c = colorbar('Location', 'eastoutside');
-c.Ticks = [0 25 50 75]; c.Label.String = '% modulated cells';
+caxis([0 100]); c = colorbar('Location', 'eastoutside');
+c.Ticks = [0 25 50 75 100]; c.Label.String = '% modulated cells';
 title('Approach')
 
+
+% overalls
+subplot(3,2,5); cla; hold on
+MS_bar_w_err(rew_mat(1:3,6)'*100,rew_mat(4:7,6)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
+MS_bar_w_err(rew_mat(8:10,6)'*100,rew_mat(11:13,6)'*100, [c_ord(3,:); c_ord(4,:)],1, 'ttest2', 3:4);
+set(gca, 'xtick', 1:4, 'XTickLabel', {'C', 'O_e', 'O_l', 'R'});
+xlim([0.5 4.5])
+ylabel('% modulated cells');
+title('Reward any')
+
+subplot(3,2,6); cla; hold on
+MS_bar_w_err(app_mat(1:3,6)'*100,app_mat(4:7,6)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
+MS_bar_w_err(app_mat(8:10,6)'*100,app_mat(11:13,6)'*100, [c_ord(3,:); c_ord(4,:)],1, 'ttest2', 3:4);
+set(gca, 'xtick', 1:4, 'XTickLabel', {'C', 'O_e', 'O_l', 'R'});
+xlim([0.5 4.5])
+ylabel('% modulated cells');
+title('Approach any')
+
+figure(10909)
+clf
+subplot(2,2,1); cla; hold on
+MS_bar_w_err(rew_mat(:,7)'*100,rew_mat(:,8)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
+set(gca, 'xtick', 1:2, 'XTickLabel', {'small', 'large'});
+xlim([0.5 2.5])
+ylabel('% modulated cells');
+title('Reward any')
+
+subplot(2,2,2); cla; hold on
+MS_bar_w_err(app_mat(:,7)'*100,app_mat(:,8)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
+set(gca, 'xtick', 1:2, 'XTickLabel', {'small', 'large'});
+xlim([0.5 2.5])
+ylabel('% modulated cells');
+title('Approach any')
+
+subplot(2,2,3); cla; hold on
+MS_bar_w_err(sum(this_rew_h(:,1:2))'*100,this_rew_h(:,3:4)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
+set(gca, 'xtick', 1:2, 'XTickLabel', {'small', 'large'});
+xlim([0.5 2.5])
+ylabel('% modulated cells');
+title('Reward any')
+
+subplot(2,2,4); cla; hold on
+MS_bar_w_err(this_app_h(:,1:2)'*100,this_app_h(:,3:4)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
+set(gca, 'xtick', 1:2, 'XTickLabel', {'small', 'large'});
+xlim([0.5 2.5])
+ylabel('% modulated cells');
+title('Approach any')
 
 %% collect the percentage response
 k = 0;
