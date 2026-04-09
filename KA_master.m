@@ -929,32 +929,32 @@ title('Approach any')
 figure(10909)
 clf
 subplot(2,2,1); cla; hold on
-MS_bar_w_err(rew_mat(:,7)'*100,rew_mat(:,8)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
-set(gca, 'xtick', 1:2, 'XTickLabel', {'small', 'large'});
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err(rew_mat(:,7)'*100,rew_mat(:,8)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest', 1:2);
+set(gca, 'xtick', 1:2, 'XTickLabel', {'large', 'small'});
 xlim([0.5 2.5])
 ylabel('% modulated cells');
 title('Reward any')
 
 subplot(2,2,2); cla; hold on
-MS_bar_w_err(app_mat(:,7)'*100,app_mat(:,8)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
-set(gca, 'xtick', 1:2, 'XTickLabel', {'small', 'large'});
+[~, ~, ~,a_t_p, a_t_stats] = MS_bar_w_err(app_mat(:,7)'*100,app_mat(:,8)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest', 1:2);
+set(gca, 'xtick', 1:2, 'XTickLabel', {'large', 'small'});
 xlim([0.5 2.5])
 ylabel('% modulated cells');
 title('Approach any')
-
-subplot(2,2,3); cla; hold on
-MS_bar_w_err(sum(this_rew_h(:,1:2))'*100,this_rew_h(:,3:4)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
-set(gca, 'xtick', 1:2, 'XTickLabel', {'small', 'large'});
-xlim([0.5 2.5])
-ylabel('% modulated cells');
-title('Reward any')
-
-subplot(2,2,4); cla; hold on
-MS_bar_w_err(this_app_h(:,1:2)'*100,this_app_h(:,3:4)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
-set(gca, 'xtick', 1:2, 'XTickLabel', {'small', 'large'});
-xlim([0.5 2.5])
-ylabel('% modulated cells');
-title('Approach any')
+% 
+% subplot(2,2,3); cla; hold on
+% MS_bar_w_err(sum(this_rew_h(:,1:2),2)'*100,this_rew_h(:,3:4)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
+% set(gca, 'xtick', 1:2, 'XTickLabel', {'small', 'large'});
+% xlim([0.5 2.5])
+% ylabel('% modulated cells');
+% title('Reward any')
+% 
+% subplot(2,2,4); cla; hold on
+% MS_bar_w_err(this_app_h(:,1:2)'*100,this_app_h(:,3:4)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
+% set(gca, 'xtick', 1:2, 'XTickLabel', {'small', 'large'});
+% xlim([0.5 2.5])
+% ylabel('% modulated cells');
+% title('Approach any')
 
 %% collect the percentage response
 k = 0;
