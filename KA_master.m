@@ -76,7 +76,7 @@ c_map = [.05 .05 0.05 ; c_ord(2,:)]; %[6, 25, 34; 249, 160, 27]/255; % SUNS colo
 f_id = {'North', 'West', 'South',  'East', 'Overall'};
 flav_id = {'Grape x3','Orange x3', 'Grape x1', 'Orange x1', '   '};
 
-rng(123, 'twister') % set the rng seed
+rng(1111, 'twister') % set the rng seed
 
 %% loop over sessions / cells
 cd(data_dir)
@@ -132,7 +132,7 @@ end
 fprintf('<strong>%0.0f total sessions, %0.2f had good cells, %0.0f omitted, %0.0f no spike data, %0.0f too short</strong>\n', length(success), sum(success==1), sum(success==99), sum(success==404), sum(success==-10))
 %% Process each cell within a session
 
-rng(123, 'twister')
+rng(1111, 'twister')
 cd(inter_dir)
 sess_list = dir([inter_dir filesep 'C*.mat']);
 
@@ -319,23 +319,53 @@ app_no_mod = sum(sum(app_out.h(:,1:5),2) == 0);
 
 % save([parent_path filesep 'Spd_data.mat'], 'spd_data')
 
-%% generate histograms of the maximal and miniaml firing rates that exceed +/- 1.96sd (using PETH and PETA)
-kk = 5; 
+%% sort cells in the output matrix by phase
+
+[phase_sort, phase_sort_idx] = sort(phase); % lucky that they are already in a sortable format. 
+
+phase_sort_idx = flipud(fliplr(phase_sort_idx));
+phase_sort = flipud(fliplr(phase_sort));
+
+c_idx = find(contains(phase_sort, 'C'));
+oe_idx = find(contains(phase_sort, {'O1', 'O2', 'O3'}));
+ol_idx = find(contains(phase_sort, { 'O4','O5', 'O6', 'O7'}));
+r_idx = find(contains(phase_sort, 'R'));
+
+% phase colours
+c = linspecer(5);
+
+c_ord = c; % one for each session type C, O, E, R.
+c_ord(2,:) =  c(4,:);
+c_ord(3,:) = c(2,:);
+c_ord(4,:) = c(5,:);
+
+blues = parula(16); reds = jet(64); oranges = autumn(16);
+sess_cord = [flipud(blues(3:2:7,:));(reds(end-7:end-1,:)); c_ord(3,:); flipud(oranges(end-9:end-6,:))];
+
+
+c_orange = [255 150 0]/255;
+c_l_orange = [255 213 153]/255;
+c_purple = [98 66 158]/255;
+c_l_purple = [198 183 225]/255;
+
 c_blue = [ 0.3639    0.5755    0.7484]; 
 c_red = [0.9153    0.2816    0.2878]; 
 
-% test it
-figure(10)
+%% generate histograms of the maximal and miniaml firing rates that exceed +/- 1.96sd (using PETH and PETA)
+kk = 5; 
 
-this_all_peta = squeeze(z_peta_app(:,5,:));
+% test it
+figure(10); clf
+
+this_all_peta = squeeze(z_peta_app(:,5,phase_sort_idx));
 [~, pos_max_idx] = max(this_all_peta,[], 1, 'omitmissing');
 [~, pos_min_idx] = min(this_all_peta,[], 1, 'omitmissing');
 % sig_p_idx = sum(this_all_peta> 1.96,1) > 0; 
 % sig_n_idx = sum(this_all_peta < -1.96,1) > 0; 
-sig_p_idx = app_out.z_mean_fr(:,5) > 1.96;
-sig_n_idx = app_out.z_mean_fr(:,5) < -1.96; 
+sig_p_idx = app_out.z_mean_fr(phase_sort_idx,5) > 1.96;
+sig_n_idx = app_out.z_mean_fr(phase_sort_idx,5) < -1.96; 
 
-subplot(2,2,1); cla
+subplot(5,2,[1 3]); cla
 hold on
 
  imagesc(tvec_peta, 1:size(all_peta,3), this_all_peta')
@@ -347,8 +377,36 @@ clim([-5 5])
 ylim([.5 size(all_peta,3)+.5])
 xline(0, '--k', 'LineWidth',2); 
 title('Shuffle Normalized PETA: approach')
+h = line([cfg_peth.window(end)+.1 cfg_peth.window(end)+.1], [c_idx(1) c_idx(end)], 'Color',c_ord(1,:), 'linewidth', 4); h.Clipping = 'off';
+h = line([cfg_peth.window(end)+.1 cfg_peth.window(end)+.1], [oe_idx(1), oe_idx(end)], 'Color',c_ord(2,:), 'linewidth', 4); h.Clipping = 'off';
+h = line([cfg_peth.window(end)+.1 cfg_peth.window(end)+.1], [ol_idx(1),ol_idx(end)], 'Color',c_ord(3,:), 'linewidth', 4); h.Clipping = 'off';
+h = line([cfg_peth.window(end)+.1 cfg_peth.window(end)+.1], [r_idx(1) r_idx(end)], 'Color',c_ord(4,:), 'linewidth', 4); h.Clipping = 'off';
+ylabel('Cells')
 
-subplot(2,2,3); cla; hold on;
+
+subplot(5,2,5); cla
+hold on
+s_mat = this_all_peta(:,sig_p_idx | sig_n_idx); 
+imagesc(tvec_peta, 1:size(s_mat,2), s_mat')
+clim([-5 5])
+ylim([.5 size(s_mat,2)+.5])
+xlim([cfg_peth.window])
+title('Sig Approach ONLY')
+ylabel('Responsive cells')
+
+subplot(5,2,7); cla
+hold on
+ylim([-1.5 1.5])
+plot(tvec_peta, mean(this_all_peta(:,sig_p_idx)./max(this_all_peta(:,sig_p_idx)), 2,"omitmissing"), '-', 'color', c_blue, 'LineWidth',2)
+plot(tvec_peta, mean(this_all_peta(:,sig_n_idx)./max(this_all_peta(:,sig_n_idx)), 2,"omitmissing"),'-', 'color', c_red, 'LineWidth',2)
+xlim([cfg_peth.window])
+xline(0, '--k', 'LineWidth',2); 
+legend({'Pos mean', 'Neg mean', ''}, 'Box','off')
+ylabel('norm FR')
+set(gca, 'ytick', [-1.5 0 1.5]);
+
+
+subplot(5,2,9); cla; hold on;
 
 histogram(tvec_peta(pos_max_idx((sig_p_idx))), cfg_peth.window(1):.25:cfg_peth.window(2), 'FaceColor',c_blue,'facealpha',.7,'edgecolor','none', 'Normalization', 'percentage');
 histogram(tvec_peta(pos_min_idx((sig_n_idx))), cfg_peth.window(1):.25:cfg_peth.window(2), 'FaceColor',c_red,'facealpha',.3,'edgecolor','none', 'Normalization','percentage');
@@ -361,18 +419,19 @@ xlim([cfg_peth.window])
 xlabel('Time from reward (s)')
 xline(0, '--k', 'LineWidth',2); 
 legend({ ['Sig Pos ' num2str((sum(sig_p_idx)/length(sig_p_idx))*100,3) '%'], ['Sig Neg ' num2str((sum(sig_n_idx)/length(sig_n_idx))*100,3) '%'],'Pop maxima', 'Pop minimum', ''}, 'Box', 'off')
+ylabel('% cells')
 
 
 % Reward PETA
-this_all_peta = squeeze(z_peta(:,5,:));
+this_all_peta = squeeze(z_peta(:,5,phase_sort_idx));
 
 [~, pos_max_idx] = max(this_all_peta,[], 1, 'omitmissing');
 [~, pos_min_idx] = min(this_all_peta,[], 1, 'omitmissing');
-sig_p_idx = rew_out.z_mean_fr(:,5) > 1.96;
-sig_n_idx = rew_out.z_mean_fr(:,5) < -1.96; 
+sig_p_idx = rew_out.z_mean_fr(phase_sort_idx,5) > 1.96;
+sig_n_idx = rew_out.z_mean_fr(phase_sort_idx,5) < -1.96; 
 
 
-subplot(2,2,2); cla
+subplot(5,2,[2 4]); cla
 hold on
  imagesc(tvec_peta, 1:size(all_peta,3), this_all_peta')
 % plot(tvec_peta(pos_max_idx), 1:size(all_peth,3), 'x')
@@ -383,8 +442,31 @@ clim([-5 5])
 ylim([.5 size(all_peta,3)+.5])
 xline(0, '--k', 'LineWidth',2); 
 title('Shuffle Normalized PETA: Reward')
+h = line([cfg_peth.window(end)+.1 cfg_peth.window(end)+.1], [c_idx(1) c_idx(end)], 'Color',c_ord(1,:), 'linewidth', 4); h.Clipping = 'off';
+h = line([cfg_peth.window(end)+.1 cfg_peth.window(end)+.1], [oe_idx(1), oe_idx(end)], 'Color',c_ord(2,:), 'linewidth', 4); h.Clipping = 'off';
+h = line([cfg_peth.window(end)+.1 cfg_peth.window(end)+.1], [ol_idx(1),ol_idx(end)], 'Color',c_ord(3,:), 'linewidth', 4); h.Clipping = 'off';
+h = line([cfg_peth.window(end)+.1 cfg_peth.window(end)+.1], [r_idx(1) r_idx(end)], 'Color',c_ord(4,:), 'linewidth', 4); h.Clipping = 'off';
 
-subplot(2,2,4); cla; hold on;
+subplot(5,2,6); cla
+hold on
+s_mat = this_all_peta(:,sig_p_idx | sig_n_idx); 
+imagesc(tvec_peta, 1:size(s_mat,2), s_mat')
+clim([-5 5])
+ylim([.5 size(s_mat,2)+.5])
+xlim([cfg_peth.window])
+title('Sig Reward ONLY')
+
+subplot(5,2,8); cla
+hold on
+plot(tvec_peta, mean(this_all_peta(:,sig_p_idx)./max(this_all_peta(:,sig_p_idx)), 2,"omitmissing"), '-', 'color', c_blue, 'LineWidth',2)
+plot(tvec_peta, mean(this_all_peta(:,sig_n_idx)./max(this_all_peta(:,sig_n_idx)), 2,"omitmissing"),'-', 'color', c_red, 'LineWidth',2)
+xlim([cfg_peth.window])
+ylim([-1.5 1.5])
+xline(0, '--k', 'LineWidth',2); 
+legend({'Pos mean', 'Neg mean', ''}, 'Box','off')
+set(gca, 'ytick', [-1.5 0 1.5]);
+
+subplot(5,2,10); cla; hold on;
 histogram(tvec_peta(pos_max_idx((sig_p_idx))), cfg_peth.window(1):.25:cfg_peth.window(2), 'FaceColor',c_blue,'facealpha',.7,'edgecolor','none', 'Normalization', 'percentage');
 histogram(tvec_peta(pos_min_idx((sig_n_idx))), cfg_peth.window(1):.25:cfg_peth.window(2), 'FaceColor',c_red,'facealpha',.3,'edgecolor','none', 'Normalization','percentage');
 [hy, hx] = hist(tvec_peta(pos_max_idx),  cfg_peth.window(1):.1:cfg_peth.window(2)); 
@@ -398,9 +480,14 @@ xlabel('Time from reward (s)')
 xline(0, '--k', 'LineWidth',2); 
 legend({ ['Sig Pos ' num2str((sum(sig_p_idx)/length(sig_p_idx))*100,3) '%'], ['Sig Neg ' num2str((sum(sig_n_idx)/length(sig_n_idx))*100,3) '%'],'Pop maxima', 'Pop minimum', ''}, 'Box', 'off')
 
+
+set(gcf,'Units','Inches');
+pos = get(gcf,'Position');
+set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(gcf,[parent_path filesep 'PETA.pdf'],'-dpdf','-r300')
 %% classify cells based on waveform properties
 
-rng(4321, 'twister') % set the rng seed again in case something else got run. 
+rng(1111, 'twister') % set the rng seed again in case something else got run. 
 
 
 fr = []; bur_idx = []; s_w = []; pt_r = []; rfint = []; wave_dur = []; wave_forms = []; isi = []; pt_sym = []; 
@@ -410,7 +497,7 @@ for ii = length(stats):-1:1
     s_w(ii) = stats{ii}.spike_width*1000;
     s_r(ii) = stats{ii}.slopes_ratio; 
     isi(ii) = stats{ii}.ISI_cv;
-        pt_sym(ii) = abs(stats{ii}.pt_sym_r(1,2));
+    pt_sym(ii) = abs(stats{ii}.pt_sym_r(1,2));
     pt_r(ii) = (stats{ii}.pt_ratio);
     rfint(ii) = stats{ii}.rise_fall_inter;
     wave_dur(ii) = stats{ii}.wave_dur*1000;
@@ -419,12 +506,12 @@ end
 figure(808); clf
 subplot(2, 2, 1)
 
-[g_idx, n_val] = MS_kmean_scatter([fr', bur_idx',pt_sym'], 3, [1,2,3], 50);
+[g_idx, n_val] = MS_kmean_scatter([(fr)', bur_idx',s_r'], 2, [1,2,3], 50);
 xlabel('Firing rate (Hz)');
 ylabel('burst index')
-zlabel('spike width')
+zlabel('spike slope ratio')
 
-set(gca, 'XScale', 'log')
+% set(gca, 'XScale', 'log')
 % fprintf('Clustering returned %0.0f groups based on firing rate, burst index, and spike width <strong>G1: %0.0f%% G2: %0.0f%% G3: %0.0f%%</strong>\n',...
 %     length(unique(g_idx)), (n_val(1)/length(g_idx))*100, (n_val(2)/length(g_idx))*100, (n_val(3)/length(g_idx))*100)
 
@@ -460,15 +547,178 @@ for ii = 1:length(unique(g_idx))
         % errorbar(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(jj+1,:, g_idx == ii),3) +std(wave_forms(jj+1,:, g_idx == ii),[],3))
         plot(this_S.waves{1}.xrange(:,jj), this_wave)
     end
-    title(['Group ' num2str(ii) ' | n=' num2str(sum(g_idx == ii))  ' | FR:' num2str(round(mean(fr(g_idx == ii)),2)) '\pm' num2str(round(std(fr(g_idx == ii)),2))])
+    title(['Group ' num2str(ii) ' | n=' num2str(sum(g_idx == ii))  ' | FR:' num2str(round(mean(fr(g_idx == ii)),2)) '\pm' num2str(round(std(fr(g_idx == ii)),2))], 'Interpreter','tex')
 
 end
 
 set(gcf,'Units','Inches');
 pos = get(gcf,'Position');
-set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-print(gcf,[parent_path filesep 'wave_feature.pdf'],'-dpdf','-r300')
+% set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+% print(gcf,[parent_path filesep 'wave_feature.pdf'],'-dpdf','-r300')
 
+% sort the data 
+g_idx = g_idx(phase_sort_idx); 
+%% collect the responses over the phases
+p_types = unique(phase);
+Phase = [];rew_mat = []; app_mat = [];
+
+this_rew_h = abs(rew_out.z_mean_fr) > 1.96; 
+this_app_h = abs(app_out.z_mean_fr) > 1.96; 
+
+rew_z_sort = rew_out.z_mean_fr(phase_sort_idx,:);
+app_z_sort = app_out.z_mean_fr(phase_sort_idx,:); 
+
+
+for iP = length(p_types):-1:1
+    this_idx = strcmpi(p_types{iP}, phase);
+    for ii = size(rew_out.h,2):-1:1
+        Phase.rew_mod{iP}(:,ii) = sum(sum(this_rew_h(this_idx,ii),2)>0)/sum(this_idx);
+        Phase.app_mod{iP}(:,ii) = sum(sum(this_app_h(this_idx,ii),2)>0)/sum(this_idx);
+
+        % Phase.rew_mod{iP}(:,ii) = sum(sum(rew_out.h(this_idx,ii),2)>0)/sum(this_idx);
+        % Phase.app_mod{iP}(:,ii) = sum(sum(app_out.h(this_idx,ii),2)>0)/sum(this_idx);
+    end
+    rew_mat(iP,:) = Phase.rew_mod{iP};
+    app_mat(iP,:) = Phase.app_mod{iP};
+    %     labels{iP} = [p_types{iP}(1) str2double(p_types{iP}(end))]);
+end
+
+% get the 'any modulation'
+for iP = length(p_types):-1:1
+    this_idx = strcmpi(p_types{iP}, phase);
+
+    % any mod
+        Phase.rew_mod{iP}(:,6) = sum(sum(this_rew_h(this_idx,1:4),2)>0)/sum(this_idx);
+        Phase.app_mod{iP}(:,6) = sum(sum(this_app_h(this_idx,1:4),2)>0)/sum(this_idx);
+
+    rew_mat(iP,6) = Phase.rew_mod{iP}(:,6);
+    app_mat(iP,6) = Phase.app_mod{iP}(:,6);
+    
+    % Large reward only
+    Phase.rew_mod{iP}(:,7) = sum(sum(this_rew_h(this_idx,1:2),2)>0)/sum(this_idx);
+    Phase.app_mod{iP}(:,7) = sum(sum(this_app_h(this_idx,1:2),2)>0)/sum(this_idx);
+
+    rew_mat(iP,7) = Phase.rew_mod{iP}(:,7);
+    app_mat(iP,7) = Phase.app_mod{iP}(:,7);
+
+        % small reward only
+    Phase.rew_mod{iP}(:,8) = sum(sum(this_rew_h(this_idx,3:4),2)>0)/sum(this_idx);
+    Phase.app_mod{iP}(:,8) = sum(sum(this_app_h(this_idx,3:4),2)>0)/sum(this_idx);
+
+    rew_mat(iP,8) = Phase.rew_mod{iP}(:,8);
+    app_mat(iP,8) = Phase.app_mod{iP}(:,8);
+end
+
+
+figure(1099)
+clf
+
+subplot(3,2,[1 3])
+imagesc(1:8, 1:length(p_types), rew_mat*100);
+set(gca, 'xtick', [1:8], 'XTickLabel', {'North', 'West', 'South', 'East', 'overall', 'any', 'large', 'small'});
+set(gca,'YTick', 1:length(p_types),  'YTickLabel', p_types)
+caxis([0 100]); c = colorbar('Location', 'eastoutside');
+c.Ticks = [0 25 50 75 100]; c.Label.String = '% modulated cells';
+title('Reward')
+
+subplot(3,2,[2 4]); cla;
+imagesc(1:8, 1:length(p_types), app_mat*100);
+set(gca, 'xtick', [1:8], 'XTickLabel', {'North', 'West', 'South', 'East', 'overall', 'any', 'large', 'small'});
+set(gca,'YTick', 1:length(p_types),  'YTickLabel', p_types)
+caxis([0 100]); c = colorbar('Location', 'eastoutside');
+c.Ticks = [0 25 50 75 100]; c.Label.String = '% modulated cells';
+title('Approach')
+
+
+% overalls
+subplot(3,2,5); cla; hold on
+MS_bar_w_err(rew_mat(1:3,6)'*100,rew_mat(4:7,6)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
+MS_bar_w_err(rew_mat(8:10,6)'*100,rew_mat(11:13,6)'*100, [c_ord(3,:); c_ord(4,:)],1, 'ttest2', 3:4);
+set(gca, 'xtick', 1:4, 'XTickLabel', {'C', 'O_e', 'O_l', 'R'});
+xlim([0.5 4.5])
+ylabel('% modulated cells');
+title('Reward any')
+
+subplot(3,2,6); cla; hold on
+MS_bar_w_err(app_mat(1:3,6)'*100,app_mat(4:7,6)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
+MS_bar_w_err(app_mat(8:10,6)'*100,app_mat(11:13,6)'*100, [c_ord(3,:); c_ord(4,:)],1, 'ttest2', 3:4);
+set(gca, 'xtick', 1:4, 'XTickLabel', {'C', 'O_e', 'O_l', 'R'});
+xlim([0.5 4.5])
+ylabel('% modulated cells');
+title('Approach any')
+
+figure(10909)
+clf
+subplot(2,2,1); cla; hold on
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err(rew_mat(:,7)'*100,rew_mat(:,8)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest', 1:2);
+set(gca, 'xtick', 1:2, 'XTickLabel', {'large', 'small'});
+xlim([0.5 2.5])
+ylabel('% modulated cells');
+title('Reward any')
+
+subplot(2,2,2); cla; hold on
+[~, ~, ~,a_t_p, a_t_stats] = MS_bar_w_err(app_mat(:,7)'*100,app_mat(:,8)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest', 1:2);
+set(gca, 'xtick', 1:2, 'XTickLabel', {'large', 'small'});
+xlim([0.5 2.5])
+ylabel('% modulated cells');
+title('Approach any')
+
+
+%%%%%%%% receate original plots but with the zscores
+figure(2001)
+clf
+subplot(2,3,1); cla; hold on
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err(rew_z_sort(c_idx,5),rew_z_sort(oe_idx,5), [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2); 
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err(rew_z_sort(ol_idx,5),rew_z_sort(r_idx,5), [c_ord(3,:); c_ord(4,:)], 1,'ttest2', 3:4);
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err(rew_z_sort(oe_idx,5),rew_z_sort(ol_idx,5), [c_ord(2,:); c_ord(3,:)], 0,'ttest2', 2:3);
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err(rew_z_sort(c_idx,5),rew_z_sort(ol_idx,5), [c_ord(1,:); c_ord(3,:)], 0,'ttest2', [1 3]);
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err(rew_z_sort(c_idx,5),rew_z_sort(r_idx,5), [c_ord(1,:); c_ord(4,:)], 0,'ttest2', [1 4]);
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err(rew_z_sort(oe_idx,5),rew_z_sort(r_idx,5), [c_ord(2,:); c_ord(3,:)], 0,'ttest2', [2 4]);
+
+set(gca, 'xtick', [1:4], 'XTickLabel', {'Critia', 'Early Overtrain', 'Late overtrain', 'Post-devaluation'}, 'XTickLabelRotation', 45);
+xlim([0.5 4.5])
+ylim([-8 14]);
+ylabel('Reward response (zscore)');
+
+
+subplot(2,3,2); cla; hold on
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err([rew_z_sort(c_idx,1); rew_z_sort(c_idx,3)] ,[rew_z_sort(c_idx,2); rew_z_sort(c_idx,4)], [c_purple; c_orange], 1,'ttest2', 1:2); 
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err([rew_z_sort(oe_idx,1); rew_z_sort(oe_idx,3)] ,[rew_z_sort(oe_idx,2); rew_z_sort(oe_idx,4)], [c_purple; c_orange], 1,'ttest2', 4:5); 
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err([rew_z_sort(ol_idx,1); rew_z_sort(ol_idx,3)] ,[rew_z_sort(ol_idx,2); rew_z_sort(ol_idx,4)], [c_purple; c_orange], 1,'ttest2', 7:8); 
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err([rew_z_sort(r_idx,1); rew_z_sort(r_idx,3)] ,[rew_z_sort(r_idx,2); rew_z_sort(r_idx,4)], [c_purple; c_orange], 1,'ttest2', 10:11); 
+
+set(gca, 'xtick', [1.5 4.5 7.5 10.5], 'XTickLabel', {'Critia', 'Early Overtrain', 'Late overtrain', 'Post-devaluation'}, 'XTickLabelRotation', 45);
+xlim([0.5 11.5])
+ylim([-10 25]);
+ylabel('Reward response (zscore)');
+title('Reward any')
+
+subplot(2,3,3); cla; hold on
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err([rew_z_sort(c_idx,3); rew_z_sort(c_idx,4)] ,[rew_z_sort(c_idx,1); rew_z_sort(c_idx,2)], [.8 .8 .8; .5 .5 .5], 1,'ttest2', 1:2); 
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err([rew_z_sort(oe_idx,3); rew_z_sort(oe_idx,4)] ,[rew_z_sort(oe_idx,1); rew_z_sort(oe_idx,2)], [.8 .8 .8; .5 .5 .5], 1,'ttest2', 4:5); 
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err([rew_z_sort(ol_idx,3); rew_z_sort(ol_idx,4)] ,[rew_z_sort(ol_idx,1); rew_z_sort(ol_idx,2)], [.8 .8 .8; .5 .5 .5], 1,'ttest2', 7:8); 
+[~, ~, ~,t_p, t_stats] = MS_bar_w_err([rew_z_sort(r_idx,3); rew_z_sort(r_idx,4)] ,[rew_z_sort(r_idx,1); rew_z_sort(r_idx,2)], [.8 .8 .8; .5 .5 .5], 1,'ttest2', 10:11); 
+
+set(gca, 'xtick', [1.5 4.5 7.5 10.5], 'XTickLabel', {'Critia', 'Early Overtrain', 'Late overtrain', 'Post-devaluation'}, 'XTickLabelRotation', 45);
+xlim([0.5 11.5])
+ylim([-10 25]);
+ylabel('Reward response (zscore)');
+title('Reward any')
+
+set(gcf,'Units','Inches');
+pos = get(gcf,'Position');
+set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(gcf,[parent_path filesep 'zscore_rew_resp.pdf'],'-dpdf','-r300')
+
+
+%%%% collect data for stats
+cell_type = cell(size(g_idx)); 
+cell_type(g_idx == 2) = {'FS'}; 
+cell_type(g_idx == 1) = {'RS'}; 
+
+tbl_out = table(rew_z_sort(:,1), rew_z_sort(:,2), rew_z_sort(:,3), rew_z_sort(:,4), rew_z_sort(:,5), phase_sort', cell_type, 'VariableNames',{'G_large_z', 'O_large_z', 'G_small_z', 'O_small_z', 'R_overall_z','Phase', 'Cell_type'}); 
+
+writetable(tbl_out, [parent_path filesep 'PETA_tbl.csv'])
 
 
 %% check for cells with the 25ms spike width
@@ -840,107 +1090,7 @@ title(['All cells (n = ' num2str(length(app_out.h(:,5))) ')'])
 
 fprintf('Overall modulation: Rew positive %0.2f%%  Rew negative %0.2f%%  No mod %0.2f%%\n', this_rew_mod_pos(5)*100, this_rew_mod_neg(5)*100, this_rew_no_mod*100)
 
-%%
-p_types = unique(phase);
-Phase = [];rew_mat = []; app_mat = [];
 
-this_rew_h = abs(rew_out.z_mean_fr) > 1.96; 
-this_app_h = abs(app_out.z_mean_fr) > 1.96; 
-
-
-for iP = length(p_types):-1:1
-    this_idx = strcmpi(p_types{iP}, phase);
-    for ii = size(rew_out.h,2):-1:1
-        Phase.rew_mod{iP}(:,ii) = sum(sum(this_rew_h(this_idx,ii),2)>0)/sum(this_idx);
-        Phase.app_mod{iP}(:,ii) = sum(sum(this_app_h(this_idx,ii),2)>0)/sum(this_idx);
-
-        % Phase.rew_mod{iP}(:,ii) = sum(sum(rew_out.h(this_idx,ii),2)>0)/sum(this_idx);
-        % Phase.app_mod{iP}(:,ii) = sum(sum(app_out.h(this_idx,ii),2)>0)/sum(this_idx);
-    end
-    rew_mat(iP,:) = Phase.rew_mod{iP};
-    app_mat(iP,:) = Phase.app_mod{iP};
-    %     labels{iP} = [p_types{iP}(1) str2double(p_types{iP}(end))]);
-end
-
-% get the 'any modulation'
-for iP = length(p_types):-1:1
-    this_idx = strcmpi(p_types{iP}, phase);
-
-    % any mod
-        Phase.rew_mod{iP}(:,6) = sum(sum(this_rew_h(this_idx,1:4),2)>0)/sum(this_idx);
-        Phase.app_mod{iP}(:,6) = sum(sum(this_app_h(this_idx,1:4),2)>0)/sum(this_idx);
-
-    rew_mat(iP,6) = Phase.rew_mod{iP}(:,6);
-    app_mat(iP,6) = Phase.app_mod{iP}(:,6);
-    
-    % Large reward only
-    Phase.rew_mod{iP}(:,7) = sum(sum(this_rew_h(this_idx,1:2),2)>0)/sum(this_idx);
-    Phase.app_mod{iP}(:,7) = sum(sum(this_app_h(this_idx,1:2),2)>0)/sum(this_idx);
-
-    rew_mat(iP,7) = Phase.rew_mod{iP}(:,7);
-    app_mat(iP,7) = Phase.app_mod{iP}(:,7);
-
-        % small reward only
-    Phase.rew_mod{iP}(:,8) = sum(sum(this_rew_h(this_idx,3:4),2)>0)/sum(this_idx);
-    Phase.app_mod{iP}(:,8) = sum(sum(this_app_h(this_idx,3:4),2)>0)/sum(this_idx);
-
-    rew_mat(iP,8) = Phase.rew_mod{iP}(:,8);
-    app_mat(iP,8) = Phase.app_mod{iP}(:,8);
-end
-
-
-figure(1099)
-clf
-
-subplot(3,2,[1 3])
-imagesc(1:8, 1:length(p_types), rew_mat*100);
-set(gca, 'xtick', [1:8], 'XTickLabel', {'North', 'West', 'South', 'East', 'overall', 'any', 'large', 'small'});
-set(gca,'YTick', 1:length(p_types),  'YTickLabel', p_types)
-caxis([0 100]); c = colorbar('Location', 'eastoutside');
-c.Ticks = [0 25 50 75 100]; c.Label.String = '% modulated cells';
-title('Reward')
-
-subplot(3,2,[2 4]); cla;
-imagesc(1:8, 1:length(p_types), app_mat*100);
-set(gca, 'xtick', [1:8], 'XTickLabel', {'North', 'West', 'South', 'East', 'overall', 'any', 'large', 'small'});
-set(gca,'YTick', 1:length(p_types),  'YTickLabel', p_types)
-caxis([0 100]); c = colorbar('Location', 'eastoutside');
-c.Ticks = [0 25 50 75 100]; c.Label.String = '% modulated cells';
-title('Approach')
-
-
-% overalls
-subplot(3,2,5); cla; hold on
-MS_bar_w_err(rew_mat(1:3,6)'*100,rew_mat(4:7,6)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
-MS_bar_w_err(rew_mat(8:10,6)'*100,rew_mat(11:13,6)'*100, [c_ord(3,:); c_ord(4,:)],1, 'ttest2', 3:4);
-set(gca, 'xtick', 1:4, 'XTickLabel', {'C', 'O_e', 'O_l', 'R'});
-xlim([0.5 4.5])
-ylabel('% modulated cells');
-title('Reward any')
-
-subplot(3,2,6); cla; hold on
-MS_bar_w_err(app_mat(1:3,6)'*100,app_mat(4:7,6)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);
-MS_bar_w_err(app_mat(8:10,6)'*100,app_mat(11:13,6)'*100, [c_ord(3,:); c_ord(4,:)],1, 'ttest2', 3:4);
-set(gca, 'xtick', 1:4, 'XTickLabel', {'C', 'O_e', 'O_l', 'R'});
-xlim([0.5 4.5])
-ylabel('% modulated cells');
-title('Approach any')
-
-figure(10909)
-clf
-subplot(2,2,1); cla; hold on
-[~, ~, ~,t_p, t_stats] = MS_bar_w_err(rew_mat(:,7)'*100,rew_mat(:,8)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest', 1:2);
-set(gca, 'xtick', 1:2, 'XTickLabel', {'large', 'small'});
-xlim([0.5 2.5])
-ylabel('% modulated cells');
-title('Reward any')
-
-subplot(2,2,2); cla; hold on
-[~, ~, ~,a_t_p, a_t_stats] = MS_bar_w_err(app_mat(:,7)'*100,app_mat(:,8)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest', 1:2);
-set(gca, 'xtick', 1:2, 'XTickLabel', {'large', 'small'});
-xlim([0.5 2.5])
-ylabel('% modulated cells');
-title('Approach any')
 % 
 % subplot(2,2,3); cla; hold on
 % MS_bar_w_err(sum(this_rew_h(:,1:2),2)'*100,this_rew_h(:,3:4)'*100, [c_ord(1,:); c_ord(2,:)], 1,'ttest2', 1:2);

@@ -165,7 +165,7 @@ pt_ratio = best_wave(p_idx) / best_wave(val_idx);
 pt_ratio = best_wave(p_idx) / best_wave(val_idx);
 
 % bursting propensity
-burst_idx = (sum(ISI < .010)./lengthsum(ISI < .010)) / (sum(ISI > .010)./length(ISI > .010));
+burst_idx = (sum(ISI < .010)./length(sum(ISI < .010))) / (sum(ISI > .010)./length(ISI > .010));
       
 %%
       
