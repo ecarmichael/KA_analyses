@@ -331,6 +331,19 @@ oe_idx = find(contains(phase_sort, {'O1', 'O2', 'O3'}));
 ol_idx = find(contains(phase_sort, { 'O4','O5', 'O6', 'O7'}));
 r_idx = find(contains(phase_sort, 'R'));
 
+% sort the speed vectors
+spd_z = spd_z(phase_sort_idx); 
+spd_corr = spd_corr(phase_sort_idx); 
+spd_p = spd_p(phase_sort_idx); 
+spd_mod = spd_mod(phase_sort_idx); 
+
+spd_data = spd_data(phase_sort_idx);
+% sort the stats
+stats = stats(phase_sort_idx); 
+
+% sort the cell IDS
+cell_id = cell_id(phase_sort_idx); 
+
 % phase colours
 c = linspecer(5);
 
@@ -341,7 +354,6 @@ c_ord(4,:) = c(5,:);
 
 blues = parula(16); reds = jet(64); oranges = autumn(16);
 sess_cord = [flipud(blues(3:2:7,:));(reds(end-7:end-1,:)); c_ord(3,:); flipud(oranges(end-9:end-6,:))];
-
 
 c_orange = [255 150 0]/255;
 c_l_orange = [255 213 153]/255;
@@ -506,10 +518,12 @@ end
 figure(808); clf
 subplot(2, 2, 1)
 
-[g_idx, n_val] = MS_kmean_scatter([(fr)', bur_idx',s_r'], 2, [1,2,3], 50);
+[g_idx, n_val] = MS_kmean_scatter([(fr)', bur_idx',s_w'], 2, [1,2,3], 50);
 xlabel('Firing rate (Hz)');
 ylabel('burst index')
-zlabel('spike slope ratio')
+zlabel('spike width')
+
+colors = linspecer(2);  %or any other way of creating the colormap
 
 % set(gca, 'XScale', 'log')
 % fprintf('Clustering returned %0.0f groups based on firing rate, burst index, and spike width <strong>G1: %0.0f%% G2: %0.0f%% G3: %0.0f%%</strong>\n',...
@@ -541,23 +555,29 @@ for ii = 1:length(unique(g_idx))
     hold on
     for jj = 1
         this_wave = wave_forms(:, g_idx == ii)./max(wave_forms(:, g_idx == ii)); 
-
-        shadedErrorBar(this_S.waves{1}.xrange(:,jj), nanmean(this_wave,2),std(this_wave,[],2) )
-        plot(this_S.waves{1}.xrange(:,jj), nanmean(this_wave,2))
+        x_range = (this_S.waves{1}.xrange(:,jj) - this_S.waves{1}.xrange(1,jj))./32;
+        % plot(x_range , nanmean(this_wave,2))
         % errorbar(this_S.waves{1}.xrange(:,jj), nanmean(wave_forms(jj+1,:, g_idx == ii),3) +std(wave_forms(jj+1,:, g_idx == ii),[],3))
-        plot(this_S.waves{1}.xrange(:,jj), this_wave)
+        % plot(x_range, this_wave)
+        s = shadedErrorBar(x_range, mean(this_wave,2),std(this_wave,[],2, 'omitmissing') ); 
+        s.mainLine.LineWidth = 3; 
+        s.mainLine.Color = colors(ii,:);
+        s.patch.FaceColor = colors(ii,:);
+        s.patch.FaceAlpha = 0.2;
+        s.edge(1).Color = colors(ii,:);
+        s.edge(2).Color = colors(ii,:);
+
     end
     title(['Group ' num2str(ii) ' | n=' num2str(sum(g_idx == ii))  ' | FR:' num2str(round(mean(fr(g_idx == ii)),2)) '\pm' num2str(round(std(fr(g_idx == ii)),2))], 'Interpreter','tex')
-
+        % xlim([x_range(1) x_range(end)])
+ylabel('voltage (normalized)'); xlabel('time (ms)')
+set(gca, 'xtick', [0 .5 1])
 end
-
 set(gcf,'Units','Inches');
 pos = get(gcf,'Position');
-% set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-% print(gcf,[parent_path filesep 'wave_feature.pdf'],'-dpdf','-r300')
+set(gcf,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(gcf,[parent_path filesep 'wave_feature.pdf'],'-dpdf','-r300')
 
-% sort the data 
-g_idx = g_idx(phase_sort_idx); 
 %% collect the responses over the phases
 p_types = unique(phase);
 Phase = [];rew_mat = []; app_mat = [];
@@ -716,7 +736,14 @@ cell_type = cell(size(g_idx));
 cell_type(g_idx == 2) = {'FS'}; 
 cell_type(g_idx == 1) = {'RS'}; 
 
-tbl_out = table(rew_z_sort(:,1), rew_z_sort(:,2), rew_z_sort(:,3), rew_z_sort(:,4), rew_z_sort(:,5), phase_sort', cell_type, 'VariableNames',{'G_large_z', 'O_large_z', 'G_small_z', 'O_small_z', 'R_overall_z','Phase', 'Cell_type'}); 
+for ii = 1:length(sub)
+    sub{ii} = num2str(sub{ii}); 
+end
+tbl_out = table(sub', phase_sort', cell_type, rew_z_sort(:,1), rew_z_sort(:,2), rew_z_sort(:,3), rew_z_sort(:,4), rew_z_sort(:,5),...
+    app_z_sort(:,1), app_z_sort(:,2), app_z_sort(:,3), app_z_sort(:,4), app_z_sort(:,5),...
+     'VariableNames',{'Subject', 'Phase', 'Cell_type','G_large_z', 'O_large_z', 'G_small_z', 'O_small_z', 'R_overall_z',...
+    'app_G_large_z', 'app_O_large_z', 'app_G_small_z', 'app_O_small_z', 'app_R_overall_z',...
+    }); 
 
 writetable(tbl_out, [parent_path filesep 'PETA_tbl.csv'])
 
